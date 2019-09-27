@@ -1,0 +1,461 @@
+import { remote } from 'electron';
+import fs from 'fs';
+import fse from 'fs-extra';
+import jsonfile from 'jsonfile';
+import path from 'path';
+import history from './common/history';
+import { WorkspaceFileExt, workspaces } from './global-settings';
+import paths from './paths';
+
+export type ExecuteEnv = {
+	name?: string;
+	urlReplaceRegexp?: string;
+	urlReplaceTo?: string;
+};
+export type WorkspaceSettings = {
+	name: string;
+	workspaceFile: string;
+	envs?: ExecuteEnv[];
+};
+export enum StepType {
+	START = 'start',
+	CLICK = 'click',
+	CHANGE = 'change',
+	AJAX = 'ajax',
+	/** ignore on capture 20190925 */
+	DOM_CHANGE = 'dom-change',
+	SUBMIT = 'submit',
+	END = 'end',
+	PAGE_CLOSED = 'page-closed',
+	PAGE_CREATED = 'page-created',
+	/** ignored on replay 20190925 */
+	PAGE_ERROR = 'page-error',
+	PAGE_SWITCHED = 'page-switched',
+	/** ignored on replay 20190925 */
+	DIALOG_OPEN = 'dialog-open',
+	/** ignore on capture 20190925 */
+	RESOURCE_LOAD = 'resource-load',
+	/** ignore on capture 20190925 */
+	LOAD = 'load',
+	MOUSE_DOWN = 'mousedown',
+	FOCUS = 'focus',
+	/** ignore on capture 20190925 */
+	UNLOAD = 'unload',
+	/** ignore on capture 20190925 */
+	VALUE_CHANGE = 'valuechange'
+}
+export type StepAssertion = {
+	element?: string;
+	attribute?: string;
+	operator: StepAssertOperator;
+	value?: string;
+};
+export type StepCondition = {
+	element?: string;
+	attribute?: string;
+	operator: StepAssertOperator;
+	value?: string;
+};
+export type StepConditions = (StepCondition | { conj: 'or' | 'and'; conditions: StepConditions })[];
+export type Step = {
+	/** step type */
+	type: StepType;
+	/** human reading text */
+	human?: string;
+	/** page uuid */
+	uuid: string;
+	assertions?: StepAssertion[];
+	conditions?: StepConditions;
+};
+export type Device = {
+	name: string;
+	userAgent: string;
+	viewport: {
+		width: number;
+		height: number;
+		deviceScaleFactor: number;
+		isMobile: boolean;
+		hasTouch: boolean;
+		isLandscape: boolean;
+	};
+};
+export type StartStep = Step & { type: StepType.START; url: string; device: Device };
+export type AjaxStep = Step & {
+	type: StepType.AJAX;
+	request: {
+		url: string;
+		method: 'GET' | 'POST' | 'DELETE' | 'PUT' | 'PATCH' | 'OPTION';
+		headers: { [key in string]: string };
+		body: any;
+		resourceType: string;
+	};
+	response: {
+		statusCode: number;
+		statusMessage: string;
+		headers: { [key in string]: string };
+		body: string;
+	};
+};
+export type ResourceLoadStep = Step & {
+	type: StepType.RESOURCE_LOAD;
+	request: {
+		url: string;
+		method: 'GET' | 'POST' | 'DELETE' | 'PUT' | 'PATCH' | 'OPTION';
+		resourceType: string;
+	};
+	response: {
+		statusCode: number;
+		statusMessage: string;
+	};
+};
+export type LoadStep = Step & { type: StepType.LOAD; target: string };
+export type UnloadStep = Step & { type: StepType.UNLOAD; target: string };
+export type PageClosedStep = Step & { type: StepType.PAGE_CLOSED; url: string };
+export type PageCreatedStep = Step & { type: StepType.PAGE_CREATED; url: string };
+export type PageErrorStep = Step & { type: StepType.PAGE_ERROR; url: string };
+export type PageSwitchStep = Step & { type: StepType.PAGE_SWITCHED; url: string };
+export type DialogOpenStep = Step & { type: StepType.DIALOG_OPEN; url: string };
+export type EndStep = Step & { type: StepType.END };
+export type DomEventStep = Step & { target: string };
+export type ClickStep = DomEventStep & { type: StepType.CLICK };
+export type MouseDownStep = DomEventStep & { type: StepType.MOUSE_DOWN };
+export type TextChangeEvent = DomEventStep & { type: StepType.CHANGE };
+export type FocusStep = DomEventStep & { type: StepType.FOCUS };
+export type ChangeStep = DomEventStep & { type: StepType.CHANGE; value: string };
+export type DomChangeStep = Step & { type: StepType.DOM_CHANGE };
+export enum StepAssertOperator {
+	EQUALS = '==',
+	NOT_EQUALS = '<>',
+	MORE_THAN = '>',
+	MORE_THAN_OR_EQUALS = '>=',
+	LESS_THAN = '<',
+	LESS_THAN_OR_EQUALS = '<=',
+	REGEXP = 'Regexp',
+	STARTS_WITH = 'Starts with',
+	NOT_STARTS_WITH = 'Not starts with',
+	ENDS_WITH = 'Ends with',
+	NOT_ENDS_WITH = 'Not ends with',
+	CONTAINS = 'Contains',
+	NOT_CONTAINS = 'Not contains',
+	EXISTS = 'Exists',
+	NOT_EXISTS = 'Not Exists'
+}
+export type Flow = {
+	name: string;
+	description: string;
+	steps?: Step[];
+};
+export type Story = {
+	name: string;
+	description: string;
+	flows?: Flow[];
+};
+export type WorkspaceStructure = {
+	stories: Story[];
+};
+
+let currentWorkspaceSettings: WorkspaceSettings | null = null;
+let currentWorkspaceStructure: WorkspaceStructure | null = null;
+
+export const isWorkspaceOpened = () => {
+	return currentWorkspaceSettings != null && currentWorkspaceStructure != null;
+};
+export const getCurrentWorkspace = (): { settings: WorkspaceSettings; structure: WorkspaceStructure } => {
+	return {
+		settings: getCurrentWorkspaceSettings()!,
+		structure: getCurrentWorkspaceStructure()!
+	};
+};
+export const getCurrentWorkspaceSettings = (): WorkspaceSettings | null => {
+	return currentWorkspaceSettings;
+};
+export const getCurrentWorkspaceStructure = (): WorkspaceStructure | null => {
+	return currentWorkspaceStructure;
+};
+export const saveCurrentWorkspace = async () => {
+	const { settings } = getCurrentWorkspace();
+	const { workspaceFile: file, ...rest } = settings;
+	await jsonfile.writeFile(file, rest, { spaces: '\t', encoding: 'UTF-8' });
+};
+
+const loadWorkspace = (file: string): WorkspaceSettings => {
+	try {
+		const settings = jsonfile.readFileSync(file) as WorkspaceSettings;
+		settings.workspaceFile = file;
+		return settings;
+	} catch {
+		return {
+			name: path.parse(file).name,
+			workspaceFile: file
+		} as WorkspaceSettings;
+	}
+};
+const loadWorkspaceStructure = (settings: WorkspaceSettings): WorkspaceStructure => {
+	const structure = { stories: [] } as WorkspaceStructure;
+	const workspaceFile = settings.workspaceFile;
+	const folder = path.parse(workspaceFile).dir;
+	const files = fs.readdirSync(folder);
+	structure.stories = files
+		.map(file => {
+			let story: Story | null = null;
+			const storyFolder = path.join(folder, file);
+			const stat = fs.statSync(storyFolder);
+			if (stat.isDirectory()) {
+				const storyFile = asStoryFileName(file);
+				if (isStoryFileExists(settings, { name: file } as Story)) {
+					try {
+						const storyFilePath = path.join(storyFolder, storyFile);
+						const storyFileData = jsonfile.readFileSync(storyFilePath);
+						const { description, ...rest } = storyFileData;
+						story = { name: file, description, ...rest };
+					} catch {
+						// cannot read story file data, ignored
+						story = { name: file, description: '' };
+					}
+				} else {
+					// story file not exists
+					story = { name: file, description: '' };
+				}
+
+				story!.flows = fs
+					.readdirSync(storyFolder)
+					.map(file => {
+						let flow: Flow | null = null;
+						if (isFlowFile(file) && fs.statSync(path.join(storyFolder, file)).isFile()) {
+							// if flow file
+							try {
+								const flowFileData = jsonfile.readFileSync(path.join(storyFolder, file));
+								const { description, ...rest } = flowFileData;
+								flow = { name: asFlowName(file), description, ...rest };
+							} catch {
+								flow = {
+									name: asFlowName(file),
+									description: 'File is broken! But never mind, just go on!'
+								};
+							}
+						} else {
+						}
+						return flow;
+					})
+					.filter(story => story != null)
+					.sort((a, b) => a!.name.localeCompare(b!.name)) as Flow[];
+			}
+			return story;
+		})
+		.filter(story => story != null)
+		.sort((a, b) => a!.name.localeCompare(b!.name)) as Story[];
+
+	return structure;
+};
+const releaseCurrentWorkspace = () => {
+	currentWorkspaceSettings = null;
+	currentWorkspaceStructure = null;
+};
+
+export const openWorkspaceByFolder = async (folder: string) => {
+	const files = fs.readdirSync(folder);
+	const workspaceFile = files.find(file => path.parse(file).ext === `.${WorkspaceFileExt}`);
+	if (!workspaceFile) {
+		remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+			type: 'error',
+			title: 'Invalid workspace',
+			message: 'Workspace file not found.'
+		});
+		return Promise.reject();
+	} else {
+		openWorkspace(path.join(folder, workspaceFile));
+		return Promise.resolve();
+	}
+};
+export const openWorkspace = (file: string): void => {
+	const settings = loadWorkspace(file);
+	workspaces.addWorkspace({ name: settings.name, path: path.parse(file).dir });
+	currentWorkspaceSettings = settings;
+	const structure = loadWorkspaceStructure(settings);
+	currentWorkspaceStructure = structure;
+
+	const current = remote.getCurrentWindow();
+	history.replace(paths.OPENED_WORKSPACE);
+	current.setTitle(`${settings.name} - ${path.parse(file).dir}`);
+	current.setResizable(true);
+	current.setMaximizable(true);
+	current.maximize();
+};
+
+export const createWorkspace = (folder: string, filename: string, options: { name: string }): void => {
+	const { name } = options;
+	fs.mkdirSync(folder, { recursive: true });
+	const file = path.join(folder, filename + '.' + WorkspaceFileExt);
+	jsonfile.writeFileSync(file, { name }, { spaces: '\t', encoding: 'UTF-8' });
+	openWorkspace(file);
+};
+export const closeCurrentWorkspace = (): void => {
+	releaseCurrentWorkspace();
+	const current = remote.getCurrentWindow();
+	current.setTitle('Welcome to LastHit');
+	current.setResizable(false);
+	current.setMaximizable(false);
+	current.setSize(780, 480, true);
+	current.center();
+};
+
+export const createStoryOnCurrentWorkspace = async (options: {
+	name: string;
+	description?: string;
+}): Promise<Story> => {
+	const { name, description } = options;
+	const story = { name, description } as Story;
+
+	const { settings, structure } = getCurrentWorkspace();
+	if (isStoryFolderExists(settings, story)) {
+		// story already exists
+		return Promise.reject('Story folder exists.');
+	}
+
+	fs.mkdirSync(getStoryFolder(settings, story));
+	jsonfile.writeFileSync(getStoryFilePath(settings, story), { description }, { encoding: 'UTF-8', spaces: '\t' });
+
+	structure.stories.push(story);
+	structure.stories.sort((a, b) => a.name.localeCompare(b.name));
+
+	return Promise.resolve(story);
+};
+
+export const deleteStoryFromCurrentWorkspace = async (story: Story) => {
+	const { settings, structure } = getCurrentWorkspace();
+
+	if (isStoryFolderExists(settings, story)) {
+		fse.removeSync(getStoryFolder(settings, story));
+	}
+
+	const index = structure.stories.indexOf(story);
+	if (index !== -1) {
+		structure.stories.splice(index, 1);
+	}
+
+	return Promise.resolve();
+};
+
+export const renameStory = (story: Story, newname: string): Promise<Story> => {
+	const { settings, structure } = getCurrentWorkspace();
+	const workspaceFile = settings.workspaceFile;
+	const folder = path.parse(workspaceFile).dir;
+
+	const storyFolder = getStoryFolder(settings, story);
+	if (isStoryFileExists(settings, story)) {
+		fse.renameSync(getStoryFilePath(settings, story), path.join(storyFolder, asStoryFileName(newname)));
+	}
+	if (isStoryFolderExists(settings, story)) {
+		fse.renameSync(storyFolder, path.join(folder, newname));
+	}
+
+	story.name = newname;
+	structure.stories.sort((a, b) => a.name.localeCompare(b.name));
+
+	return Promise.resolve(story);
+};
+
+export const createFlowOnCurrentWorkspace = async (
+	story: Story,
+	options: { name: string; description?: string }
+): Promise<Flow> => {
+	const { name, description } = options;
+	const flow = { name, description } as Flow;
+
+	const { settings } = getCurrentWorkspace();
+	if (!isStoryFolderExists(settings, story)) {
+		// story not exists
+		return Promise.reject('Story folder not exists.');
+	}
+	if (isFlowFileExists(settings, story, flow)) {
+		// flow already exists
+		return Promise.reject('Flow file exists.');
+	}
+
+	jsonfile.writeFileSync(
+		getFlowFilePath(settings, story, flow),
+		{ description },
+		{ encoding: 'UTF-8', spaces: '\t' }
+	);
+
+	story.flows = story.flows || [];
+	story.flows.push(flow);
+	story.flows.sort((a, b) => a.name.localeCompare(b.name));
+
+	return Promise.resolve(flow);
+};
+export const saveFlow = async (story: Story, flow: Flow) => {
+	const { settings } = getCurrentWorkspace();
+
+	// const storyFolder = getStoryFolder(settings, story);
+	try {
+		// properties name and state are no need to persist
+		const { name, ...rest } = flow;
+		await jsonfile.writeFile(getFlowFilePath(settings, story, flow), rest, { encoding: 'UTF-8', spaces: '\t' });
+		return Promise.resolve();
+	} catch (e) {
+		return Promise.reject(e);
+	}
+};
+export const renameFlow = (story: Story, flow: Flow, newname: string): Promise<Flow> => {
+	const { settings } = getCurrentWorkspace();
+
+	const storyFolder = getStoryFolder(settings, story);
+	if (isFlowFileExists(settings, story, flow)) {
+		fse.renameSync(getFlowFilePath(settings, story, flow), path.join(storyFolder, asFlowFileName(newname)));
+	}
+
+	flow.name = newname;
+	story.flows!.sort((a, b) => a.name.localeCompare(b.name));
+
+	return Promise.resolve(flow);
+};
+
+export const deleteFlowFromCurrentWorkspace = async (story: Story, flow: Flow) => {
+	const { settings } = getCurrentWorkspace();
+
+	if (isFlowFileExists(settings, story, flow)) {
+		fse.removeSync(getFlowFilePath(settings, story, flow));
+	}
+
+	const index = story.flows!.indexOf(flow);
+	if (index !== -1) {
+		story.flows!.splice(index, 1);
+	}
+
+	return Promise.resolve();
+};
+
+const asFlowFileName = (name: string): string => {
+	return `${name}.flow.json`;
+};
+export const getFlowFilePath = (settings: WorkspaceSettings, story: Story, flow: Flow): string => {
+	return path.join(getStoryFolder(settings, story), asFlowFileName(flow.name));
+};
+const asFlowName = (filename: string): string => {
+	return filename.substr(0, filename.length - 10);
+};
+const isFlowFile = (filename: string): boolean => {
+	return filename.endsWith('.flow.json');
+};
+const isFlowFileExists = (settings: WorkspaceSettings, story: Story, flow: Flow): boolean => {
+	const flowFilePath = getFlowFilePath(settings, story, flow);
+	return fs.existsSync(flowFilePath) && fs.statSync(flowFilePath).isFile();
+};
+const asStoryFileName = (name: string): string => {
+	return `${name}.story.json`;
+};
+const getStoryFolder = (settings: WorkspaceSettings, story: Story): string => {
+	return path.join(path.parse(settings.workspaceFile).dir, story.name);
+};
+const getStoryFilePath = (settings: WorkspaceSettings, story: Story): string => {
+	return path.join(getStoryFolder(settings, story), asStoryFileName(story.name));
+};
+const isStoryFolderExists = (settings: WorkspaceSettings, story: Story): boolean => {
+	const storyFolder = getStoryFolder(settings, story);
+	return fs.existsSync(storyFolder) && fs.statSync(storyFolder).isDirectory();
+};
+const isStoryFileExists = (settings: WorkspaceSettings, story: Story): boolean => {
+	const storyFilePath = getStoryFilePath(settings, story);
+	return fs.existsSync(storyFilePath) && fs.statSync(storyFilePath).isFile();
+};

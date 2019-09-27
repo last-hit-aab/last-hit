@@ -1,0 +1,52 @@
+{
+	"name": "last-hit",
+	"version": "0.1.0",
+	"description": "last hit on enterprise web",
+	"private": true,
+	"main": "main/index.js",
+	"scripts": {
+		"build:renderer": "npm run build --prefix renderer",
+		"start": "npm run build:renderer && electron .",
+		"start:dev": "npm run build:renderer && electron . --watch-renderer=true",
+		"pack": "npm run build:renderer && electron-builder --dir",
+		"pack:win": "npm run build:renderer && electron-builder -w",
+		"pack:mac": "npm run build:renderer && electron-builder -m",
+		"pack:all": "npm run build:renderer && electron-builder -mw",
+		"coverage": "nyc report --reporter=html"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://gitlab.com/last-hit/last-hit.git"
+	},
+	"keywords": [
+		"test",
+		"web",
+		"automation"
+	],
+	"author": "last-hit-team",
+	"license": "UNLICENSED",
+	"bugs": {
+		"url": "https://gitlab.com/last-hit/last-hit/issues"
+	},
+	"homepage": "https://gitlab.com/last-hit/last-hit#readme",
+	"devDependencies": {
+		"electron": "^6.0.9",
+		"electron-builder": "^21.2.0",
+		"nyc": "^14.1.1"
+	},
+	"dependencies": {
+		"body-parser": "^1.19.0",
+		"cross-spawn": "^6.0.5",
+		"express": "^4.17.1",
+		"puppeteer": "^1.20.0",
+		"puppeteer-to-istanbul": "^1.2.2",
+		"resemblejs": "^3.2.3",
+		"uuid": "^3.3.3",
+		"watchr": "^4.1.0",
+		"yargs": "^13.3.0"
+	},
+	"build": {
+		"asar": true,
+		"asarUnpack": "node_modules/puppeteer/.local-chromium/**/*"
+	}
+}
