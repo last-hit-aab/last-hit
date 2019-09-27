@@ -254,7 +254,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	// can start to record only when not on recording
 	const canStartRecord = !onRecord && onReplay === ReplayType.NONE;
 	// step by step button can click when not replaying or on step by step replaying
-	const canStartStepReplay = !onRecord && [ReplayType.NONE, ReplayType.STEP].includes(onReplay);
+	const canStartStepReplay = canStartPlay || (onReplay === ReplayType.STEP && stepReplaying);
 	const status = (() => {
 		if (onPause) {
 			return 'Record Paused';
@@ -513,7 +513,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 							<Button
 								title="Step by step"
 								onClick={onStartStepReplayClicked}
-								disabled={!canStartStepReplay || stepReplaying}
+								disabled={!canStartStepReplay}
 							>
 								<PlayStepIcon />
 							</Button>
@@ -534,7 +534,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 								title={showAllSteps ? 'Hide irrelevant steps' : 'Show all steps'}
 								onClick={onShowAllStepsClicked}
 								className={classes.showAllSteps}
-								disabled={onRecord || onReplay !== ReplayType.NONE}
+								disabled={onRecord || onReplay !== ReplayType.NONE || steps.length === 0}
 							>
 								<FontAwesomeIcon icon={faShoePrints} />
 								{showAllSteps ? <FontAwesomeIcon icon={faBan} /> : null}
