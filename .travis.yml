@@ -1,0 +1,14 @@
+os: 
+  - osx
+  - windows
+language: node_js
+node_js:
+  - 11
+cache:
+  yarn: true
+script:
+  - cd renderer
+  - yarn install
+  - cd ..
+  - yarn install
+  - yarn run pack:$TRAVIS_OS_NAME
