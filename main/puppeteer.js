@@ -158,12 +158,15 @@ const installListenersOnPage = async page => {
 					element = elements[1];
 				}
 			}
-			window.$lhGetUuid().then(uuid => {
-				const data = transformEvent(e, element);
-				data.uuid = uuid;
-				window.$lhRecordEvent(JSON.stringify(data), isOnMask);
-			});
+
+			const data = transformEvent(e, element);
+			data.uuid = window.$lhUuid;
+			window.$lhRecordEvent(JSON.stringify(data), isOnMask);
 		};
+
+		window.$lhGetUuid().then(uuid => {
+			window.$lhUuid = uuid;
+		});
 
 		Object.values({
 			CLICK: 'click',
