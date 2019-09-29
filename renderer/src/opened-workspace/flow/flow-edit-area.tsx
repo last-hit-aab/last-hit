@@ -206,16 +206,20 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 		};
 	}, [story, flow]);
 	React.useEffect(() => {
-		if (onRecord) {
-			const div = stepContainerRef.current!;
-			div.scrollTop = div.scrollHeight - div.clientHeight;
-		} else if (onReplay !== ReplayType.NONE) {
-			const div = stepContainerRef.current!;
-			const current = div.children[currentReplayStepIndex];
-			if (current) {
-				current.scrollIntoView(true);
-				div.scrollTop = div.scrollTop - 10;
+		try {
+			if (onRecord) {
+				const div = stepContainerRef.current!;
+				div.scrollTop = div.scrollHeight - div.clientHeight;
+			} else if (onReplay !== ReplayType.NONE) {
+				const div = stepContainerRef.current!;
+				const current = div.children[currentReplayStepIndex];
+				if (current) {
+					current.scrollIntoView(true);
+					div.scrollTop = div.scrollTop - 10;
+				}
 			}
+		} catch (e) {
+			console.error(e);
 		}
 	});
 
