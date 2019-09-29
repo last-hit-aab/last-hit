@@ -358,11 +358,16 @@ class Replayer {
 	async executeFocusStep(step) {
 		const page = this.getPageOrThrow(step.uuid);
 		const xpath = step.path.replace(/"/g, "'");
-		console.log(`Execute click, step path is ${xpath}.`);
+		console.log(`Execute focus, step path is ${xpath}.`);
 
 		const elements = await page.$x(xpath);
 		const element = elements[0];
-		await element.focus();
+		await element.evaluate(node => {
+			node.focus();
+			const event = document.createEvent('HTMLEvents');
+			event.initEvent('focus', true, true);
+			node.dispatchEvent(event);
+		});
 	}
 	async executeAjaxStep(step) {
 		// TODO do nothing now
