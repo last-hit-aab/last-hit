@@ -35,6 +35,14 @@ const controlPage = async (replayer, page, device) => {
 	page.on('close', async () => {
 		replayer.removePage(page);
 	});
+
+
+	page.on('dialog', async dialog => {
+		if (dialog.type() == "alert") {
+			await dialog.accept("success");
+		}
+	});
+
 	// page created by window.open or anchor
 	page.on('popup', async newPage => {
 		const newUrl = getUrlPath(newPage.url());
