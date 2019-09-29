@@ -9,8 +9,8 @@
 		"start": "npm run build:renderer && electron .",
 		"start:dev": "npm run build:renderer && electron . --watch-renderer=true",
 		"pack": "npm run build:renderer && electron-builder --dir",
-		"pack:win": "npm run build:renderer && electron-builder -w",
-		"pack:mac": "npm run build:renderer && electron-builder -m",
+		"pack:windows": "npm run build:renderer && electron-builder -w",
+		"pack:osx": "npm run build:renderer && electron-builder -m",
 		"pack:all": "npm run build:renderer && electron-builder -mw",
 		"coverage": "nyc report --reporter=html"
 	},
