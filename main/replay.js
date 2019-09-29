@@ -1,6 +1,7 @@
 const { URL } = require('url');
 const puppeteer = require('puppeteer');
 const { ipcMain } = require('electron');
+const { logger } = require('./logger');
 
 // const generateKeyByObject = (story, flow) => {
 // 	return `[${flow.name}@${story.name}]`;
@@ -136,6 +137,9 @@ class LoggedRequests {
 		console.log(
 			`Check all requests are done, currently ${this.requests.length} created and ${this.offsets.length} offsetted.`
 		);
+		logger.debug(
+			`Check all requests are done, currently ${this.requests.length} created and ${this.offsets.length} offsetted.`
+		)
 		if (this.requests.length === this.offsets.length) {
 			if (canResolve) {
 				this.clear();

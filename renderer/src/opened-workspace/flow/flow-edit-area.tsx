@@ -20,6 +20,10 @@ import StartRecordDialog from './start-record';
 import StartReplayDialog from './start-replay';
 import { getStepFork, IRRELEVANT_STEPS, ReplayType } from './step-definition';
 import StepFreeMoveDialog from './step-free-move';
+
+//log message to file in render process
+const logger = remote.getGlobal('logger');
+
 // a hint step for start recording
 const NO_STEPS = [
 	{
@@ -304,6 +308,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 		// set as step replaying anyway, it will disable the step play button
 		setStepReplaying(true);
 		handleReplayStepEnd(story, flow, type);
+		logger.debug(`continue-replay-step-${generateKeyByObject(story, flow)}`);
 		ipcRenderer.send(`continue-replay-step-${generateKeyByObject(story, flow)}`, {
 			storyName: story.name,
 			flow,
