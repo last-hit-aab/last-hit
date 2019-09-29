@@ -147,6 +147,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 		freeMoveStep: null as Step | null
 	});
 	const [currentReplayStepIndex, setCurrentReplayStepIndex] = React.useState(-1);
+	// step replaying or not
 	const [stepReplaying, setStepReplaying] = React.useState(false);
 	React.useEffect(() => {
 		ipcRenderer.on(`message-captured-${generateKeyByObject(story, flow)}`, (evt, arg) => {
@@ -208,10 +209,13 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 		if (onRecord) {
 			const div = stepContainerRef.current!;
 			div.scrollTop = div.scrollHeight - div.clientHeight;
-		} else if (onReplay) {
+		} else if (onReplay !== ReplayType.NONE) {
 			const div = stepContainerRef.current!;
-			div.children[currentReplayStepIndex].scrollIntoView(true);
-			div.scrollTop = div.scrollTop - 10;
+			const current = div.children[currentReplayStepIndex];
+			if (current) {
+				current.scrollIntoView(true);
+				div.scrollTop = div.scrollTop - 10;
+			}
 		}
 	});
 
@@ -249,12 +253,16 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	const onRecord = state.onRecord;
 	const onReplay = state.onReplay;
 	const onPause = state.onPause;
-	// can start to play only when steps exists and not on recording
+	// can start to play only when there has step, and not on recording, and not on replaying
 	const canStartPlay = steps.length !== 0 && !onRecord && onReplay === ReplayType.NONE;
-	// can start to record only when not on recording
+	const canStartRegularReplay = canStartPlay || (onReplay === ReplayType.REGULAR && !stepReplaying);
+	const canStartSmartReplay = canStartPlay || (onReplay === ReplayType.SMART && !stepReplaying);
+	// can start to record only when not on recording, and not on replaying
 	const canStartRecord = !onRecord && onReplay === ReplayType.NONE;
-	// step by step button can click when not replaying or on step by step replaying
-	const canStartStepReplay = canStartPlay || (onReplay === ReplayType.STEP && stepReplaying);
+	// step by step button can click when
+	// 1. there has step, and not on recording, and not on replaying,
+	// 2. or on step by step replaying, but current step is finished
+	const canStartStepReplay = canStartPlay || (onReplay === ReplayType.STEP && !stepReplaying);
 	const status = (() => {
 		if (onPause) {
 			return 'Record Paused';
@@ -266,34 +274,26 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			return null;
 		}
 	})();
-	const onStartRegularReplayClicked = (): void => {
-		setCurrentReplayStepIndex(-1);
-		setState({
-			...state,
-			openStartReplay: ReplayType.REGULAR,
-			onReplay: ReplayType.NONE
-		});
-	};
-	const onStartSmartReplayClicked = (): void => {
-		setCurrentReplayStepIndex(-1);
-		setState({
-			...state,
-			openStartReplay: ReplayType.SMART,
-			onReplay: ReplayType.NONE
-		});
-	};
-	const onStartStepReplayClicked = (): void => {
+	const handleStartReplay = (type: ReplayType): void => {
 		if (onReplay === ReplayType.NONE) {
-			// not on replay, start it
 			setCurrentReplayStepIndex(-1);
 			setState({
 				...state,
-				openStartReplay: ReplayType.STEP,
+				openStartReplay: type,
 				onReplay: ReplayType.NONE
 			});
 		} else {
 			replayNextStep(story, flow, onReplay, currentReplayStepIndex);
 		}
+	};
+	const onStartRegularReplayClicked = (): void => {
+		handleStartReplay(ReplayType.REGULAR);
+	};
+	const onStartSmartReplayClicked = (): void => {
+		handleStartReplay(ReplayType.SMART);
+	};
+	const onStartStepReplayClicked = (): void => {
+		handleStartReplay(ReplayType.STEP);
 	};
 	const replayNextStep = (story: Story, flow: Flow, type: ReplayType, index: number): void => {
 		setCurrentReplayStepIndex(index + 1);
@@ -310,7 +310,6 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 		ipcRenderer.once(`replay-step-end-${generateKeyByObject(story, flow)}`, (event, arg) => {
 			const { error, index } = arg;
 			if (error) {
-				// TODO
 				(async () => {
 					await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
 						type: 'error',
@@ -330,8 +329,8 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 					setCurrentReplayStepIndex(-1);
 					setStepReplaying(false);
 				})();
-			} else if (flow.steps![index].type === StepType.END) {
-				// the end step is finished
+			} else if (flow.steps![index].type === StepType.END || index >= flow.steps!.length - 1) {
+				// the end or last step is finished
 				(async () => {
 					const ret: Electron.MessageBoxReturnValue = await remote.dialog.showMessageBox(
 						remote.getCurrentWindow(),
@@ -366,8 +365,14 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 				// set step replaying to false, enable the step play button
 				setStepReplaying(false);
 			} else {
-				// go on
-				replayNextStep(story, flow, type, index);
+				const nextStep = flow.steps![index + 1];
+				if (nextStep && nextStep.breakpoint) {
+					// do nothing
+					setStepReplaying(false);
+				} else {
+					// go on
+					replayNextStep(story, flow, type, index);
+				}
 			}
 		});
 	};
@@ -386,6 +391,38 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			handleReplayStepEnd(story, flow, replayType);
 			ipcRenderer.send('launch-replay', { flow, index: 0, storyName: story.name });
 		}
+	};
+	const onStopReplayClicked = (): void => {
+		(async () => {
+			const ret: Electron.MessageBoxReturnValue = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+				type: 'info',
+				title: 'Stop replay',
+				message: 'Do you want to stop step by step replay?',
+				buttons: ['OK & disconnect only', 'OK & disconnect & close Chromium', 'Cancel']
+			});
+			switch (ret.response) {
+				case 0:
+					ipcRenderer.send(`continue-replay-step-${generateKeyByObject(story, flow)}`, {
+						command: 'disconnect'
+					});
+					break;
+				case 1:
+					ipcRenderer.send(`continue-replay-step-${generateKeyByObject(story, flow)}`, {
+						command: 'abolish'
+					});
+					break;
+				case 2:
+					// cancel stop
+					return;
+			}
+			setState({
+				...state,
+				openStartReplay: ReplayType.NONE,
+				onReplay: ReplayType.NONE
+			});
+			setCurrentReplayStepIndex(-1);
+			setStepReplaying(false);
+		})();
 	};
 	const onStartRecordClicked = (): void => {
 		setState({ ...state, openStartRecord: true, onRecord: false });
@@ -504,10 +541,18 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 					/>
 					<Grid item className={classes.buttonBars}>
 						<ButtonGroup variant="contained" color="primary" size="small">
-							<Button title="Smart play" onClick={onStartSmartReplayClicked} disabled={!canStartPlay}>
+							<Button
+								title="Smart play"
+								onClick={onStartSmartReplayClicked}
+								disabled={!canStartSmartReplay}
+							>
 								<SmartPlayIcon />
 							</Button>
-							<Button title="Play" onClick={onStartRegularReplayClicked} disabled={!canStartPlay}>
+							<Button
+								title="Play"
+								onClick={onStartRegularReplayClicked}
+								disabled={!canStartRegularReplay}
+							>
 								<PlayIcon />
 							</Button>
 							<Button
@@ -516,6 +561,13 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 								disabled={!canStartStepReplay}
 							>
 								<PlayStepIcon />
+							</Button>
+							<Button
+								title="Stop replay"
+								onClick={onStopReplayClicked}
+								disabled={onReplay !== ReplayType.STEP || stepReplaying}
+							>
+								<StopIcon />
 							</Button>
 						</ButtonGroup>
 						<ButtonGroup variant="contained" color="primary" size="small">
@@ -566,7 +618,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 										onPause,
 										onReplay,
 										replayStepIndex: currentReplayStepIndex,
-										stepReplaying: stepReplaying,
+										stepReplaying,
 										myIndex: index
 									}}
 									irrelevant={IRRELEVANT_STEPS.includes(step.type)}

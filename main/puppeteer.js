@@ -29,7 +29,7 @@ const createPageWindowEventRecorder = flowKey => (eventJsonStr, onPickDOM) => {
 	}
 };
 const captureScreenshot = async page => {
-	//wait for ui render
+	// wait for ui render
 	await page.waitForNavigation({ waitUntil: 'networkidle2' });
 	return await page.screenshot({ encoding: 'base64' });
 };
@@ -472,10 +472,39 @@ const launch = () => {
 			pti.write(coverages);
 		})();
 	});
+	ipcMain.on('capture-screen', (event, arg) => {
+		(async () => {
+			const { flowKey, uuid } = arg;
+			const browser = browsers[flowKey];
+			if (browser == null) {
+				event.reply(`screen-captured-${flowKey}`, { error: 'Browser not found.' });
+				return;
+			}
+			const pages = await browser.pages();
+			const page = pages.find(async page => {
+				return uuid === (await page.evaluate(() => window.$lhGetUuid()));
+			});
+			if (page == null) {
+				event.reply(`screen-captured-${flowKey}`, { error: 'Page not found.' });
+			} else {
+				try {
+					const base64 = await page.screenshot({ encoding: 'base64' });
+					event.reply(`screen-captured-${flowKey}`, { image: base64 });
+				} catch (e) {
+					console.error(e);
+					event.reply(`screen-captured-${flowKey}`, { error: e.message });
+				}
+			}
+		})();
+	});
 	ipcMain.on('start-pick-dom', (event, arg) => {
 		(async () => {
 			const { flowKey, uuid } = arg;
 			const browser = browsers[flowKey];
+			if (browser == null) {
+				event.reply('dom-on-page-picked', { error: 'browser not found.' });
+				return;
+			}
 			const pages = await browser.pages();
 			const page = pages.find(async page => {
 				return uuid === (await page.evaluate(() => window.$lhGetUuid()));

@@ -300,7 +300,31 @@ class Replayer {
 		console.log(`Execute change, step path is ${xpath}, step value is ${step.value}.`);
 
 		const elements = await page.$x(xpath);
-		await elements[0].type(step.value);
+		const element = elements[0];
+		const elementTagName = await element.evaluate(node => node.tagName);
+		if (elementTagName === 'INPUT') {
+			const elementType = await element.evaluate(node => node.getAttribute('type'));
+			if (elementType.toLowerCase() === 'date') {
+				await element.evaluate((node, value) => {
+					node.value = value;
+					const event = document.createEvent('HTMLEvents');
+					event.initEvent('change', true, true);
+					node.dispatchEvent(event);
+				}, step.value);
+			} else {
+				await element.type(step.value);
+			}
+		} else if (elementTagName === 'SELECT') {
+			await element.evaluate((node, value) => {
+				node.value = value;
+				const event = document.createEvent('HTMLEvents');
+				event.initEvent('change', true, true);
+				node.dispatchEvent(event);
+			}, step.value);
+		} else {
+			await element.type(step.value);
+		}
+
 		await this.isRemoteFinsihed(page);
 	}
 	async executeClickStep(step) {

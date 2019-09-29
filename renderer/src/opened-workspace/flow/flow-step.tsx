@@ -2,15 +2,26 @@ import { Button, ButtonGroup, Grid, InputBase, makeStyles } from '@material-ui/c
 import MoveDownIcon from '@material-ui/icons/ArrowDownward';
 import MoveUpIcon from '@material-ui/icons/ArrowUpward';
 import ConditionIcon from '@material-ui/icons/CallSplit';
+import CaptureScreenIcon from '@material-ui/icons/CameraEnhance';
 import AssertIcon from '@material-ui/icons/ControlCamera';
 import DeleteIcon from '@material-ui/icons/DeleteForever';
 import FreeMoveIcon from '@material-ui/icons/ImportExport';
+import BreakpointIcon from '@material-ui/icons/PauseCircleFilled';
+import { ipcRenderer, remote } from 'electron';
 import React, { Fragment } from 'react';
+import { generateKeyByObject } from '../../common/flow-utils';
 import { getTheme } from '../../global-settings';
 import { Flow, saveFlow, Step, StepType, Story } from '../../workspace-settings';
-import { ASSERTABLE_STEPS, CONDITIONABLE_STEPS, getStepFork, StepIcon, ReplayType } from './step-definition';
 import StepAssertionDialog from './step-assertion';
 import StepConditionDialog from './step-condition';
+import {
+	ASSERTABLE_STEPS,
+	CONDITIONABLE_STEPS,
+	getStepFork,
+	IRRELEVANT_STEPS,
+	ReplayType,
+	StepIcon
+} from './step-definition';
 import ThumbnailDialog from './thumbnail-view-dialog';
 
 const myTheme = getTheme();
@@ -23,6 +34,30 @@ const useStyles = makeStyles(theme => ({
 		border: `1px solid ${myTheme.stepFocusColor}`,
 		borderRadius: 2,
 		cursor: 'pointer',
+		position: 'relative',
+		'&:before, &:after': {
+			position: 'absolute',
+			display: 'block',
+			fontSize: '0.5rem',
+			color: theme.palette.secondary.light,
+			width: 14,
+			height: 14,
+			border: `1px solid ${theme.palette.secondary.light}`,
+			borderRadius: '100%',
+			textAlign: 'center',
+			lineHeight: '14px',
+			overflow: 'hidden',
+			whiteSpace: 'nowrap',
+			left: 2
+		},
+		'&:before': {
+			content: 'attr(data-index)',
+			top: 2
+		},
+		'&[data-is-breakpoint=true]:after': {
+			content: '"b"',
+			bottom: 2
+		},
 		'&[data-is-irrelevant=true]': {
 			marginLeft: theme.spacing(4),
 			width: `calc(100% - ${theme.spacing(4)}px)`
@@ -152,6 +187,29 @@ export default (props: {
 		forceUpdate(ignored);
 		saveFlow(story, flow);
 	};
+	const onCaptureScreenClicked = (): void => {
+		const flowKey = generateKeyByObject(story, flow);
+		ipcRenderer.once(`screen-captured-${flowKey}`, (event, arg) => {
+			const { error, image } = arg;
+			if (error) {
+				remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+					type: 'error',
+					title: 'Capture screenshot',
+					message: `Cannot find the page with uuid[${step.uuid}], have you close that?`
+				});
+			} else {
+				step.image = image;
+				forceUpdate(ignored);
+				saveFlow(story, flow);
+			}
+		});
+		ipcRenderer.send('capture-screen', { flowKey, uuid: step.uuid });
+	};
+	const onToggleBreakpointClicked = (): void => {
+		step.breakpoint = !!!step.breakpoint;
+		forceUpdate(ignored);
+		saveFlow(story, flow);
+	};
 	const onStepAssertionClicked = (): void => setState({ ...state, openStepAssertion: true });
 	const onStepAssertionDialogClose = (): void => setState({ ...state, openStepAssertion: false });
 	const onStepConditionClicked = (): void => setState({ ...state, openStepCondition: true });
@@ -160,6 +218,11 @@ export default (props: {
 	const buttons = (
 		<ButtonGroup variant="contained" color="primary" size="small" className={classes.buttons}>
 			{[
+				onRecord && myIndex === flow.steps!.length - 1 && myIndex !== 0 ? (
+					<Button title="Capture Screenshot" key="capture screenshot" onClick={onCaptureScreenClicked}>
+						<CaptureScreenIcon />
+					</Button>
+				) : null,
 				ASSERTABLE_STEPS.includes(type) && (!onRecord || onPause) && onReplay === ReplayType.NONE ? (
 					<Button
 						title="Assertion"
@@ -178,6 +241,11 @@ export default (props: {
 						data-has-condition={step.conditions && step.conditions.length !== 0}
 					>
 						<ConditionIcon />
+					</Button>
+				) : null,
+				!IRRELEVANT_STEPS.includes(type) && (!onRecord || onPause) && onReplay === ReplayType.NONE ? (
+					<Button title="Toggle Breakpoint" key="toggle breakpoint" onClick={onToggleBreakpointClicked}>
+						<BreakpointIcon />
 					</Button>
 				) : null,
 				irrelevantShow && canMoveUp && !onRecord && onReplay === ReplayType.NONE ? (
@@ -216,9 +284,11 @@ export default (props: {
 			className={classes.root}
 			tabIndex={0}
 			data-step-type={type}
+			data-index={myIndex + 1}
 			data-is-irrelevant={irrelevant}
 			data-on-replay={onReplay !== ReplayType.NONE && replayStepIndex === myIndex}
 			data-on-replaying={onReplay !== ReplayType.NONE && replayStepIndex === myIndex && stepReplaying}
+			data-is-breakpoint={step.breakpoint}
 		>
 			<StepIcon step={step} />
 			<InputBase

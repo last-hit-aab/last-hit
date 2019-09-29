@@ -64,6 +64,10 @@ export type Step = {
 	human?: string;
 	/** page uuid */
 	uuid: string;
+	/** screenshot, base64 */
+	image?: string;
+	/** breakpoint */
+	breakpoint?: boolean;
 	assertions?: StepAssertion[];
 	conditions?: StepConditions;
 };

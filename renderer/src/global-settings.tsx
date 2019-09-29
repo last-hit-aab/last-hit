@@ -60,7 +60,7 @@ const defaultSettings = {
 		outlineScrollBarThumbBackgroundColor: 'rgba(29, 29, 29, 0.3)',
 		workareaBottomBackgroundColor: '#2b2b2b',
 		workareaBottomSegmentHoverBackgroundColor: '#3a57a2',
-		opacityForFontColor: 0.7,
+		opacityForFontColor: 0.9,
 		workareaTabsIndicatorBackgroundColor: 'rgba(109,194,184,1)',
 		textScrollBarThumbBackgroundColor: 'rgba(29, 29, 29, 0.3)',
 		flowIconColor: 'rgba(121,134,203,1)',
