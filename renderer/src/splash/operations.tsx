@@ -1,4 +1,4 @@
-import { faCodeBranch, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Theme } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
@@ -112,14 +112,14 @@ export default (props: ComponentProps): JSX.Element => {
 					<span>Open</span>
 				</Button>
 			</Grid>
-			<Grid item className={classes.operation} container alignItems="center">
+			{/* <Grid item className={classes.operation} container alignItems="center">
 				<Button>
 					<span>
 						<FontAwesomeIcon icon={faCodeBranch} />
 					</span>
 					<span>Check out from Git</span>
 				</Button>
-			</Grid>
+			</Grid> */}
 		</Grid>
 	);
 };

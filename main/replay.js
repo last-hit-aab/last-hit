@@ -1,4 +1,4 @@
-const URL = require('url');
+const { URL } = require('url');
 const puppeteer = require('puppeteer');
 const { ipcMain } = require('electron');
 
@@ -117,6 +117,8 @@ class LoggedRequests {
 	create(request) {
 		// console.log(`Request ${request.url()} created.`);
 		this.requests.push(request);
+		// reset used time to 0, ensure timeout is begin from the last created request
+		this.used = 0;
 	}
 	offset(request) {
 		// console.log(`Request ${request.url()} offsetted.`);
@@ -127,7 +129,7 @@ class LoggedRequests {
 		this.offsets = [];
 		this.used = 0;
 	}
-	async poll(resolve, reject) {
+	async poll(resolve, reject, canResolve) {
 		await this.getPage().waitFor(1000);
 		this.used += 1000;
 
@@ -135,8 +137,12 @@ class LoggedRequests {
 			`Check all requests are done, currently ${this.requests.length} created and ${this.offsets.length} offsetted.`
 		);
 		if (this.requests.length === this.offsets.length) {
-			this.clear();
-			resolve();
+			if (canResolve) {
+				this.clear();
+				resolve();
+			} else {
+				this.poll(resolve, reject, true);
+			}
 		} else if (this.used > this.timeout) {
 			this.clear();
 			reject(new Error(`Wait for all requests done, timeout after ${this.used}ms.`));
@@ -286,6 +292,8 @@ class Replayer {
 				return await this.executeChangeStep(step);
 			case 'click':
 				return await this.executeClickStep(step);
+			case 'focus':
+				return await this.executeFocusStep(step);
 			case 'ajax':
 				return await this.executeAjaxStep(step);
 			case 'end':
@@ -301,26 +309,16 @@ class Replayer {
 
 		const elements = await page.$x(xpath);
 		const element = elements[0];
-		const elementTagName = await element.evaluate(node => node.tagName);
+		const elementTagName = await this.getElementTagName(element);
 		if (elementTagName === 'INPUT') {
-			const elementType = await element.evaluate(node => node.getAttribute('type'));
-			if (elementType.toLowerCase() === 'date') {
-				await element.evaluate((node, value) => {
-					node.value = value;
-					const event = document.createEvent('HTMLEvents');
-					event.initEvent('change', true, true);
-					node.dispatchEvent(event);
-				}, step.value);
+			const elementType = await this.getElementType(element);
+			if (['date', 'checkbox'].includes(elementType.toLowerCase())) {
+				await this.setValueToElement(element, step.value);
 			} else {
 				await element.type(step.value);
 			}
 		} else if (elementTagName === 'SELECT') {
-			await element.evaluate((node, value) => {
-				node.value = value;
-				const event = document.createEvent('HTMLEvents');
-				event.initEvent('change', true, true);
-				node.dispatchEvent(event);
-			}, step.value);
+			await this.setValueToElement(element, step.value);
 		} else {
 			await element.type(step.value);
 		}
@@ -333,13 +331,55 @@ class Replayer {
 		console.log(`Execute click, step path is ${xpath}.`);
 
 		const elements = await page.$x(xpath);
-		await elements[0].click();
+		const element = elements[0];
+		const elementTagName = await this.getElementTagName(element);
+		if (elementTagName === 'INPUT') {
+			const elementType = await this.getElementType(element);
+			if (elementType && ['checkbox'].includes(elementType.toLowerCase())) {
+				const value = await this.getElementValue(element);
+				if (value == step.value) {
+					// ignore this click, it was invoked by javascript already
+					console.log(
+						'Click excution is ignored because of value is matched, it was invoked by javascript already.'
+					);
+					return;
+				}
+			}
+		}
+		const visible = await this.isElementVisible(element);
+		if (visible) {
+			await elements[0].click();
+		} else {
+			await element.evaluate(node => node.click());
+		}
+
 		await this.isRemoteFinsihed(page);
+	}
+	async executeFocusStep(step) {
+		const page = this.getPageOrThrow(step.uuid);
+		const xpath = step.path.replace(/"/g, "'");
+		console.log(`Execute click, step path is ${xpath}.`);
+
+		const elements = await page.$x(xpath);
+		const element = elements[0];
+		await element.focus();
 	}
 	async executeAjaxStep(step) {
 		// TODO do nothing now
 		console.log(`Execute ajax, step url is ${step.url}.`);
 	}
+	getElementTagName = async element => await element.evaluate(node => node.tagName);
+	getElementType = async element => await element.evaluate(node => node.getAttribute('type'));
+	getElementValue = async element => await element.evaluate(node => node.value);
+	isElementVisible = async element => await element.evaluate(node => node.offsetWidth > 0 && node.offsetHeight > 0);
+	setValueToElement = async (element, value) => {
+		await element.evaluate((node, value) => {
+			node.value = value;
+			const event = document.createEvent('HTMLEvents');
+			event.initEvent('change', true, true);
+			node.dispatchEvent(event);
+		}, value);
+	};
 }
 
 const browsers = {};

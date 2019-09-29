@@ -52,11 +52,15 @@ const installListenersOnPage = async page => {
 		const createXPathFromElement = elm => {
 			var allNodes = document.getElementsByTagName('*');
 			for (var segs = []; elm && elm.nodeType == 1; elm = elm.parentNode) {
-				if (elm.hasAttribute('id')) {
+				if (elm.hasAttribute('id') && !/^md-.+-.{6,16}$/.test(elm.getAttribute('id'))) {
 					var uniqueIdCount = 0;
 					for (var n = 0; n < allNodes.length; n++) {
-						if (allNodes[n].hasAttribute('id') && allNodes[n].id == elm.id) uniqueIdCount++;
-						if (uniqueIdCount > 1) break;
+						if (allNodes[n].hasAttribute('id') && allNodes[n].id == elm.id) {
+							uniqueIdCount++;
+						}
+						if (uniqueIdCount > 1) {
+							break;
+						}
 					}
 					if (uniqueIdCount == 1) {
 						segs.unshift('//*[@id="' + elm.getAttribute('id') + '"]');
@@ -81,6 +85,18 @@ const installListenersOnPage = async page => {
 		};
 
 		const transformEvent = (e, element) => {
+			let xpath = createXPathFromElement(element);
+			if (e.type === 'click' && xpath.indexOf('/svg') !== -1) {
+				const newXpath = xpath.replace(/^(.*button.*)\/svg.*$/, '$1');
+				if (newXpath !== xpath) {
+					// replaced
+					let parent = element;
+					while (parent.tagName !== 'BUTTON') {
+						parent = parent.parentElement;
+					}
+					element = parent;
+				}
+			}
 			return {
 				// keys
 				altKey: e.altKey,
@@ -104,7 +120,7 @@ const installListenersOnPage = async page => {
 				isTrusted: e.isTrusted,
 				value: element.value,
 				// computed
-				path: createXPathFromElement(element),
+				path: xpath,
 				target: `<${element.tagName.toLowerCase()} ${element
 					.getAttributeNames()
 					.map(name => `${name}="${element.getAttribute(name)}"`)
