@@ -3,7 +3,6 @@ node_modules
 build
 package-lock
 coverage
-./nyc_output
-
 .nyc_output
 log/**
+package-lock.json
