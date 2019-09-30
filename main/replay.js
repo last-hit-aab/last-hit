@@ -87,7 +87,7 @@ const launchBrowser = async replayer => {
 		headless: false,
 		executablePath: getChromiumExecPath(),
 		args: browserArgs,
-		slowMo: 100
+		slowMo: 20
 	});
 	const pages = await browser.pages();
 	let page;
@@ -166,6 +166,7 @@ class LoggedRequests {
 		logger.debug(
 			`Check all requests are done, currently ${this.requests.length} created and ${this.offsets.length} offsetted.`
 		);
+		//when the page pop up, the page has been loaded before request interception, then requests length will less than offsets length
 		if (this.requests.length <= this.offsets.length) {
 			if (canResolve) {
 				this.clear();
@@ -336,6 +337,8 @@ class Replayer {
 				return await this.executeClickStep(step);
 			case 'focus':
 				return await this.executeFocusStep(step);
+			case 'keydown':
+				return await this.executeKeydownStep(step);
 			case 'ajax':
 				return await this.executeAjaxStep(step);
 			case 'scroll':
@@ -418,8 +421,42 @@ class Replayer {
 			node.dispatchEvent(event);
 		});
 	}
+	async executeKeydownStep(step) {
+		const page = await this.getPageOrThrow(step.uuid);
+		const xpath = step.path.replace(/"/g, "'");
+		const value = step.value;
+		console.log(`Execute keydown, step path is ${xpath}, key is ${value}`);
+
+		const steps = this.getSteps();
+		const currentIndex = this.getCurrentIndex();
+
+		// check the pattern: keydown(key=enter)->change->click(element type=submit)
+		if (steps[currentIndex].type === 'keydown' && steps[currentIndex + 1].type === 'change') {
+			if (steps[currentIndex].target === steps[currentIndex + 1].target) {
+				if (steps[currentIndex + 2].type === 'click') {
+					const elements = await page.$x(steps[currentIndex + 2].path.replace(/"/g, "'"));
+					const element = elements[0];
+					const elementTagName = await this.getElementTagName(element);
+					const elementType = await this.getElementType(element);
+					if (elementTagName === 'INPUT' && elementType === 'submit') {
+						logger.debug(`find the pattern: enter->change->submit, then skip the enter step. the step path is ${xpath}`);
+						return;
+					}
+				}
+			}
+		}
+
+		switch (step.value) {
+			case 'Enter':
+				return await page.keyboard.press('Enter');
+			default:
+				console.log(`keydown [${value}] is not implemented yet.`);
+				return Promise.resolve();
+		}
+
+	}
 	async executeScrollStep(step) {
-		const page = this.getPageOrThrow(step.uuid);
+		const page = await this.getPageOrThrow(step.uuid);
 
 		const scrollTop = step.scrollTop || 0;
 		const scrollLeft = step.scrollLeft || 0;
