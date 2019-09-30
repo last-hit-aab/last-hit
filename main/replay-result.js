@@ -23,7 +23,26 @@ const replayRecords = new Map();
 var currentReplayId = "";
 var replaySummary = null;
 
+const recordReplayEventError = async (storyName, flowName, replayType, data, e) => {
+    return new Promise((resolve, reject) => {
+        try {
 
+            const replayKey = _buildKey(storyName, flowName, currentReplayId)
+            if (replayType == "ajax") {
+                replaySummary.numberOfAjax = replaySummary.numberOfAjax + 1
+            } else {
+                console.log("replayKey", replayKey)
+                replaySummary.numberOfFailed = replaySummary.numberOfFailed + 1
+                // replayRecords.get(replayKey).push(data)
+            }
+
+            resolve(true)
+        } catch (e) {
+            console.error(e)
+            reject(e)
+        }
+    })
+}
 
 const recordReplayEvent = async (storyName, flowName, replayType, data) => {
     return new Promise((resolve, reject) => {
@@ -32,10 +51,7 @@ const recordReplayEvent = async (storyName, flowName, replayType, data) => {
             if (replayType == "ajax") {
                 replaySummary.numberOfAjax = replaySummary.numberOfAjax + 1
             } else {
-                console.log("replayKey", replayKey)
-                replaySummary.numberOfStep = replaySummary.numberOfStep + 1
-                replaySummary.numberOfSuccess = replaySummary.numberOfSuccess + 1
-                // replayRecords.get(replayKey).push(data)
+                replaySummary.numberOfSuccess += 1
             }
 
             resolve(true)
@@ -48,11 +64,15 @@ const recordReplayEvent = async (storyName, flowName, replayType, data) => {
 
 
 
-const initReplayRecord = (storyName, flowName) => {
+const initReplayRecord = (storyName, flow) => {
+
+    const flowName = flow.name;
+    const numberOfStep = flow.steps.length - 2
     console.log(this.replayRecords)
     replayRecords.clear()
     const replayId = uuidv4()
     replaySummary = new ReplaySummary({ storyName, flowName, replayId })
+    replaySummary.numberOfStep = numberOfStep
     currentReplayId = replayId;
     const key = _buildKey(storyName, flowName, replayId);
     console.log("key", key)
@@ -79,4 +99,4 @@ const destory = () => {
 }
 
 
-module.exports = { initReplayRecord, recordReplayEvent, getReplayRecords, destory, printRecords }
+module.exports = { initReplayRecord, recordReplayEvent, getReplayRecords, destory, printRecords, recordReplayEventError }

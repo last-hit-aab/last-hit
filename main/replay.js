@@ -2,7 +2,7 @@ const { URL } = require('url');
 const puppeteer = require('puppeteer');
 const { ipcMain } = require('electron');
 const { logger } = require('./logger');
-const { initReplayRecord, recordReplayEvent, printRecords } = require('./replay-result');
+const { initReplayRecord, recordReplayEvent, printRecords, recordReplayEventError } = require('./replay-result');
 // const generateKeyByObject = (story, flow) => {
 // 	return `[${flow.name}@${story.name}]`;
 // };
@@ -86,8 +86,8 @@ const launchBrowser = async replayer => {
 	const browser = await puppeteer.launch({
 		headless: false,
 		executablePath: getChromiumExecPath(),
-		args: browserArgs,
-		slowMo: 20
+		args: browserArgs
+		// slowMo: 5
 	});
 	const pages = await browser.pages();
 	let page;
@@ -147,7 +147,7 @@ class LoggedRequests {
 		this.used = 0;
 	}
 	async poll(resolve, reject, canResolve) {
-		await this.getPage().waitFor(1000);
+		await this.getPage().waitFor(500);
 		this.used += 1000;
 
 		for (var i = 0, len = this.requests.length; i < len; i++) {
@@ -309,6 +309,7 @@ class Replayer {
 			return;
 		}
 		try {
+			printRecords(this.getStoryName(), this.getFlow().name);
 			await browser.disconnect();
 		} catch (e) {
 			console.error('Failed to disconnect from brwoser.');
@@ -554,6 +555,7 @@ const launch = () => {
 		const { storyName, flowName, replayer } = options;
 		ipcMain.once(`continue-replay-step-${generateKeyByString(storyName, flowName)}`, async (event, arg) => {
 			const { flow, index, command } = arg;
+			const step = replayer.getCurrentStep();
 			switch (command) {
 				case 'disconnect':
 					replayer.end(false);
@@ -565,13 +567,14 @@ const launch = () => {
 					try {
 						console.log(`Continue step[${index}]@${generateKeyByString(storyName, flowName)}.`);
 						await replayer.next(flow, index);
-						const step = replayer.getCurrentStep();
+
 						recordReplayEvent(storyName, flowName, step.type, step)
 						waitForNextStep({ event, replayer, storyName, flowName, index });
 					} catch (e) {
 						console.error(e);
 						// failed, prepare for next step
 						// send back
+						recordReplayEventError(storyName, flowName, step.type, step, e)
 						waitForNextStep({ event, replayer, storyName, flowName, index, error: e.message });
 					}
 			}
@@ -593,7 +596,7 @@ const launch = () => {
 			browsers[generateKeyByString(storyName, flow.name)] = replayer.getBrowser();
 
 			// init replay record 
-			initReplayRecord(storyName, flow.name);
+			initReplayRecord(storyName, flow);
 			// successful, prepare for next step
 			// send back
 			waitForNextStep({ event, replayer, storyName, flowName: flow.name, index });
