@@ -335,6 +335,8 @@ class Replayer {
 				return await this.executeClickStep(step);
 			case 'focus':
 				return await this.executeFocusStep(step);
+			case 'keydown':
+				return await this.executeKeydownStep(step);
 			case 'ajax':
 				return await this.executeAjaxStep(step);
 			case 'scroll':
@@ -415,6 +417,21 @@ class Replayer {
 			event.initEvent('focus', true, true);
 			node.dispatchEvent(event);
 		});
+	}
+	async executeKeydownStep(step) {
+		const page = await this.getPageOrThrow(step.uuid);
+		const xpath = step.path.replace(/"/g, "'");
+		const value = step.value;
+		console.log(`Execute keydown, step path is ${xpath}, key is ${value}`);
+
+		switch (step.type) {
+			case 'Enter':
+				return await page.keyboard.press('Enter');
+			default:
+				console.log(`keydown [${value}] is not implemented yet.`);
+				return Promise.resolve();
+		}
+
 	}
 	async executeScrollStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
