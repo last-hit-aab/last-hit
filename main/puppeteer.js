@@ -96,6 +96,7 @@ const installListenersOnPage = async page => {
 						parent = parent.parentElement;
 					}
 					element = parent;
+					xpath = newXpath;
 				}
 			}
 			return {
