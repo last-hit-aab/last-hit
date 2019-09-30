@@ -19,7 +19,6 @@ const getUrlPath = url => {
 	return parsed.href;
 };
 
-
 /**
  * @param {Replayer} replayer
  * @param {Page} page
@@ -151,7 +150,7 @@ class LoggedRequests {
 		);
 		logger.debug(
 			`Check all requests are done, currently ${this.requests.length} created and ${this.offsets.length} offsetted.`
-		)
+		);
 		if (this.requests.length <= this.offsets.length) {
 			if (canResolve) {
 				this.clear();
@@ -213,11 +212,11 @@ class Replayer {
 		this.browser = browser;
 	}
 
-	getDevice(){
+	getDevice() {
 		return this.device;
 	}
-	setDevice(device){
-		this.device=device;
+	setDevice(device) {
+		this.device = device;
 	}
 	/**
 	 * @param {Page} page
@@ -321,6 +320,8 @@ class Replayer {
 				return await this.executeFocusStep(step);
 			case 'ajax':
 				return await this.executeAjaxStep(step);
+			case 'scroll':
+				return await this.executeScrollStep(step);
 			case 'page-created':
 				return await this.executePageCreated(step);
 			case 'end':
@@ -396,6 +397,34 @@ class Replayer {
 			node.dispatchEvent(event);
 		});
 	}
+	async executeScrollStep(step) {
+		const page = this.getPageOrThrow(step.uuid);
+
+		const scrollTop = step.scrollTop || 0;
+		const scrollLeft = step.scrollLeft || 0;
+		console.log(scrollTop, scrollLeft);
+
+		if (step.target === 'document') {
+			await page.evaluate(
+				(scrollTop, scrollLeft) => {
+					document.documentElement.scrollTo({ top: scrollTop, left: scrollLeft });
+				},
+				scrollTop,
+				scrollLeft
+			);
+		} else {
+			const xpath = step.path.replace(/"/g, "'");
+			const elements = await page.$x(xpath);
+			const element = elements[0];
+			await element.evaluate(
+				(node, scrollTop, scrollLeft) => {
+					node.scrollTo({ top: scrollTop, left: scrollLeft });
+				},
+				scrollTop,
+				scrollLeft
+			);
+		}
+	}
 	async executeAjaxStep(step) {
 		// TODO do nothing now
 		console.log(`Execute ajax, step url is ${step.url}.`);
@@ -420,8 +449,8 @@ class Replayer {
 				await newPage.goto(step.url, { waitUntil: 'domcontentloaded' });
 				const [response] = await Promise.all([
 					newPage.waitForNavigation(), // The promise resolves after navigation has finished
-					await newPage.goto(step.url, { waitUntil: 'domcontentloaded' }), // Go to the url will indirectly cause a navigation
-				  ]);
+					await newPage.goto(step.url, { waitUntil: 'domcontentloaded' }) // Go to the url will indirectly cause a navigation
+				]);
 			}
 		}
 	}

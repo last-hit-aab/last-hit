@@ -39,6 +39,7 @@ export enum StepType {
 	LOAD = 'load',
 	MOUSE_DOWN = 'mousedown',
 	FOCUS = 'focus',
+	SCROLL = 'scroll',
 	/** ignore on capture 20190925 */
 	UNLOAD = 'unload',
 	/** ignore on capture 20190925 */
@@ -123,6 +124,7 @@ export type EndStep = Step & { type: StepType.END };
 export type DomEventStep = Step & { target: string };
 export type ClickStep = DomEventStep & { type: StepType.CLICK };
 export type MouseDownStep = DomEventStep & { type: StepType.MOUSE_DOWN };
+export type ScrollStep = DomEventStep & { type: StepType.SCROLL; scrollTop: number; scrollLeft: number };
 export type TextChangeEvent = DomEventStep & { type: StepType.CHANGE };
 export type FocusStep = DomEventStep & { type: StepType.FOCUS };
 export type ChangeStep = DomEventStep & { type: StepType.CHANGE; value: string };
