@@ -36,9 +36,6 @@ const controlPage = async (replayer, page, device) => {
 		replayer.removePage(page);
 	});
 
-
-
-
 	// page created by window.open or anchor
 	page.on('popup', async newPage => {
 		const newUrl = getUrlPath(newPage.url());
@@ -57,8 +54,8 @@ const controlPage = async (replayer, page, device) => {
 		await controlPage(replayer, newPage, device);
 	});
 	page.on('dialog', async dialog => {
-		if (dialog.type() == "alert") {
-			await dialog.accept("success");
+		if (dialog.type() == 'alert') {
+			await dialog.accept('success');
 		}
 	});
 	page.on('request', request => {
@@ -330,7 +327,7 @@ class Replayer {
 		this.currentIndex = index;
 		const step = this.getCurrentStep();
 		const storyName = this.getStoryName();
-		const flowName = this.getFlow().name
+		const flowName = this.getFlow().name;
 		switch (step.type) {
 			case 'change':
 				return await this.executeChangeStep(step);
@@ -345,9 +342,11 @@ class Replayer {
 			case 'scroll':
 				return await this.executeScrollStep(step);
 			case 'page-created':
-				return await this.executePageCreated(step);
+				return await this.executePageCreatedStep(step);
 			case 'page-switched':
-				return await this.executePageSwitched(step);
+				return await this.executePageSwitchedStep(step);
+			case 'page-closed':
+				return await this.executePageClosedStep(step);
 			case 'end':
 				printRecords(storyName, flowName);
 			default:
@@ -440,7 +439,9 @@ class Replayer {
 					const elementTagName = await this.getElementTagName(element);
 					const elementType = await this.getElementType(element);
 					if (elementTagName === 'INPUT' && elementType === 'submit') {
-						logger.debug(`find the pattern: enter->change->submit, then skip the enter step. the step path is ${xpath}`);
+						logger.debug(
+							`find the pattern: enter->change->submit, then skip the enter step. the step path is ${xpath}`
+						);
 						return;
 					}
 				}
@@ -454,7 +455,6 @@ class Replayer {
 				console.log(`keydown [${value}] is not implemented yet.`);
 				return Promise.resolve();
 		}
-
 	}
 	async executeScrollStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
@@ -488,7 +488,7 @@ class Replayer {
 		// TODO do nothing now
 		console.log(`Execute ajax, step url is ${step.url}.`);
 	}
-	async executePageCreated(step) {
+	async executePageCreatedStep(step) {
 		logger.debug(`Execute page created, step url is ${step.url}.`);
 		const page = this.getPage(step.uuid);
 		if (page) {
@@ -507,12 +507,12 @@ class Replayer {
 				await controlPage(this, newPage, this.device);
 				const [response] = await Promise.all([
 					newPage.waitForNavigation(), // The promise resolves after navigation has finished
-					await newPage.goto(step.url, { waitUntil: 'domcontentloaded' }), // Go to the url will indirectly cause a navigation
+					await newPage.goto(step.url, { waitUntil: 'domcontentloaded' }) // Go to the url will indirectly cause a navigation
 				]);
 			}
 		}
 	}
-	async executePageSwitched(step) {
+	async executePageSwitchedStep(step) {
 		logger.debug(`Execute page switched, step url is ${step.url}.`);
 		const page = this.getPage(step.uuid);
 		if (page) {
@@ -530,9 +530,16 @@ class Replayer {
 				await controlPage(this, newPage, this.device);
 				const [response] = await Promise.all([
 					newPage.waitForNavigation(),
-					await newPage.goto(step.url, { waitUntil: 'domcontentloaded' }),
+					await newPage.goto(step.url, { waitUntil: 'domcontentloaded' })
 				]);
 			}
+		}
+	}
+	async executePageClosedStep(step) {
+		logger.debug(`Execute page closed, step url is ${step.url}.`);
+		const page = this.getPage(step.uuid);
+		if (page) {
+			await page.close();
 		}
 	}
 	getElementTagName = async element => await element.evaluate(node => node.tagName);

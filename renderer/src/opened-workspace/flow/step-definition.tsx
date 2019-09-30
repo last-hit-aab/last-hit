@@ -19,6 +19,7 @@ import AjaxIcon from '@material-ui/icons/NetworkCheck';
 import PageCreateIcon from '@material-ui/icons/PostAdd';
 import React from 'react';
 import ScrollIcon from '@material-ui/icons/Motorcycle';
+import KeyIcon from '@material-ui/icons/Keyboard';
 import {
 	AjaxStep,
 	ChangeStep,
@@ -159,6 +160,10 @@ const STEP_FORKS = {
 	[StepType.MOUSE_DOWN]: {
 		icon: <MouseIcon style={{ transform: 'translateY(4px)' }} />,
 		label: (step: MouseDownStep): string => `Mouse down on ${shorternTarget(step.target)}.`
+	},
+	[StepType.KEY_DOWN]: {
+		icon: <KeyIcon style={{ transform: 'translateY(4px)' }} />,
+		label: (step: MouseDownStep): string => `Key down on ${shorternTarget(step.target)}.`
 	},
 	[StepType.SCROLL]: {
 		icon: <ScrollIcon style={{ transform: 'translateY(4px)' }} />,
