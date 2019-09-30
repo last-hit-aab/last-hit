@@ -2,7 +2,7 @@ const { URL } = require('url');
 const puppeteer = require('puppeteer');
 const { ipcMain } = require('electron');
 const { logger } = require('./logger');
-
+const { initReplayRecord, recordReplayEvent, printRecords } = require('./replay-result');
 // const generateKeyByObject = (story, flow) => {
 // 	return `[${flow.name}@${story.name}]`;
 // };
@@ -327,6 +327,8 @@ class Replayer {
 		this.flow = flow;
 		this.currentIndex = index;
 		const step = this.getCurrentStep();
+		const storyName = this.getStoryName();
+		const flowName = this.getFlow().name
 		switch (step.type) {
 			case 'change':
 				return await this.executeChangeStep(step);
@@ -343,6 +345,7 @@ class Replayer {
 			case 'page-switched':
 				return await this.executePageSwitched(step);
 			case 'end':
+				printRecords(storyName, flowName);
 			default:
 				console.log(`Step[${step.type}] is not implemented yet.`);
 				return Promise.resolve();
@@ -525,6 +528,8 @@ const launch = () => {
 					try {
 						console.log(`Continue step[${index}]@${generateKeyByString(storyName, flowName)}.`);
 						await replayer.next(flow, index);
+						const step = replayer.getCurrentStep();
+						recordReplayEvent(storyName, flowName, step.type, step)
 						waitForNextStep({ event, replayer, storyName, flowName, index });
 					} catch (e) {
 						console.error(e);
@@ -549,6 +554,9 @@ const launch = () => {
 			await replayer.start();
 			// put into cache
 			browsers[generateKeyByString(storyName, flow.name)] = replayer.getBrowser();
+
+			// init replay record 
+			initReplayRecord(storyName, flow.name);
 			// successful, prepare for next step
 			// send back
 			waitForNextStep({ event, replayer, storyName, flowName: flow.name, index });
