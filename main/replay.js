@@ -2,7 +2,7 @@ const { URL } = require('url');
 const puppeteer = require('puppeteer');
 const { ipcMain } = require('electron');
 const { logger } = require('./logger');
-
+const { initReplayRecord, recordReplayEvent, printRecords } = require('./replay-result');
 // const generateKeyByObject = (story, flow) => {
 // 	return `[${flow.name}@${story.name}]`;
 // };
@@ -87,7 +87,7 @@ const launchBrowser = async replayer => {
 		headless: false,
 		executablePath: getChromiumExecPath(),
 		args: browserArgs,
-		slowMo: 100
+		slowMo: 20
 	});
 	const pages = await browser.pages();
 	let page;
@@ -328,6 +328,8 @@ class Replayer {
 		this.flow = flow;
 		this.currentIndex = index;
 		const step = this.getCurrentStep();
+		const storyName = this.getStoryName();
+		const flowName = this.getFlow().name
 		switch (step.type) {
 			case 'change':
 				return await this.executeChangeStep(step);
@@ -346,6 +348,7 @@ class Replayer {
 			case 'page-switched':
 				return await this.executePageSwitched(step);
 			case 'end':
+				printRecords(storyName, flowName);
 			default:
 				console.log(`Step[${step.type}] is not implemented yet.`);
 				return Promise.resolve();
@@ -424,7 +427,26 @@ class Replayer {
 		const value = step.value;
 		console.log(`Execute keydown, step path is ${xpath}, key is ${value}`);
 
-		switch (step.type) {
+		const steps = this.getSteps();
+		const currentIndex = this.getCurrentIndex();
+
+		// check the pattern: keydown(key=enter)->change->click(element type=submit)
+		if (steps[currentIndex].type === 'keydown' && steps[currentIndex + 1].type === 'change') {
+			if (steps[currentIndex].target === steps[currentIndex + 1].target) {
+				if (steps[currentIndex + 2].type === 'click') {
+					const elements = await page.$x(steps[currentIndex + 2].path.replace(/"/g, "'"));
+					const element = elements[0];
+					const elementTagName = await this.getElementTagName(element);
+					const elementType = await this.getElementType(element);
+					if (elementTagName === 'INPUT' && elementType === 'submit') {
+						logger.debug(`find the pattern: enter->change->submit, then skip the enter step. the step path is ${xpath}`);
+						return;
+					}
+				}
+			}
+		}
+
+		switch (step.value) {
 			case 'Enter':
 				return await page.keyboard.press('Enter');
 			default:
@@ -543,6 +565,8 @@ const launch = () => {
 					try {
 						console.log(`Continue step[${index}]@${generateKeyByString(storyName, flowName)}.`);
 						await replayer.next(flow, index);
+						const step = replayer.getCurrentStep();
+						recordReplayEvent(storyName, flowName, step.type, step)
 						waitForNextStep({ event, replayer, storyName, flowName, index });
 					} catch (e) {
 						console.error(e);
@@ -567,6 +591,9 @@ const launch = () => {
 			await replayer.start();
 			// put into cache
 			browsers[generateKeyByString(storyName, flow.name)] = replayer.getBrowser();
+
+			// init replay record 
+			initReplayRecord(storyName, flow.name);
 			// successful, prepare for next step
 			// send back
 			waitForNextStep({ event, replayer, storyName, flowName: flow.name, index });
