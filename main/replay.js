@@ -166,6 +166,7 @@ class LoggedRequests {
 		logger.debug(
 			`Check all requests are done, currently ${this.requests.length} created and ${this.offsets.length} offsetted.`
 		);
+		//when the page pop up, the page has been loaded before request interception, then requests length will less than offsets length
 		if (this.requests.length <= this.offsets.length) {
 			if (canResolve) {
 				this.clear();
@@ -416,7 +417,7 @@ class Replayer {
 		});
 	}
 	async executeScrollStep(step) {
-		const page = this.getPageOrThrow(step.uuid);
+		const page = await this.getPageOrThrow(step.uuid);
 
 		const scrollTop = step.scrollTop || 0;
 		const scrollLeft = step.scrollLeft || 0;
