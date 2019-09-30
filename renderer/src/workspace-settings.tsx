@@ -18,32 +18,26 @@ export type WorkspaceSettings = {
 	envs?: ExecuteEnv[];
 };
 export enum StepType {
-	START = 'start',
-	CLICK = 'click',
-	CHANGE = 'change',
-	AJAX = 'ajax',
-	/** ignore on capture 20190925 */
-	DOM_CHANGE = 'dom-change',
+	START = 'start',					// done in replay
+	CLICK = 'click',					// done in replay
+	CHANGE = 'change',					// done in replay
+	AJAX = 'ajax',						// ignore in replay 20191001
+	DOM_CHANGE = 'dom-change',			// ignore on capture 20190925
 	SUBMIT = 'submit',
-	END = 'end',
-	PAGE_CLOSED = 'page-closed',
-	PAGE_CREATED = 'page-created',
-	/** ignored on replay 20190925 */
-	PAGE_ERROR = 'page-error',
-	PAGE_SWITCHED = 'page-switched',
-	/** ignored on replay 20190925 */
-	DIALOG_OPEN = 'dialog-open',
-	/** ignore on capture 20190925 */
-	RESOURCE_LOAD = 'resource-load',
-	/** ignore on capture 20190925 */
-	LOAD = 'load',
+	END = 'end',						// done in replay
+	PAGE_CLOSED = 'page-closed',		// done in replay
+	PAGE_CREATED = 'page-created',		// done in replay
+	PAGE_ERROR = 'page-error',			// ignore in replay 20190925
+	PAGE_SWITCHED = 'page-switched',	// done in replay
+	DIALOG_OPEN = 'dialog-open',		// ignored on replay 20190925
+	RESOURCE_LOAD = 'resource-load',	// ignore on capture 20190925
+	LOAD = 'load', 						// ignore on capture 20190925
 	MOUSE_DOWN = 'mousedown',
-	FOCUS = 'focus',
-	SCROLL = 'scroll',
-	/** ignore on capture 20190925 */
-	UNLOAD = 'unload',
-	/** ignore on capture 20190925 */
-	VALUE_CHANGE = 'valuechange'
+	KEY_DOWN = 'keydown',				// done in replay
+	FOCUS = 'focus',					// done in replay
+	SCROLL = 'scroll',					// done in replay
+	UNLOAD = 'unload',					// ignore on capture 20190925
+	VALUE_CHANGE = 'valuechange'		// ignore on capture 20190925
 }
 export type StepAssertion = {
 	element?: string;
