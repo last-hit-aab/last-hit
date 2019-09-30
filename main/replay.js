@@ -87,7 +87,7 @@ const launchBrowser = async replayer => {
 		headless: false,
 		executablePath: getChromiumExecPath(),
 		args: browserArgs,
-		slowMo: 100
+		slowMo: 20
 	});
 	const pages = await browser.pages();
 	let page;
@@ -424,7 +424,26 @@ class Replayer {
 		const value = step.value;
 		console.log(`Execute keydown, step path is ${xpath}, key is ${value}`);
 
-		switch (step.type) {
+		const steps = this.getSteps();
+		const currentIndex = this.getCurrentIndex();
+
+		// check the pattern: keydown(key=enter)->change->click(element type=submit)
+		if (steps[currentIndex].type === 'keydown' && steps[currentIndex + 1].type === 'change') {
+			if (steps[currentIndex].target === steps[currentIndex + 1].target) {
+				if (steps[currentIndex + 2].type === 'click') {
+					const elements = await page.$x(steps[currentIndex + 2].path.replace(/"/g, "'"));
+					const element = elements[0];
+					const elementTagName = await this.getElementTagName(element);
+					const elementType = await this.getElementType(element);
+					if (elementTagName === 'INPUT' && elementType === 'submit') {
+						logger.debug(`find the pattern: enter->change->submit, then skip the enter step. the step path is ${xpath}`);
+						return;
+					}
+				}
+			}
+		}
+
+		switch (step.value) {
 			case 'Enter':
 				return await page.keyboard.press('Enter');
 			default:
