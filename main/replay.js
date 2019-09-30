@@ -19,6 +19,7 @@ const getUrlPath = url => {
 	return parsed.href;
 };
 
+
 /**
  * @param {Replayer} replayer
  * @param {Page} page
@@ -92,6 +93,7 @@ const launchBrowser = async replayer => {
 	// set back to replayer
 	replayer.setBrowser(browser);
 	replayer.putPage(uuid, page);
+	replayer.setDevice(device);
 	// add control into page
 	await controlPage(replayer, page, device);
 	// open url
@@ -134,13 +136,23 @@ class LoggedRequests {
 		await this.getPage().waitFor(1000);
 		this.used += 1000;
 
+		for (var i = 0, len = this.requests.length; i < len; i++) {
+			const url = this.requests[i].url();
+			logger.debug(`reqeusts check, the request index is ${i}, request url is ${url}`);
+		}
+
+		for (var i = 0, len = this.offsets.length; i < len; i++) {
+			const url = this.offsets[i].url();
+			logger.debug(`offsets check, the request index is ${i}, request url is ${url}`);
+		}
+
 		console.log(
 			`Check all requests are done, currently ${this.requests.length} created and ${this.offsets.length} offsetted.`
 		);
 		logger.debug(
 			`Check all requests are done, currently ${this.requests.length} created and ${this.offsets.length} offsetted.`
 		)
-		if (this.requests.length === this.offsets.length) {
+		if (this.requests.length <= this.offsets.length) {
 			if (canResolve) {
 				this.clear();
 				resolve();
@@ -148,8 +160,9 @@ class LoggedRequests {
 				this.poll(resolve, reject, true);
 			}
 		} else if (this.used > this.timeout) {
+			const usedTime = this.used;
 			this.clear();
-			reject(new Error(`Wait for all requests done, timeout after ${this.used}ms.`));
+			reject(new Error(`Wait for all requests done, timeout after ${usedTime}ms.`));
 		} else {
 			this.poll(resolve, reject);
 		}
@@ -199,6 +212,13 @@ class Replayer {
 	setBrowser(browser) {
 		this.browser = browser;
 	}
+
+	getDevice(){
+		return this.device;
+	}
+	setDevice(device){
+		this.device=device;
+	}
 	/**
 	 * @param {Page} page
 	 * @returns null when not found
@@ -206,6 +226,7 @@ class Replayer {
 	findUuid(page) {
 		return Object.keys(this.pages).find(id => this.pages[id] === page);
 	}
+
 	/**
 	 * @param {string} uuid
 	 * @returns null when not found
@@ -300,6 +321,8 @@ class Replayer {
 				return await this.executeFocusStep(step);
 			case 'ajax':
 				return await this.executeAjaxStep(step);
+			case 'page-created':
+				return await this.executePageCreated(step);
 			case 'end':
 			default:
 				console.log(`Step[${step.type}] is not implemented yet.`);
@@ -376,6 +399,31 @@ class Replayer {
 	async executeAjaxStep(step) {
 		// TODO do nothing now
 		console.log(`Execute ajax, step url is ${step.url}.`);
+	}
+	async executePageCreated(step) {
+		logger.debug(`Execute page created, step url is ${step.url}.`);
+		const page = this.getPage(step.uuid);
+		if (page) {
+			//do nothing
+			logger.debug(`pop up page created, page uuid is ${step.uuid}.`);
+		} else {
+			const sleep = require('util').promisify(setTimeout);
+			await sleep(1000);
+			const page = this.getPage(step.uuid);
+			if (page) {
+				logger.debug(`double check, pop up page created, page uuid is ${step.uuid}.`);
+			} else {
+				logger.debug(`To creat pop up page, and add page uuid is ${step.uuid}.`);
+				const newPage = await this.browser.newPage();
+				this.putPage(step.uuid, newPage);
+				await controlPage(this, newPage, this.device);
+				await newPage.goto(step.url, { waitUntil: 'domcontentloaded' });
+				const [response] = await Promise.all([
+					newPage.waitForNavigation(), // The promise resolves after navigation has finished
+					await newPage.goto(step.url, { waitUntil: 'domcontentloaded' }), // Go to the url will indirectly cause a navigation
+				  ]);
+			}
+		}
 	}
 	getElementTagName = async element => await element.evaluate(node => node.tagName);
 	getElementType = async element => await element.evaluate(node => node.getAttribute('type'));
