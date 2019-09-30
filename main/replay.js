@@ -81,7 +81,8 @@ const launchBrowser = async replayer => {
 	const browser = await puppeteer.launch({
 		headless: false,
 		executablePath: getChromiumExecPath(),
-		args: browserArgs
+		args: browserArgs,
+		slowMo: 100
 	});
 	const pages = await browser.pages();
 	let page;
@@ -104,6 +105,14 @@ const launchBrowser = async replayer => {
 	// } catch (e) {
 	// 	console.error(e);
 	// }
+
+	//you can try this solution about wait for navigateion
+	/*
+	const [response] = await Promise.all([
+		page.waitForNavigation(), // The promise resolves after navigation has finished
+		await page.goto(step.url, { waitUntil: 'domcontentloaded' }), // Go to the url will indirectly cause a navigation
+	]);
+	*/
 	return page;
 };
 
@@ -213,11 +222,11 @@ class Replayer {
 		this.browser = browser;
 	}
 
-	getDevice(){
+	getDevice() {
 		return this.device;
 	}
-	setDevice(device){
-		this.device=device;
+	setDevice(device) {
+		this.device = device;
 	}
 	/**
 	 * @param {Page} page
@@ -239,11 +248,12 @@ class Replayer {
 	 * @param {string} uuid
 	 * @returns page
 	 */
-	getPageOrThrow(uuid) {
+	async getPageOrThrow(uuid) {
 		const page = this.getPage(uuid);
 		if (page == null) {
 			throw new Error('Page not found.');
 		}
+		await page.bringToFront();
 		return page;
 	}
 	/**
@@ -323,6 +333,8 @@ class Replayer {
 				return await this.executeAjaxStep(step);
 			case 'page-created':
 				return await this.executePageCreated(step);
+			case 'page-switched':
+				return await this.executePageSwitched(step);
 			case 'end':
 			default:
 				console.log(`Step[${step.type}] is not implemented yet.`);
@@ -330,7 +342,7 @@ class Replayer {
 		}
 	}
 	async executeChangeStep(step) {
-		const page = this.getPageOrThrow(step.uuid);
+		const page = await this.getPageOrThrow(step.uuid);
 		const xpath = step.path.replace(/"/g, "'");
 		console.log(`Execute change, step path is ${xpath}, step value is ${step.value}.`);
 
@@ -353,7 +365,7 @@ class Replayer {
 		await this.isRemoteFinsihed(page);
 	}
 	async executeClickStep(step) {
-		const page = this.getPageOrThrow(step.uuid);
+		const page = await this.getPageOrThrow(step.uuid);
 		const xpath = step.path.replace(/"/g, "'");
 		console.log(`Execute click, step path is ${xpath}.`);
 
@@ -383,7 +395,7 @@ class Replayer {
 		await this.isRemoteFinsihed(page);
 	}
 	async executeFocusStep(step) {
-		const page = this.getPageOrThrow(step.uuid);
+		const page = await this.getPageOrThrow(step.uuid);
 		const xpath = step.path.replace(/"/g, "'");
 		console.log(`Execute focus, step path is ${xpath}.`);
 
@@ -417,11 +429,33 @@ class Replayer {
 				const newPage = await this.browser.newPage();
 				this.putPage(step.uuid, newPage);
 				await controlPage(this, newPage, this.device);
-				await newPage.goto(step.url, { waitUntil: 'domcontentloaded' });
 				const [response] = await Promise.all([
 					newPage.waitForNavigation(), // The promise resolves after navigation has finished
 					await newPage.goto(step.url, { waitUntil: 'domcontentloaded' }), // Go to the url will indirectly cause a navigation
-				  ]);
+				]);
+			}
+		}
+	}
+	async executePageSwitched(step) {
+		logger.debug(`Execute page switched, step url is ${step.url}.`);
+		const page = this.getPage(step.uuid);
+		if (page) {
+			await page.bringToFront();
+		} else {
+			const sleep = require('util').promisify(setTimeout);
+			await sleep(1000);
+			const page = this.getPage(step.uuid);
+			if (page) {
+				await page.bringToFront();
+			} else {
+				logger.debug(`To creat switched page, and add page uuid is ${step.uuid}.`);
+				const newPage = await this.browser.newPage();
+				this.putPage(step.uuid, newPage);
+				await controlPage(this, newPage, this.device);
+				const [response] = await Promise.all([
+					newPage.waitForNavigation(),
+					await newPage.goto(step.url, { waitUntil: 'domcontentloaded' }),
+				]);
 			}
 		}
 	}
