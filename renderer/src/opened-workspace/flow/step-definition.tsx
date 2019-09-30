@@ -18,6 +18,7 @@ import MouseIcon from '@material-ui/icons/Mouse';
 import AjaxIcon from '@material-ui/icons/NetworkCheck';
 import PageCreateIcon from '@material-ui/icons/PostAdd';
 import React from 'react';
+import ScrollIcon from '@material-ui/icons/Motorcycle';
 import {
 	AjaxStep,
 	ChangeStep,
@@ -36,7 +37,8 @@ import {
 	StartStep,
 	Step,
 	StepType,
-	UnloadStep
+	UnloadStep,
+	ScrollStep
 } from '../../workspace-settings';
 
 const shorternUrl = (url: string): string => {
@@ -53,7 +55,9 @@ const shorternUrl = (url: string): string => {
 const IGNORED_ATTRS = ['style', 'value', 'lang'];
 const shorternTarget = (target: string): string => {
 	try {
-		if (target) {
+		if (target === 'document') {
+			return 'Document';
+		} else if (target) {
 			const parser = new DOMParser();
 			const xml = parser.parseFromString(target.substr(0, target.length - 1) + '/>', 'text/xml');
 			const node = xml.children[0];
@@ -155,6 +159,11 @@ const STEP_FORKS = {
 	[StepType.MOUSE_DOWN]: {
 		icon: <MouseIcon style={{ transform: 'translateY(4px)' }} />,
 		label: (step: MouseDownStep): string => `Mouse down on ${shorternTarget(step.target)}.`
+	},
+	[StepType.SCROLL]: {
+		icon: <ScrollIcon style={{ transform: 'translateY(4px)' }} />,
+		label: (step: ScrollStep): string =>
+			`Scroll to [${step.scrollTop},${step.scrollLeft}] on ${shorternTarget(step.target)}.`
 	},
 	[StepType.SUBMIT]: {
 		icon: <FontAwesomeIcon icon={faPaperPlane} />,

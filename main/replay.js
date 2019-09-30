@@ -19,7 +19,6 @@ const getUrlPath = url => {
 	return parsed.href;
 };
 
-
 /**
  * @param {Replayer} replayer
  * @param {Page} page
@@ -36,6 +35,10 @@ const controlPage = async (replayer, page, device) => {
 	page.on('close', async () => {
 		replayer.removePage(page);
 	});
+
+
+
+
 	// page created by window.open or anchor
 	page.on('popup', async newPage => {
 		const newUrl = getUrlPath(newPage.url());
@@ -54,7 +57,9 @@ const controlPage = async (replayer, page, device) => {
 		await controlPage(replayer, newPage, device);
 	});
 	page.on('dialog', async dialog => {
-		// do nohting now
+		if (dialog.type() == "alert") {
+			await dialog.accept("success");
+		}
 	});
 	page.on('request', request => {
 		replayer.putRequest(replayer.findUuid(page), request);
@@ -160,7 +165,7 @@ class LoggedRequests {
 		);
 		logger.debug(
 			`Check all requests are done, currently ${this.requests.length} created and ${this.offsets.length} offsetted.`
-		)
+		);
 		if (this.requests.length <= this.offsets.length) {
 			if (canResolve) {
 				this.clear();
@@ -331,6 +336,8 @@ class Replayer {
 				return await this.executeFocusStep(step);
 			case 'ajax':
 				return await this.executeAjaxStep(step);
+			case 'scroll':
+				return await this.executeScrollStep(step);
 			case 'page-created':
 				return await this.executePageCreated(step);
 			case 'page-switched':
@@ -407,6 +414,34 @@ class Replayer {
 			event.initEvent('focus', true, true);
 			node.dispatchEvent(event);
 		});
+	}
+	async executeScrollStep(step) {
+		const page = this.getPageOrThrow(step.uuid);
+
+		const scrollTop = step.scrollTop || 0;
+		const scrollLeft = step.scrollLeft || 0;
+		console.log(scrollTop, scrollLeft);
+
+		if (step.target === 'document') {
+			await page.evaluate(
+				(scrollTop, scrollLeft) => {
+					document.documentElement.scrollTo({ top: scrollTop, left: scrollLeft });
+				},
+				scrollTop,
+				scrollLeft
+			);
+		} else {
+			const xpath = step.path.replace(/"/g, "'");
+			const elements = await page.$x(xpath);
+			const element = elements[0];
+			await element.evaluate(
+				(node, scrollTop, scrollLeft) => {
+					node.scrollTo({ top: scrollTop, left: scrollLeft });
+				},
+				scrollTop,
+				scrollLeft
+			);
+		}
 	}
 	async executeAjaxStep(step) {
 		// TODO do nothing now

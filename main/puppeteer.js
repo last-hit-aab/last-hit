@@ -30,7 +30,7 @@ const createPageWindowEventRecorder = flowKey => (eventJsonStr, onPickDOM) => {
 };
 const captureScreenshot = async page => {
 	// wait for ui render
-	await page.waitForNavigation({ waitUntil: 'networkidle2' });
+	// await page.waitForNavigation({ waitUntil: 'networkidle2' });
 	return await page.screenshot({ encoding: 'base64' });
 };
 // expose function to given page
@@ -422,12 +422,12 @@ const launch = () => {
 			browser.on('targetchanged', async target => {
 				if (target.type() === 'page') {
 					console.log('browser event target changed caught');
-					// RESEARCH must delay 10ms to get the correct url, don't know why
+					// RESEARCH must delay 100ms to get the correct url, don't know why
 					setTimeout(async () => {
 						const page = await target.page();
 						const uuid = findUuidOfPage(page, allPages);
 						sendRecordedEvent(JSON.stringify({ type: 'page-switched', url: page.url(), uuid }));
-					}, 10);
+					}, 100);
 				}
 			});
 			browser.on('targetdestroyed', async target => {
