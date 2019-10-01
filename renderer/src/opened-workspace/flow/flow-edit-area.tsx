@@ -155,6 +155,9 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	const [stepReplaying, setStepReplaying] = React.useState(false);
 	React.useEffect(() => {
 		ipcRenderer.on(`message-captured-${generateKeyByObject(story, flow)}`, (evt, arg) => {
+			if (onPause) {
+				return;
+			}
 			// add the tail anyway
 			flow.steps = flow.steps || [];
 			switch (arg.type) {
