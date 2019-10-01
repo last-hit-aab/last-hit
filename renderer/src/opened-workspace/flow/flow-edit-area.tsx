@@ -194,6 +194,21 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 						}, 300);
 					}
 					break;
+				case StepType.PAGE_SWITCHED:
+					const { url } = arg;
+					if (url === 'about:blank' && flow.steps!.length === 1) {
+						// ignore the first about:blank
+						return;
+					} else {
+						for (let index = flow.steps.length - 1; index >= 0; index--) {
+							if ((flow.steps[index] as any).url === url) {
+								// ignore the page-switched, but not switched
+								return;
+							}
+						}
+					}
+					flow.steps.push(arg);
+					break;
 				default:
 					flow.steps.push(arg);
 					break;

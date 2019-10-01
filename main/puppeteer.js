@@ -3,7 +3,6 @@ const puppeteer = require('puppeteer');
 const uuidv4 = require('uuid/v4');
 const pti = require('puppeteer-to-istanbul');
 
-
 const getChromiumExecPath = () => {
 	return puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked');
 };
@@ -129,9 +128,9 @@ const installListenersOnPage = async page => {
 					element === document
 						? 'document'
 						: `<${element.tagName.toLowerCase()} ${element
-							.getAttributeNames()
-							.map(name => `${name}="${element.getAttribute(name)}"`)
-							.join(' ')}>`
+								.getAttributeNames()
+								.map(name => `${name}="${element.getAttribute(name)}"`)
+								.join(' ')}>`
 				// bubbles: e.bubbles,
 				// cancelBubble: e.cancelBubble,
 				// cancelable: e.cancelable,
@@ -177,7 +176,6 @@ const installListenersOnPage = async page => {
 				// otherwise ignored
 				return;
 			}
-
 
 			let element = e.target;
 			if (isOnMask) {
@@ -430,12 +428,28 @@ const launch = () => {
 			browser.on('targetchanged', async target => {
 				if (target.type() === 'page') {
 					console.log('browser event target changed caught');
-					// RESEARCH must delay 100ms to get the correct url, don't know why
-					setTimeout(async () => {
-						const page = await target.page();
-						const uuid = findUuidOfPage(page, allPages);
-						sendRecordedEvent(JSON.stringify({ type: 'page-switched', url: page.url(), uuid }));
-					}, 100);
+					// RESEARCH the url is old when target changed event is catched, so must wait the new url.
+					// don't know the mechanism
+					const page = await target.page();
+					const uuid = findUuidOfPage(page, allPages);
+					const url = page.url();
+					sendRecordedEvent(JSON.stringify({ type: 'page-switched', url, uuid }));
+					let times = 0;
+					const handle = () => {
+						setTimeout(() => {
+							times++;
+							const anUrl = page.url();
+							if (url === anUrl) {
+								if (times < 10) {
+									// max 10 times
+									handle();
+								}
+							} else {
+								sendRecordedEvent(JSON.stringify({ type: 'page-switched', url: anUrl, uuid }));
+							}
+						}, 100);
+					};
+					handle();
 				}
 			});
 			browser.on('targetdestroyed', async target => {
