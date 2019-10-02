@@ -1,0 +1,26 @@
+{
+	"name": "last-hit-replayer",
+	"version": "0.1.0",
+	"description": "Replayer for last-hit recorded data.",
+	"main": "index.js",
+	"scripts": {},
+	"repository": {
+		"type": "git",
+		"url": "git+https://gitlab.com/last-hit/last-hit.git"
+	},
+	"keywords": [
+		"automation",
+		"test",
+		"ci"
+	],
+	"author": "last-hit-team",
+	"license": "UNLICENSED",
+	"bugs": {
+		"url": "https://gitlab.com/last-hit/last-hit/issues"
+	},
+	"homepage": "https://gitlab.com/last-hit/last-hit#readme",
+	"dependencies": {
+		"puppeteer": "^1.20.0",
+		"uuid": "^3.3.3"
+	}
+}
