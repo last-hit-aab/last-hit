@@ -376,7 +376,7 @@ class Replayer {
 			let segments = value.split('\\');
 			segments = segments[segments.length - 1].split('/');
 			const filename = segments[segments.length - 1];
-			const dir = path.join(__dirname, `temp-${uuidv4()}`);
+			const dir = path.join(__dirname, 'upload-temp', uuidv4());
 			const filepath = path.join(dir, filename);
 			console.log(filepath);
 			const byteString = atob(step.file.split(',')[1]);
