@@ -1,5 +1,9 @@
 const { URL } = require('url');
 const puppeteer = require('puppeteer');
+const path = require('path');
+const fs = require('fs');
+const uuidv4 = require('uuid/v4');
+const atob = require('atob');
 const { initReplayRecord, recordReplayEvent, printRecords, recordReplayEventError } = require('./replay-result');
 
 const generateKeyByString = (storyName, flowName) => {
@@ -357,8 +361,54 @@ class Replayer {
 
 		const elements = await page.$x(xpath);
 		const element = elements[0];
-		// change is change only, cannot use type
-		await this.setValueToElement(element, step.value);
+		const elementTagName = await this.getElementTagName(element);
+
+		let isFileUpload = false;
+		if (elementTagName === 'INPUT') {
+			const elementType = await this.getElementType(element);
+			if (elementType === 'file') {
+				isFileUpload = true;
+			}
+		}
+
+		if (isFileUpload) {
+			const value = step.value;
+			let segments = value.split('\\');
+			segments = segments[segments.length - 1].split('/');
+			const filename = segments[segments.length - 1];
+			const dir = path.join(__dirname, `temp-${uuidv4()}`);
+			const filepath = path.join(dir, filename);
+			console.log(filepath);
+			const byteString = atob(step.file.split(',')[1]);
+			// separate out the mime component
+			const mimeString = step.file
+				.split(',')[0]
+				.split(':')[1]
+				.split(';')[0];
+
+			// write the bytes of the string to an ArrayBuffer
+			const ab = new ArrayBuffer(byteString.length);
+			// create a view into the buffer
+			const ia = new Uint8Array(ab);
+			// set the bytes of the buffer to the correct values
+			for (let i = 0; i < byteString.length; i++) {
+				ia[i] = byteString.charCodeAt(i);
+			}
+			// write the ArrayBuffer to a blob, and you're done
+			// const blob = new Blob([ab], { type: mimeString });
+			fs.mkdirSync(dir, { recursive: true });
+			fs.writeFileSync(filepath, Buffer.from(ia));
+
+			// file upload
+			const [fileChooser] = await Promise.all([
+				page.waitForFileChooser(),
+				element.evaluate(node => node.click())
+			]);
+			await fileChooser.accept([filepath]);
+		} else {
+			// change is change only, cannot use type
+			await this.setValueToElement(element, step.value);
+		}
 		await this.isRemoteFinsihed(page);
 	}
 	async executeClickStep(step) {
@@ -380,6 +430,11 @@ class Replayer {
 					);
 					return;
 				}
+			} else if (elementType === 'file') {
+				// click on a input[type=file] will introduce a file chooser dialog
+				// which cannot be resolved programatically
+				// ignore it
+				return;
 			}
 		}
 		const visible = await this.isElementVisible(element);

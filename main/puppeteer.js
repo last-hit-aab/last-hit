@@ -98,6 +98,7 @@ const installListenersOnPage = async page => {
 					xpath = newXpath;
 				}
 			}
+
 			return {
 				// keys
 				altKey: e.altKey,
@@ -197,6 +198,21 @@ const installListenersOnPage = async page => {
 					window.$lhRecordEvent(JSON.stringify(data), isOnMask);
 					scrollTimeoutHandle = null;
 				}, 100);
+			} else if (
+				e.type === 'change' &&
+				element.tagName === 'INPUT' &&
+				(element.getAttribute('type') || '').toLowerCase() === 'file'
+			) {
+				// catch upload file
+				const file = element.files[0];
+				if (file) {
+					const reader = new FileReader();
+					reader.onload = () => {
+						data.file = reader.result;
+						window.$lhRecordEvent(JSON.stringify(data), isOnMask);
+					};
+					reader.readAsDataURL(file);
+				}
 			} else {
 				window.$lhRecordEvent(JSON.stringify(data), isOnMask);
 			}
