@@ -94,7 +94,7 @@ flows.forEach(flowObject => {
 	const { story: storyName, flow: flowName } = flowObject;
 	const flowKey = `${flowName}@${storyName}`;
 	console.info(`Start to replay ${flowKey}.`.bold.red);
-	const file = path.join(workspace, storyName, flowName);
+	const file = path.join(workspace, storyName, `${flowName}.flow.json`);
 	let flow = null;
 	try {
 		flow = jsonfile.readFileSync(file);

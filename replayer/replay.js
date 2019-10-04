@@ -362,10 +362,10 @@ class Replayer {
 		const elements = await page.$x(xpath);
 		const element = elements[0];
 		const elementTagName = await this.getElementTagName(element);
+		const elementType = await this.getElementType(element);
 
 		let isFileUpload = false;
 		if (elementTagName === 'INPUT') {
-			const elementType = await this.getElementType(element);
 			if (elementType === 'file') {
 				isFileUpload = true;
 			}
@@ -421,16 +421,7 @@ class Replayer {
 		const elementTagName = await this.getElementTagName(element);
 		if (elementTagName === 'INPUT') {
 			const elementType = await this.getElementType(element);
-			if (elementType && ['checkbox'].includes(elementType.toLowerCase())) {
-				const value = await this.getElementValue(element);
-				if (value == step.value) {
-					// ignore this click, it was invoked by javascript already
-					console.log(
-						'Click excution is ignored because of value is matched, it was invoked by javascript already.'
-					);
-					return;
-				}
-			} else if (elementType === 'file') {
+			if (elementType === 'file') {
 				// click on a input[type=file] will introduce a file chooser dialog
 				// which cannot be resolved programatically
 				// ignore it
