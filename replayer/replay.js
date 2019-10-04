@@ -581,18 +581,26 @@ class Replayer {
 			await page.close();
 		}
 	}
-	getElementTagName = async element => await element.evaluate(node => node.tagName);
-	getElementType = async element => await element.evaluate(node => node.getAttribute('type'));
-	getElementValue = async element => await element.evaluate(node => node.value);
-	isElementVisible = async element => await element.evaluate(node => node.offsetWidth > 0 && node.offsetHeight > 0);
-	setValueToElement = async (element, value) => {
+	async getElementTagName(element) {
+		return await element.evaluate(node => node.tagName);
+	}
+	async getElementType(element) {
+		return await element.evaluate(node => node.getAttribute('type'));
+	}
+	async getElementValue(element) {
+		return await element.evaluate(node => node.value);
+	}
+	async isElementVisible(element) {
+		return await element.evaluate(node => node.offsetWidth > 0 && node.offsetHeight > 0);
+	}
+	async setValueToElement(element, value) {
 		await element.evaluate((node, value) => {
 			node.value = value;
 			const event = document.createEvent('HTMLEvents');
 			event.initEvent('change', true, true);
 			node.dispatchEvent(event);
 		}, value);
-	};
+	}
 }
 
 const browsers = {};

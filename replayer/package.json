@@ -3,7 +3,9 @@
 	"version": "0.1.0",
 	"description": "Replayer for last-hit recorded data.",
 	"main": "index.js",
-	"scripts": {},
+	"scripts": {
+		"start": "node ./index.js"
+	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://gitlab.com/last-hit/last-hit.git"
@@ -21,7 +23,10 @@
 	"homepage": "https://gitlab.com/last-hit/last-hit#readme",
 	"dependencies": {
 		"atob": "^2.1.2",
+		"colors": "^1.4.0",
+		"jsonfile": "^5.0.0",
 		"puppeteer": "^1.20.0",
-		"uuid": "^3.3.3"
+		"uuid": "^3.3.3",
+		"yargs": "^14.0.0"
 	}
 }
