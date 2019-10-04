@@ -100,7 +100,7 @@ const launchBrowser = async replayer => {
 	// add control into page
 	await controlPage(replayer, page, device);
 	// open url
-	await page.goto(url, { waitUntil: 'domcontentloaded' });
+	await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
 	// RESEARCH too much time, remove
 	// try {
 	// 	await page.waitForNavigation();
@@ -421,7 +421,17 @@ class Replayer {
 		const elementTagName = await this.getElementTagName(element);
 		if (elementTagName === 'INPUT') {
 			const elementType = await this.getElementType(element);
-			if (elementType === 'file') {
+			if (elementType && ['checkbox'].includes(elementType.toLowerCase())) {
+				const value = await this.getElementValue(element);
+				const checked = await this.getElementChecked(element);
+				if (value == step.value && checked == step.checked) {
+					// ignore this click, the value and checked is already same as step does
+					console.log(
+						'Click excution is ignored because of value and checked are matched, it was invoked by javascript or something else already.'
+					);
+					return;
+				}
+			} else if (elementType === 'file') {
 				// click on a input[type=file] will introduce a file chooser dialog
 				// which cannot be resolved programatically
 				// ignore it
@@ -577,6 +587,12 @@ class Replayer {
 	}
 	async getElementType(element) {
 		return await element.evaluate(node => node.getAttribute('type'));
+	}
+	async getElementChecked(element) {
+		return await element.evaluate(node => node.checked);
+	}
+	async getElementAttrValue(element, attrName) {
+		return await element.evaluate((node, attr) => node.getAttribute(attr), attrName);
 	}
 	async getElementValue(element) {
 		return await element.evaluate(node => node.value);

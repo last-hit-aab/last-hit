@@ -213,6 +213,13 @@ const installListenersOnPage = async page => {
 					};
 					reader.readAsDataURL(file);
 				}
+			} else if (
+				element.tagName === 'INPUT' &&
+				['checkbox', 'radio'].indexOf((element.getAttribute('type') || '').toLowerCase()) != -1
+			) {
+				// record checked
+				data.checked = element.checked;
+				window.$lhRecordEvent(JSON.stringify(data), isOnMask);
 			} else {
 				window.$lhRecordEvent(JSON.stringify(data), isOnMask);
 			}
