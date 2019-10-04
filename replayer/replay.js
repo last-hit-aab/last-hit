@@ -99,7 +99,7 @@ const launchBrowser = async replayer => {
 	replayer.setDevice(device);
 	// add control into page
 	await controlPage(replayer, page, device);
-	// open url
+	// open url, timeout to 2 mins
 	await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
 	// RESEARCH too much time, remove
 	// try {
@@ -421,7 +421,13 @@ class Replayer {
 		const elementTagName = await this.getElementTagName(element);
 		if (elementTagName === 'INPUT') {
 			const elementType = await this.getElementType(element);
-			if (elementType && ['checkbox'].includes(elementType.toLowerCase())) {
+			if (elementType && ['checkbox', 'radio'].includes(elementType.toLowerCase())) {
+				// there are some ui-repos, show a div/span/i etc instead of checkbox itself
+				// and invoke click event by javascript when user click the visible component
+				// it will causes record the click and change event
+				// anyway replay change only changes the value of input, it's unaffected.
+				// but the click leads value changing.
+				// so here is the check, if value and checked are already same as which did by the click step, ignore the click step.
 				const value = await this.getElementValue(element);
 				const checked = await this.getElementChecked(element);
 				if (value == step.value && checked == step.checked) {
