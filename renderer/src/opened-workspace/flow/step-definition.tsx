@@ -9,21 +9,23 @@ import {
 	faTimesCircle
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import DialogOpenIcon from '@material-ui/icons/AssignmentLate';
+import DialogCloseIcon from '@material-ui/icons/AssignmentTurnedIn';
 import PageErrorIcon from '@material-ui/icons/Error';
 import FocusIcon from '@material-ui/icons/FilterCenterFocus';
+import KeyIcon from '@material-ui/icons/Keyboard';
 import ResourceLoadIcon from '@material-ui/icons/Label';
 import ResourceUnloadIcon from '@material-ui/icons/LabelOff';
-import DialogOpenIcon from '@material-ui/icons/Message';
+import ScrollIcon from '@material-ui/icons/Motorcycle';
 import MouseIcon from '@material-ui/icons/Mouse';
 import AjaxIcon from '@material-ui/icons/NetworkCheck';
 import PageCreateIcon from '@material-ui/icons/PostAdd';
 import React from 'react';
-import ScrollIcon from '@material-ui/icons/Motorcycle';
-import KeyIcon from '@material-ui/icons/Keyboard';
 import {
 	AjaxStep,
 	ChangeStep,
 	ClickStep,
+	DialogCloseStep,
 	DialogOpenStep,
 	DomChangeStep,
 	EndStep,
@@ -35,11 +37,11 @@ import {
 	PageErrorStep,
 	PageSwitchStep,
 	ResourceLoadStep,
+	ScrollStep,
 	StartStep,
 	Step,
 	StepType,
-	UnloadStep,
-	ScrollStep
+	UnloadStep
 } from '../../workspace-settings';
 
 const shorternUrl = (url: string): string => {
@@ -126,7 +128,13 @@ const STEP_FORKS = {
 	},
 	[StepType.DIALOG_OPEN]: {
 		icon: <DialogOpenIcon style={{ transform: 'translateY(6px)' }} />,
-		label: (step: DialogOpenStep): string => `Dialog opened, ${shorternUrl(step.url)}`
+		label: (step: DialogOpenStep): string =>
+			`${step.dialog.charAt(0).toUpperCase() + step.dialog.slice(1)} opened, ${shorternUrl(step.url)}`
+	},
+	[StepType.DIALOG_CLOSE]: {
+		icon: <DialogCloseIcon style={{ transform: 'translateY(6px)' }} />,
+		label: (step: DialogCloseStep): string =>
+			`${step.dialog.charAt(0).toUpperCase() + step.dialog.slice(1)} closed, ${shorternUrl(step.url)}`
 	},
 	[StepType.PAGE_ERROR]: {
 		icon: <PageErrorIcon style={{ transform: 'translateY(4px)' }} />,
@@ -206,8 +214,7 @@ export const IRRELEVANT_STEPS = [
 	StepType.LOAD,
 	StepType.UNLOAD,
 	StepType.RESOURCE_LOAD,
-	StepType.PAGE_ERROR,
-	StepType.DIALOG_OPEN
+	StepType.PAGE_ERROR
 ];
 export enum ReplayType {
 	SMART = 1,

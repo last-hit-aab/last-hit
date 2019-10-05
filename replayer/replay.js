@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const uuidv4 = require('uuid/v4');
 const atob = require('atob');
+const util = require('util');
 const { initReplayRecord, recordReplayEvent, printRecords, recordReplayEventError } = require('./replay-result');
 
 const generateKeyByString = (storyName, flowName) => {
@@ -54,8 +55,38 @@ const controlPage = async (replayer, page, device) => {
 		await controlPage(replayer, newPage, device);
 	});
 	page.on('dialog', async dialog => {
-		if (dialog.type() == 'alert') {
+		const dialogType = dialog.type();
+		if (dialogType === 'alert') {
+			// accept is the only way to alert dialog
 			await dialog.accept('success');
+		} else if (['confirm', 'prompt'].includes(dialogType)) {
+			const currentIndex = replayer.getCurrentIndex();
+			const steps = replayer.getSteps();
+			const uuid = replayer.findUuid(page);
+			// find the first dialog close step, it must be confirm step
+			const dialogCloseStep = steps
+				.filter((step, index) => index > currentIndex)
+				.filter(step => step.type === 'dialog-close')
+				.find(step => step.uuid === uuid);
+			if (dialogCloseStep == null) {
+				throw new Error('Cannot find dialog close step for current dialog open, flow is broken for replay.');
+			}
+			if (dialogCloseStep.dialog !== dialogType) {
+				throw new Error(
+					`Cannot match dialog type, should be "${dialogType}", but is "${dialogCloseStep.dialog}", flow is broken for replay.`
+				);
+			}
+			const returnValue = dialogCloseStep.returnValue;
+			if (typeof returnValue === 'string') {
+				// handle click yes for prompt dialog
+				dialog.accept(returnValue);
+			} else if (returnValue) {
+				// handle click yes for confirm dialog
+				dialog.accept();
+			} else {
+				// handle click no for both confirm and prompt dialog
+				dialog.dismiss();
+			}
 		}
 	});
 	page.on('request', request => {
@@ -224,7 +255,6 @@ class Replayer {
 	setBrowser(browser) {
 		this.browser = browser;
 	}
-
 	getDevice() {
 		return this.device;
 	}
@@ -341,6 +371,10 @@ class Replayer {
 				return await this.executeAjaxStep(step);
 			case 'scroll':
 				return await this.executeScrollStep(step);
+			case 'dialog-open':
+				return await this.executeDialogOpenStep(step);
+			case 'dialog-close':
+				return await this.executeDialogCloseStep(step);
 			case 'page-created':
 				return await this.executePageCreatedStep(step);
 			case 'page-switched':
@@ -450,7 +484,6 @@ class Replayer {
 		} else {
 			await element.evaluate(node => node.click());
 		}
-
 		await this.isRemoteFinsihed(page);
 	}
 	async executeFocusStep(step) {
@@ -466,6 +499,7 @@ class Replayer {
 			event.initEvent('focus', true, true);
 			node.dispatchEvent(event);
 		});
+		await this.isRemoteFinsihed(page);
 	}
 	async executeKeydownStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
@@ -530,6 +564,14 @@ class Replayer {
 			);
 		}
 	}
+	async executeDialogOpenStep(step) {
+		// dialog open is invoked by javascript anyway, ignore it
+		console.log(`Execute ${step.dialog} open, step url is ${step.url}.`);
+	}
+	async executeDialogCloseStep(step) {
+		// dialog close is invoked manually anyway, should be handled in page popup event, ignore it
+		console.log(`Execute ${step.dialog} close, step url is ${step.url}.`);
+	}
 	async executeAjaxStep(step) {
 		// TODO do nothing now
 		console.log(`Execute ajax, step url is ${step.url}.`);
@@ -541,7 +583,8 @@ class Replayer {
 			//do nothing
 			logger.debug(`pop up page created, page uuid is ${step.uuid}.`);
 		} else {
-			const sleep = require('util').promisify(setTimeout);
+			// TODO really 1s?
+			const sleep = util.promisify(setTimeout);
 			await sleep(1000);
 			const page = this.getPage(step.uuid);
 			if (page) {
@@ -564,7 +607,8 @@ class Replayer {
 		if (page) {
 			await page.bringToFront();
 		} else {
-			const sleep = require('util').promisify(setTimeout);
+			// TODO really 1s?
+			const sleep = util.promisify(setTimeout);
 			await sleep(1000);
 			const page = this.getPage(step.uuid);
 			if (page) {

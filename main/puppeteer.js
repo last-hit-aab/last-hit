@@ -37,9 +37,7 @@ const captureScreenshot = async page => {
 const exposeFunctionToPage = async (page, flowKey, allPages) => {
 	const uuid = findUuidOfPage(page, allPages);
 	await page.exposeFunction('$lhGetUuid', () => uuid);
-	await page.exposeFunction('$lhGetFlowKey', () => {
-		return flowKey;
-	});
+	await page.exposeFunction('$lhGetFlowKey', () => flowKey);
 	await page.exposeFunction('$lhRecordEvent', createPageWindowEventRecorder(flowKey));
 };
 /**
@@ -244,6 +242,51 @@ const installListenersOnPage = async page => {
 			// UNLOAD: 'unload',
 			// VALUE_CHANGE: 'valuechange'
 		}).forEach(eventType => document.addEventListener(eventType, eventHandler, { capture: true }));
+
+		const recordDialogEvent = options => {
+			const { message, defaultMessage, returnValue, eventType, dialogType } = options;
+			window.$lhRecordEvent(
+				JSON.stringify({
+					uuid: window.$lhUuid,
+					type: eventType,
+					dialog: dialogType,
+					message,
+					defaultMessage,
+					returnValue,
+					target: 'document',
+					url: window.location.href
+				}),
+				false
+			);
+		};
+		// take over native dialog, 4 types: alert, prompt, confirm and beforeunload
+		// 
+		const nativeAlert = window.alert;
+		window.alert = message => {
+			recordDialogEvent({ message, eventType: 'dialog-open', dialogType: 'alert' });
+			nativeAlert(message);
+			recordDialogEvent({ message, eventType: 'dialog-close', dialogType: 'alert' });
+		};
+		const nativeConfirm = window.confirm;
+		window.confirm = message => {
+			recordDialogEvent({ message, eventType: 'dialog-open', dialogType: 'confirm' });
+			const ret = nativeConfirm(message);
+			recordDialogEvent({ message, eventType: 'dialog-close', dialogType: 'confirm', returnValue: ret });
+			return ret;
+		};
+		const nativePrompt = window.prompt;
+		window.prompt = (message, defaultMessage) => {
+			recordDialogEvent({ message, defaultMessage, eventType: 'dialog-open', dialogType: 'prompt' });
+			const ret = nativePrompt(message, defaultMessage);
+			recordDialogEvent({
+				message,
+				defaultMessage,
+				eventType: 'dialog-close',
+				dialogType: 'prompt',
+				returnValue: ret
+			});
+			return ret;
+		};
 	});
 };
 
@@ -379,12 +422,13 @@ const controlPage = async (page, options, allPages) => {
 			sendRecordedEvent(JSON.stringify({ type: 'page-created', url: newPage.url(), image: base64, uuid }));
 		}
 	});
-	page.on('dialog', async dialog => {
-		console.log(`page event dialog caught`);
-		const base64 = await captureScreenshot(page);
-		const uuid = findUuidOfPage(page, allPages);
-		sendRecordedEvent(JSON.stringify({ type: 'dialog-open', url: page.url(), image: base64, uuid }));
-	});
+	// use scripts interception
+	// page.on('dialog', async dialog => {
+	// 	console.log(`page event dialog caught`);
+	// 	const base64 = await captureScreenshot(page);
+	// 	const uuid = findUuidOfPage(page, allPages);
+	// 	sendRecordedEvent(JSON.stringify({ type: 'dialog-open', url: page.url(), image: base64, uuid }));
+	// });
 	page.on('pageerror', async () => {
 		console.log(`page event pageerror caught`);
 		const base64 = await captureScreenshot(page);
