@@ -260,7 +260,7 @@ const installListenersOnPage = async page => {
 			);
 		};
 		// take over native dialog, 4 types: alert, prompt, confirm and beforeunload
-		// 
+		//
 		const nativeAlert = window.alert;
 		window.alert = message => {
 			recordDialogEvent({ message, eventType: 'dialog-open', dialogType: 'alert' });
@@ -423,12 +423,16 @@ const controlPage = async (page, options, allPages) => {
 		}
 	});
 	// use scripts interception
-	// page.on('dialog', async dialog => {
-	// 	console.log(`page event dialog caught`);
-	// 	const base64 = await captureScreenshot(page);
-	// 	const uuid = findUuidOfPage(page, allPages);
-	// 	sendRecordedEvent(JSON.stringify({ type: 'dialog-open', url: page.url(), image: base64, uuid }));
-	// });
+	page.on('dialog', async dialog => {
+		console.log(`page event dialog caught`);
+		if (dialog.type() === 'beforeunload') {
+			const base64 = await captureScreenshot(page);
+			const uuid = findUuidOfPage(page, allPages);
+			sendRecordedEvent(
+				JSON.stringify({ type: 'dialog-open', dialog: 'beforeunload', url: page.url(), image: base64, uuid })
+			);
+		}
+	});
 	page.on('pageerror', async () => {
 		console.log(`page event pageerror caught`);
 		const base64 = await captureScreenshot(page);

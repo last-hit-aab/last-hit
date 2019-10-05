@@ -69,7 +69,9 @@ const controlPage = async (replayer, page, device) => {
 				.filter(step => step.type === 'dialog-close')
 				.find(step => step.uuid === uuid);
 			if (dialogCloseStep == null) {
-				throw new Error('Cannot find dialog close step for current dialog open, flow is broken for replay.');
+				throw new Error(
+					`Cannot find dialog close step for current dialog "${dialogType}" open, flow is broken for replay.`
+				);
 			}
 			if (dialogCloseStep.dialog !== dialogType) {
 				throw new Error(
@@ -85,6 +87,30 @@ const controlPage = async (replayer, page, device) => {
 				dialog.accept();
 			} else {
 				// handle click no for both confirm and prompt dialog
+				dialog.dismiss();
+			}
+		} else if ('beforeunload' === dialogType) {
+			const currentIndex = replayer.getCurrentIndex();
+			const steps = replayer.getSteps();
+			const uuid = replayer.findUuid(page);
+			const nextStep = steps
+				.filter((step, index) => index > currentIndex)
+				// must same uuid
+				.filter(step => step.uuid === uuid)
+				// unload is not captured, but must be filtered, 20191006
+				.filter(step => step.type !== 'unload')
+				// the first step which with same page uuid and isn't unload step
+				.find((step, index) => index === 0);
+			if (nextStep == null) {
+				throw new Error(
+					`Cannot find next step for current dialog "${dialogType}" open, flow is broken for replay.`
+				);
+			}
+			if (nextStep.type === 'page-closed' || nextStep.type === 'page-switched') {
+				// seems unload had been performed
+				dialog.accept();
+			} else {
+				// seems unload had been cancelled
 				dialog.dismiss();
 			}
 		}
