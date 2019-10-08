@@ -1,6 +1,6 @@
 {
 	"name": "last-hit",
-	"version": "0.2.0",
+	"version": "0.3.1",
 	"description": "last hit on enterprise web",
 	"private": true,
 	"main": "main/index.js",
