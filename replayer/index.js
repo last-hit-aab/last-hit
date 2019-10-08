@@ -166,15 +166,30 @@ flows
 		}
 	}, Promise.resolve())
 	.finally(() => {
-		console.table(report, [
-			'Story',
-			'Flow',
-			'Steps count',
-			'UI Behaviors count',
-			'Passed',
-			'Failed',
-			'Ingored errors',
-			'Ajax calls',
-			'Slow ajax calls'
-		]);
+		console.table(
+			report.map(item => {
+				return {
+					Story: item.storyName,
+					Flow: item.flowName,
+					Steps: item.numberOfStep,
+					'UI Behavior': item.numberOfUIBehavior,
+					Passed: item.numberOfSuccess,
+					Failed: item.numberOfFailed,
+					'Ignored Errors': item.ignoreErrorList,
+					'Ajax calls': item.numberOfAjax,
+					'Slow ajax calls': item.slowAjaxRequest
+				};
+			}),
+			[
+				'Story',
+				'Flow',
+				'Steps',
+				'UI Behavior',
+				'Passed',
+				'Failed',
+				'Ignored Errors',
+				'Ajax calls',
+				'Slow ajax calls'
+			]
+		);
 	});

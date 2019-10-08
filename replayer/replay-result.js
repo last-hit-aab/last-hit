@@ -7,7 +7,7 @@ class ReplaySummary {
 		this.flowName = flowName;
 		this.replayId = replayId;
 		this.numberOfStep = 0;
-		this.numberOfUIBehaver = 0;
+		this.numberOfUIBehavior = 0;
 		this.numberOfSuccess = 0;
 		this.numberOfFailed = 0;
 		this.numberOfAssert = 0;
@@ -49,7 +49,7 @@ const recordReplayEvent = async (storyName, flowName, replayType, data) => {
 				replaySummary.numberOfAjax += 1;
 				replaySummary.numberOfSuccess += 1;
 			} else {
-				replaySummary.numberOfUIBehaver += 1;
+				replaySummary.numberOfUIBehavior += 1;
 				replaySummary.numberOfSuccess += 1;
 			}
 
@@ -96,7 +96,7 @@ const printRecords = (storyName, flowName) => {
 			'storyName',
 			'flowName',
 			'numberOfStep',
-			'numberOfUIBehaver',
+			'numberOfUIBehavior',
 			'numberOfSuccess',
 			'numberOfFailed',
 			'ignoreErrorList',
