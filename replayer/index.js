@@ -70,7 +70,7 @@ const handleReplayStepEnd = (emitter, story, flow, resolve) => {
 		const { error, index } = arg;
 		if (error) {
 			(async () => {
-				console.error(`Replay flow ${key} failed.`.bold.red, error);
+				console.error(`Replay flow ${key} failed on step ${index}.`.bold.red, error);
 				emitter.once(`replay-browser-abolish-${key}`, (event, arg) => {
 					resolve();
 				});
@@ -144,7 +144,19 @@ const hanldeFlowObject = flowObject => {
 	const promise = new Promise(resolve => {
 		handleReplayStepEnd(emitter, { name: storyName }, flow, () => {
 			const summary = replayer.current.getSummary();
-			if (summary) {
+			if (summary == null || Object.keys(summary).length === 0) {
+				report.push({
+					storyName: storyName,
+					flowName: flow.name,
+					numberOfStep: flow.steps.length,
+					numberOfUIBehavior: '-',
+					numberOfSuccess: 0,
+					numberOfFailed: flow.steps.length,
+					ignoreErrorList: [],
+					numberOfAjax: '-',
+					slowAjaxRequest: []
+				});
+			} else {
 				report.push(summary);
 			}
 			resolve();

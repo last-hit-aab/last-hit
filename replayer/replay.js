@@ -8,9 +8,8 @@ const util = require('util');
 const {
 	initReplayRecord,
 	recordReplayEvent,
-	printRecords,
 	recordReplayEventError,
-	getReplaySummary
+	destory: destoryReplaySummary
 } = require('./replay-result');
 
 const inElectron = !!process.versions.electron;
@@ -258,6 +257,7 @@ class Replayer {
 		this.pages = {};
 		// key is uuid, value is LoggedRequests
 		this.requests = {};
+		this.summary = {};
 	}
 	getStoryName() {
 		return this.storyName;
@@ -269,7 +269,7 @@ class Replayer {
 		return `[${this.getFlow().name}@${this.getStoryName()}]`;
 	}
 	/**
-	 * null when no summary
+	 * @returns empty object when no summary
 	 */
 	getSummary() {
 		return this.summary;
@@ -367,7 +367,7 @@ class Replayer {
 		await this.isRemoteFinsihed(page);
 	}
 	async end(close) {
-		this.summary = getReplaySummary(this.getStoryName(), this.getFlow().name);
+		this.summary = destoryReplaySummary();
 		const browser = this.getBrowser();
 		if (browser == null) {
 			// do nothing, seems not start

@@ -18,8 +18,8 @@ class ReplaySummary {
 }
 
 const replayRecords = new Map();
-var currentReplayId = '';
-var replaySummary = null;
+let currentReplayId = '';
+let replaySummary = null;
 
 const recordReplayEventError = async (storyName, flowName, replayType, data, e) => {
 	return new Promise((resolve, reject) => {
@@ -84,10 +84,6 @@ const getReplayRecords = (storyName, flowName) => {
 	return replayRecords.get(replayKey);
 };
 
-const getReplaySummary = (storyName, flowName) => {
-	return replaySummary;
-};
-
 const printRecords = (storyName, flowName) => {
 	// const replayKey = _buildKey(storyName, flowName, currentReplayId);
 	console.table(
@@ -108,6 +104,10 @@ const printRecords = (storyName, flowName) => {
 
 const destory = () => {
 	replayRecords.clear();
+	currentReplayId = '';
+	const summary = replaySummary;
+	replaySummary = null;
+	return summary;
 };
 
 module.exports = {
@@ -116,6 +116,5 @@ module.exports = {
 	getReplayRecords,
 	destory,
 	printRecords,
-	recordReplayEventError,
-	getReplaySummary
+	recordReplayEventError
 };
