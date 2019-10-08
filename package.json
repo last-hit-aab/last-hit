@@ -1,6 +1,6 @@
 {
 	"name": "last-hit",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "last hit on enterprise web",
 	"private": true,
 	"main": "main/index.js",
@@ -8,6 +8,7 @@
 		"build:renderer": "npm run build --prefix renderer",
 		"start": "npm run build:renderer && electron .",
 		"start:dev": "npm run build:renderer && electron . --watch-renderer=true",
+		"pack:pre": "export PKG_CONFIG_PATH=/opt/local/lib/pkgconfig:/opt/X11/lib/pkgconfig",
 		"pack": "npm run build:renderer && electron-builder --dir",
 		"pack:windows": "npm run build:renderer && electron-builder -w",
 		"pack:osx": "npm run build:renderer && electron-builder -m",
@@ -52,6 +53,7 @@
 	},
 	"build": {
 		"asar": true,
-		"asarUnpack": "node_modules/puppeteer/.local-chromium/**/*"
+		"asarUnpack": "node_modules/puppeteer/.local-chromium/**/*",
+		"artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
 	}
 }
