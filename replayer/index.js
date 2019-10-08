@@ -39,7 +39,7 @@ const flows = fs
 				} else if (!flow) {
 					// story is given , flow is not given
 					// story already filtered
-					return;
+					return true;
 				} else {
 					return `${flow}.flow.json` === flowName;
 				}
@@ -49,57 +49,67 @@ const flows = fs
 	})
 	.flat();
 
+const output = fs.createWriteStream('./stdout.log');
+const errorOutput = fs.createWriteStream('./stderr.log');
+const logger = new console.Console({ stdout: output, stderr: errorOutput });
 const generateKeyByObject = (story, flow) => {
 	return `[${flow.name}@${story.name}]`;
 };
 
-const replayNextStep = (emitter, story, flow, index) => {
-	handleReplayStepEnd(emitter, story, flow);
+const replayNextStep = (emitter, story, flow, index, resolve) => {
+	handleReplayStepEnd(emitter, story, flow, resolve);
 	emitter.send(`continue-replay-step-${generateKeyByObject(story, flow)}`, {
 		storyName: story.name,
 		flow,
 		index: index + 1
 	});
 };
-const handleReplayStepEnd = (emitter, story, flow) => {
+const handleReplayStepEnd = (emitter, story, flow, resolve) => {
 	const key = generateKeyByObject(story, flow);
 	emitter.once(`replay-step-end-${key}`, (event, arg) => {
 		const { error, index } = arg;
 		if (error) {
 			(async () => {
-				console.error(`Replay flow ${key} failed.`, error);
-				// disconnect
+				console.error(`Replay flow ${key} failed.`.bold.red, error);
+				emitter.once(`replay-browser-abolish-${key}`, (event, arg) => {
+					resolve();
+				});
+				// abolish anyway
 				emitter.send(`continue-replay-step-${key}`, {
-					command: 'disconnect'
+					command: 'abolish'
 				});
 			})();
 		} else if (flow.steps[index].type === 'end' || index >= flow.steps.length - 1) {
 			// the end or last step is finished
 			(async () => {
-				console.info(`Replay flow ${key} finished.`.green);
-				emitter.send(`continue-replay-step-${generateKeyByObject(story, flow)}`, {
+				console.info(`Replay flow ${key} finished.`.bold.green);
+				emitter.once(`replay-browser-abolish-${key}`, (event, arg) => {
+					resolve();
+				});
+				emitter.send(`continue-replay-step-${key}`, {
 					command: 'abolish'
 				});
 			})();
 		} else {
 			// go on
-			replayNextStep(emitter, story, flow, index);
+			replayNextStep(emitter, story, flow, index, resolve);
 		}
 	});
 };
 
 // start
 const parallel = args.parallel || 1;
-flows.forEach(flowObject => {
+
+const hanldeFlowObject = flowObject => {
 	const { story: storyName, flow: flowName } = flowObject;
 	const flowKey = `${flowName}@${storyName}`;
-	console.info(`Start to replay ${flowKey}.`.bold.red);
+	console.info(`Start to replay [${flowKey}].`.italic.blue.underline);
 	const file = path.join(workspace, storyName, `${flowName}.flow.json`);
 	let flow = null;
 	try {
 		flow = jsonfile.readFileSync(file);
 	} catch (e) {
-		console.error(e);
+		logger.error(e);
 		return;
 	}
 	flow.name = flowName;
@@ -120,14 +130,51 @@ flows.forEach(flowObject => {
 	}
 
 	const emitter = new ReplayEmitter();
-	const replayer = replay({ emitter, logger: console });
+	let replayer;
 	try {
-		replayer.initialize();
+		replayer = replay({
+			emitter,
+			logger
+		}).initialize();
 	} catch (e) {
-		console.error(e);
+		logger.error(e);
 		return;
 	}
 
-	handleReplayStepEnd(emitter, { name: storyName }, flow);
+	const promise = new Promise(resolve => {
+		handleReplayStepEnd(emitter, { name: storyName }, flow, () => {
+			const summary = replayer.current.getSummary();
+			if (summary) {
+				report.push(summary);
+			}
+			resolve();
+		});
+	});
 	emitter.send('launch-replay', { flow, index: 0, storyName });
-});
+	return promise;
+};
+
+const report = [];
+
+flows
+	.reduce(async (promise, flowObject) => {
+		await promise;
+		try {
+			await hanldeFlowObject(flowObject);
+		} catch {
+			// do nothing
+		}
+	}, Promise.resolve())
+	.finally(() => {
+		console.table(report, [
+			'Story',
+			'Flow',
+			'Steps count',
+			'UI Behaviors count',
+			'Passed',
+			'Failed',
+			'Ingored errors',
+			'Ajax calls',
+			'Slow ajax calls'
+		]);
+	});

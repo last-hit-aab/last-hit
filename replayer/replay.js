@@ -5,7 +5,13 @@ const fs = require('fs');
 const uuidv4 = require('uuid/v4');
 const atob = require('atob');
 const util = require('util');
-const { initReplayRecord, recordReplayEvent, printRecords, recordReplayEventError } = require('./replay-result');
+const {
+	initReplayRecord,
+	recordReplayEvent,
+	printRecords,
+	recordReplayEventError,
+	getReplaySummary
+} = require('./replay-result');
 
 const inElectron = !!process.versions.electron;
 
@@ -164,7 +170,7 @@ const launchBrowser = async replayer => {
 	// try {
 	// 	await page.waitForNavigation();
 	// } catch (e) {
-	// 	console.error(e);
+	// 	logger.error(e);
 	// }
 
 	//you can try this solution about wait for navigateion
@@ -188,13 +194,13 @@ class LoggedRequests {
 		return this.page;
 	}
 	create(request) {
-		// console.log(`Request ${request.url()} created.`);
+		// logger.log(`Request ${request.url()} created.`);
 		this.requests.push(request);
 		// reset used time to 0, ensure timeout is begin from the last created request
 		this.used = 0;
 	}
 	offset(request) {
-		// console.log(`Request ${request.url()} offsetted.`);
+		// logger.log(`Request ${request.url()} offsetted.`);
 		this.offsets.push(request);
 	}
 	clear() {
@@ -216,9 +222,6 @@ class LoggedRequests {
 			logger.debug(`offsets check, the request index is ${i}, request url is ${url}`);
 		}
 
-		console.log(
-			`Check all requests are done, currently ${this.requests.length} created and ${this.offsets.length} offsetted.`
-		);
 		logger.debug(
 			`Check all requests are done, currently ${this.requests.length} created and ${this.offsets.length} offsetted.`
 		);
@@ -263,7 +266,13 @@ class Replayer {
 		return this.flow;
 	}
 	getIdentity() {
-		`[${this.getFlow().name}@${this.getStoryName()}]`;
+		return `[${this.getFlow().name}@${this.getStoryName()}]`;
+	}
+	/**
+	 * null when no summary
+	 */
+	getSummary() {
+		return this.summary;
 	}
 	getSteps() {
 		return this.flow.steps || [];
@@ -358,25 +367,26 @@ class Replayer {
 		await this.isRemoteFinsihed(page);
 	}
 	async end(close) {
+		this.summary = getReplaySummary(this.getStoryName(), this.getFlow().name);
 		const browser = this.getBrowser();
 		if (browser == null) {
 			// do nothing, seems not start
-			return;
-		}
-		try {
-			// printRecords(this.getStoryName(), this.getFlow().name);
-			await browser.disconnect();
-		} catch (e) {
-			console.error('Failed to disconnect from brwoser.');
-			console.error(e);
-		}
-		if (close) {
+		} else {
 			try {
-				await browser.close();
-				delete browsers[generateKeyByString(this.getStoryName(), this.getFlow().name)];
+				// printRecords(this.getStoryName(), this.getFlow().name);
+				await browser.disconnect();
 			} catch (e) {
-				console.error('Failed to close brwoser.');
-				console.error(e);
+				logger.error('Failed to disconnect from brwoser.');
+				logger.error(e);
+			}
+			if (close) {
+				try {
+					await browser.close();
+					delete browsers[generateKeyByString(this.getStoryName(), this.getFlow().name)];
+				} catch (e) {
+					logger.error('Failed to close brwoser.');
+					logger.error(e);
+				}
 			}
 		}
 	}
@@ -384,8 +394,8 @@ class Replayer {
 		this.flow = flow;
 		this.currentIndex = index;
 		const step = this.getCurrentStep();
-		const storyName = this.getStoryName();
-		const flowName = this.getFlow().name;
+		// const storyName = this.getStoryName();
+		// const flowName = this.getFlow().name;
 		switch (step.type) {
 			case 'change':
 				return await this.executeChangeStep(step);
@@ -410,16 +420,16 @@ class Replayer {
 			case 'page-closed':
 				return await this.executePageClosedStep(step);
 			case 'end':
-				printRecords(storyName, flowName);
+				break;
 			default:
-				console.log(`Step[${step.type}] is not implemented yet.`);
+				logger.log(`Step[${step.type}] is not implemented yet.`);
 				return Promise.resolve();
 		}
 	}
 	async executeChangeStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
 		const xpath = step.path.replace(/"/g, "'");
-		console.log(`Execute change, step path is ${xpath}, step value is ${step.value}.`);
+		logger.log(`Execute change, step path is ${xpath}, step value is ${step.value}.`);
 
 		const elements = await page.$x(xpath);
 		const element = elements[0];
@@ -475,7 +485,7 @@ class Replayer {
 	async executeClickStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
 		const xpath = step.path.replace(/"/g, "'");
-		console.log(`Execute click, step path is ${xpath}.`);
+		logger.log(`Execute click, step path is ${xpath}.`);
 
 		const elements = await page.$x(xpath);
 		const element = elements[0];
@@ -493,7 +503,7 @@ class Replayer {
 				const checked = await this.getElementChecked(element);
 				if (value == step.value && checked == step.checked) {
 					// ignore this click, the value and checked is already same as step does
-					console.log(
+					logger.log(
 						'Click excution is ignored because of value and checked are matched, it was invoked by javascript or something else already.'
 					);
 					return;
@@ -516,7 +526,7 @@ class Replayer {
 	async executeFocusStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
 		const xpath = step.path.replace(/"/g, "'");
-		console.log(`Execute focus, step path is ${xpath}.`);
+		logger.log(`Execute focus, step path is ${xpath}.`);
 
 		const elements = await page.$x(xpath);
 		const element = elements[0];
@@ -532,7 +542,7 @@ class Replayer {
 		const page = await this.getPageOrThrow(step.uuid);
 		const xpath = step.path.replace(/"/g, "'");
 		const value = step.value;
-		console.log(`Execute keydown, step path is ${xpath}, key is ${value}`);
+		logger.log(`Execute keydown, step path is ${xpath}, key is ${value}`);
 
 		const steps = this.getSteps();
 		const currentIndex = this.getCurrentIndex();
@@ -559,7 +569,7 @@ class Replayer {
 			case 'Enter':
 				return await page.keyboard.press('Enter');
 			default:
-				console.log(`keydown [${value}] is not implemented yet.`);
+				logger.log(`keydown [${value}] is not implemented yet.`);
 				return Promise.resolve();
 		}
 	}
@@ -568,7 +578,7 @@ class Replayer {
 
 		const scrollTop = step.scrollTop || 0;
 		const scrollLeft = step.scrollLeft || 0;
-		console.log(scrollTop, scrollLeft);
+		logger.log(scrollTop, scrollLeft);
 
 		if (step.target === 'document') {
 			await page.evaluate(
@@ -593,15 +603,15 @@ class Replayer {
 	}
 	async executeDialogOpenStep(step) {
 		// dialog open is invoked by javascript anyway, ignore it
-		console.log(`Execute ${step.dialog} open, step url is ${step.url}.`);
+		logger.log(`Execute ${step.dialog} open, step url is ${step.url}.`);
 	}
 	async executeDialogCloseStep(step) {
 		// dialog close is invoked manually anyway, should be handled in page popup event, ignore it
-		console.log(`Execute ${step.dialog} close, step url is ${step.url}.`);
+		logger.log(`Execute ${step.dialog} close, step url is ${step.url}.`);
 	}
 	async executeAjaxStep(step) {
 		// TODO do nothing now
-		console.log(`Execute ajax, step url is ${step.url}.`);
+		logger.log(`Execute ajax, step url is ${step.url}.`);
 	}
 	async executePageCreatedStep(step) {
 		logger.debug(`Execute page created, step url is ${step.url}.`);
@@ -696,19 +706,21 @@ const launch = () => {
 			const step = replayer.getCurrentStep();
 			switch (command) {
 				case 'disconnect':
-					replayer.end(false);
+					await replayer.end(false);
+					event.reply(`replay-browser-disconnect-${generateKeyByString(storyName, flowName)}`, {});
 					break;
 				case 'abolish':
-					replayer.end(true);
+					await replayer.end(true);
+					event.reply(`replay-browser-abolish-${generateKeyByString(storyName, flowName)}`, {});
 					break;
 				default:
 					try {
-						console.log(`Continue step[${index}]@${generateKeyByString(storyName, flowName)}.`);
+						logger.log(`Continue step[${index}]@${generateKeyByString(storyName, flowName)}.`);
 						recordReplayEvent(storyName, flowName, step.type, step);
 						await replayer.next(flow, index);
 						waitForNextStep({ event, replayer, storyName, flowName, index });
 					} catch (e) {
-						console.error(e);
+						logger.error(e);
 						// failed, prepare for next step
 						// send back
 						recordReplayEventError(storyName, flowName, step.type, step, e);
@@ -716,7 +728,7 @@ const launch = () => {
 					}
 			}
 		});
-		console.log(
+		logger.log(
 			`Reply message step[${options.index}]@[replay-step-end-${generateKeyByString(storyName, flowName)}].`
 		);
 		options.event.reply(`replay-step-end-${generateKeyByString(storyName, flowName)}`, {
@@ -724,9 +736,11 @@ const launch = () => {
 			error: options.error
 		});
 	};
+	const handle = {};
 	emitter.on('launch-replay', async (event, arg) => {
 		const { storyName, flow, index } = arg;
 		const replayer = new Replayer({ storyName, flow });
+		handle.current = replayer;
 		try {
 			await replayer.start();
 			// put into cache
@@ -738,18 +752,19 @@ const launch = () => {
 			// send back
 			waitForNextStep({ event, replayer, storyName, flowName: flow.name, index });
 		} catch (e) {
-			console.error(e);
+			logger.error(e);
 			// failed, prepare for next step
 			// send back
 			waitForNextStep({ event, replayer, storyName, flowName: flow.name, index, error: e.message });
 		}
 	});
+	return handle;
 };
 
 const destory = () => {
-	console.info('destory all puppeteer browsers.');
+	logger.info('destory all puppeteer browsers.');
 	Object.keys(browsers).forEach(async key => {
-		console.info(`destory puppeteer browser[${key}]`);
+		logger.info(`destory puppeteer browser[${key}]`);
 		const browser = browsers[key];
 		delete browsers[key];
 		try {
