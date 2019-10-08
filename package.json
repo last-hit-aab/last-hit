@@ -8,6 +8,7 @@
 		"build:renderer": "npm run build --prefix renderer",
 		"start": "npm run build:renderer && electron .",
 		"start:dev": "npm run build:renderer && electron . --watch-renderer=true",
+		"pack:pre": "export PKG_CONFIG_PATH=/opt/local/lib/pkgconfig:/opt/X11/lib/pkgconfig",
 		"pack": "npm run build:renderer && electron-builder --dir",
 		"pack:windows": "npm run build:renderer && electron-builder -w",
 		"pack:osx": "npm run build:renderer && electron-builder -m",
