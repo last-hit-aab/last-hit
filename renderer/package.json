@@ -1,6 +1,6 @@
 {
 	"name": "last-hit-appearance",
-	"version": "0.3.2",
+	"version": "0.3.3",
 	"homepage": "./",
 	"dependencies": {
 		"@fortawesome/fontawesome-svg-core": "^1.2.21",

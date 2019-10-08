@@ -7,6 +7,8 @@ const atob = require('atob');
 const util = require('util');
 const { initReplayRecord, recordReplayEvent, printRecords, recordReplayEventError } = require('./replay-result');
 
+const inElectron = !!process.versions.electron;
+
 const generateKeyByString = (storyName, flowName) => {
 	return `[${flowName}@${storyName}]`;
 };
@@ -138,7 +140,7 @@ const launchBrowser = async replayer => {
 	browserArgs.push('--disable-infobars');
 
 	const browser = await puppeteer.launch({
-		headless: false,
+		headless: !inElectron,
 		executablePath: getChromiumExecPath(),
 		args: browserArgs
 		// slowMo: 5
