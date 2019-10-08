@@ -362,7 +362,7 @@ class Replayer {
 			return;
 		}
 		try {
-			printRecords(this.getStoryName(), this.getFlow().name);
+			// printRecords(this.getStoryName(), this.getFlow().name);
 			await browser.disconnect();
 		} catch (e) {
 			console.error('Failed to disconnect from brwoser.');
@@ -630,14 +630,14 @@ class Replayer {
 		logger.debug(`Execute page switched, step url is ${step.url}.`);
 		const page = this.getPage(step.uuid);
 		if (page) {
-			await page.bringToFront();
+			// await page.bringToFront();
 		} else {
 			// TODO really 1s?
 			const sleep = util.promisify(setTimeout);
 			await sleep(1000);
 			const page = this.getPage(step.uuid);
 			if (page) {
-				await page.bringToFront();
+				// await page.bringToFront();
 			} else {
 				logger.debug(`To creat switched page, and add page uuid is ${step.uuid}.`);
 				const newPage = await this.browser.newPage();
@@ -702,9 +702,8 @@ const launch = () => {
 				default:
 					try {
 						console.log(`Continue step[${index}]@${generateKeyByString(storyName, flowName)}.`);
-						await replayer.next(flow, index);
-
 						recordReplayEvent(storyName, flowName, step.type, step);
+						await replayer.next(flow, index);
 						waitForNextStep({ event, replayer, storyName, flowName, index });
 					} catch (e) {
 						console.error(e);

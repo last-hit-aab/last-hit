@@ -7,6 +7,7 @@ class ReplaySummary {
 		this.flowName = flowName;
 		this.replayId = replayId;
 		this.numberOfStep = 0;
+		this.numberOfUIBehaver = 0
 		this.numberOfSuccess = 0;
 		this.numberOfFailed = 0;
 		this.numberOfAssert = 0;
@@ -25,10 +26,10 @@ const recordReplayEventError = async (storyName, flowName, replayType, data, e) 
 		try {
 			const replayKey = _buildKey(storyName, flowName, currentReplayId);
 			if (replayType == 'ajax') {
-				replaySummary.numberOfAjax = replaySummary.numberOfAjax + 1;
+				replaySummary.numberOfAjax += 1
 			} else {
 				console.log('replayKey', replayKey);
-				replaySummary.numberOfFailed = replaySummary.numberOfFailed + 1;
+				replaySummary.numberOfFailed += 1
 				// replayRecords.get(replayKey).push(data)
 			}
 
@@ -45,8 +46,10 @@ const recordReplayEvent = async (storyName, flowName, replayType, data) => {
 		try {
 			const replayKey = _buildKey(storyName, flowName, currentReplayId);
 			if (replayType == 'ajax') {
-				replaySummary.numberOfAjax = replaySummary.numberOfAjax + 1;
+				replaySummary.numberOfAjax += 1
+				replaySummary.numberOfSuccess += 1;
 			} else {
+				replaySummary.numberOfUIBehaver += 1
 				replaySummary.numberOfSuccess += 1;
 			}
 
@@ -60,7 +63,7 @@ const recordReplayEvent = async (storyName, flowName, replayType, data) => {
 
 const initReplayRecord = (storyName, flow) => {
 	const flowName = flow.name;
-	const numberOfStep = flow.steps.length - 2;
+	const numberOfStep = flow.steps.length - 1;
 	console.log(this.replayRecords);
 	replayRecords.clear();
 	const replayId = uuidv4();
@@ -83,7 +86,7 @@ const getReplayRecords = (storyName, flowName) => {
 
 const printRecords = (storyName, flowName) => {
 	const replayKey = _buildKey(storyName, flowName, currentReplayId);
-	console.log(JSON.stringify(replaySummary));
+	console.table([replaySummary], ["storyName", "flowName", "numberOfStep", "numberOfUIBehaver", "numberOfSuccess", "numberOfFailed", "ignoreErrorList", "numberOfAjax", "slowAjaxRequest"]);
 };
 
 const destory = () => {
