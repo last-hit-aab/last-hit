@@ -1,8 +1,11 @@
 const path = require('path');
 const fs = require('fs');
+const { app } = require('electron')
 
 const construct = () => {
-	const logFolder = path.join(__dirname, '../log/path');
+	app.setAppLogsPath();
+	const logFolder = path.join(app.getPath('logs'));
+	console.log(logFolder);
 	const logFile = 'console.log';
 	const logFilePath = path.join(logFolder, logFile);
 	if (!fs.existsSync(logFolder)) {
