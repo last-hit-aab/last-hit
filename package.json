@@ -8,6 +8,7 @@
 		"build:renderer": "npm run build --prefix renderer",
 		"start": "npm run build:renderer && electron .",
 		"start:dev": "npm run build:renderer && electron . --watch-renderer=true",
+		"pack:pre": "export PKG_CONFIG_PATH=/opt/local/lib/pkgconfig:/opt/X11/lib/pkgconfig",
 		"pack": "npm run build:renderer && electron-builder --dir",
 		"pack:windows": "npm run build:renderer && electron-builder -w",
 		"pack:osx": "npm run build:renderer && electron-builder -m",
@@ -30,15 +31,17 @@
 	},
 	"homepage": "https://gitlab.com/last-hit/last-hit#readme",
 	"devDependencies": {
-		"electron": "^6.0.9",
+		"electron": "^6.0.11",
 		"electron-builder": "^21.2.0",
 		"nyc": "^14.1.1"
 	},
 	"dependencies": {
 		"atob": "^2.1.2",
 		"body-parser": "^1.19.0",
+		"canvas": "^2.6.0",
 		"cross-spawn": "^6.0.5",
 		"express": "^4.17.1",
+		"node-gyp": "^6.0.0",
 		"pino": "^5.13.4",
 		"pino-pretty": "^3.2.1",
 		"puppeteer": "^1.20.0",
