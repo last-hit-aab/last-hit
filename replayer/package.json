@@ -1,10 +1,14 @@
 {
 	"name": "last-hit-replayer",
-	"version": "0.3.1",
+	"version": "0.3.2",
 	"description": "Replayer for last-hit recorded data.",
 	"main": "index.js",
+	"bin": {
+		"last-hit-replayer": "./bin/entry.js"
+	},
 	"scripts": {
-		"start": "node ./index.js"
+		"start": "node ./index.js",
+		"test": "last-hit-replayer"
 	},
 	"repository": {
 		"type": "git",
