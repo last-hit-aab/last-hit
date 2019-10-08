@@ -51,6 +51,7 @@
 	},
 	"build": {
 		"asar": true,
-		"asarUnpack": "node_modules/puppeteer/.local-chromium/**/*"
+		"asarUnpack": "node_modules/puppeteer/.local-chromium/**/*",
+		"artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
 	}
 }
