@@ -21,19 +21,23 @@ class CI {
 	async gatherCoverage(pages) {
 		if (!inElectron) {
 			return await pages.reduce(async (coverages, page) => {
-				let jsCoverage = [];
-				let cssCoverage = [];
 				try {
-					jsCoverage = await page.coverage.stopJSCoverage();
-				} catch (e) {
-					console.error(e);
+					let jsCoverage = [];
+					let cssCoverage = [];
+					try {
+						jsCoverage = await page.coverage.stopJSCoverage();
+					} catch (e) {
+						console.error(e);
+					}
+					try {
+						cssCoverage = await page.coverage.stopCSSCoverage();
+					} catch (e) {
+						console.error(e);
+					}
+					return coverages.concat(jsCoverage).concat(cssCoverage);
+				} catch {
+					return coverages;
 				}
-				try {
-					cssCoverage = await page.coverage.stopCSSCoverage();
-				} catch (e) {
-					console.error(e);
-				}
-				return coverages.concat(jsCoverage).concat(cssCoverage);
 			}, []);
 		} else {
 			return [];
@@ -399,6 +403,23 @@ class Replayer {
 		const uuid = this.findUuid(page);
 		const requests = this.requests[uuid];
 		return requests.waitForAllDone();
+
+		// peep next step, if not ajax step, resolve directly to speed up
+		// const { type } = this.getCurrentStep();
+		// if (['page-switched', 'page-created', 'scroll'].includes(type)) {
+		// 	return requests.waitForAllDone();
+		// }
+		// if (['scroll'].includes(type)) {
+		// 	return new Promise(resolve => setTimeout(resolve, 30));
+		// }
+
+		// const currentStepIndex = this.getCurrentIndex();
+		// const nextStep = this.getSteps()[currentStepIndex + 1];
+		// if (nextStep && nextStep.type === 'ajax') {
+		// 	return requests.waitForAllDone();
+		// } else {
+		// 	return Promise.resolve();
+		// }
 	}
 	async start() {
 		const page = await launchBrowser(this);
@@ -436,39 +457,43 @@ class Replayer {
 		this.flow = flow;
 		this.currentIndex = index;
 		const step = this.getCurrentStep();
-		// const storyName = this.getStoryName();
-		// const flowName = this.getFlow().name;
-		switch (step.type) {
-			case 'change':
-				return await this.executeChangeStep(step);
-			case 'click':
-				return await this.executeClickStep(step);
-			case 'focus':
-				return await this.executeFocusStep(step);
-			case 'keydown':
-				return await this.executeKeydownStep(step);
-			case 'mousedown':
-				return await this.executeMousedownStep(step);
-			case 'ajax':
-				return await this.executeAjaxStep(step);
-			case 'scroll':
-				return await this.executeScrollStep(step);
-			case 'dialog-open':
-				return await this.executeDialogOpenStep(step);
-			case 'dialog-close':
-				return await this.executeDialogCloseStep(step);
-			case 'page-created':
-				return await this.executePageCreatedStep(step);
-			case 'page-switched':
-				return await this.executePageSwitchedStep(step);
-			case 'page-closed':
-				return await this.executePageClosedStep(step);
-			case 'end':
-				break;
-			default:
-				logger.log(`Step[${step.type}] is not implemented yet.`);
-				return Promise.resolve();
+		if (step.type === 'end') {
+			return;
 		}
+
+		await (async () => {
+			switch (step.type) {
+				case 'change':
+					return await this.executeChangeStep(step);
+				case 'click':
+					return await this.executeClickStep(step);
+				case 'focus':
+					return await this.executeFocusStep(step);
+				case 'keydown':
+					return await this.executeKeydownStep(step);
+				case 'mousedown':
+					return await this.executeMousedownStep(step);
+				case 'ajax':
+					return await this.executeAjaxStep(step);
+				case 'scroll':
+					return await this.executeScrollStep(step);
+				case 'dialog-open':
+					return await this.executeDialogOpenStep(step);
+				case 'dialog-close':
+					return await this.executeDialogCloseStep(step);
+				case 'page-created':
+					return await this.executePageCreatedStep(step);
+				case 'page-switched':
+					return await this.executePageSwitchedStep(step);
+				case 'page-closed':
+					return await this.executePageClosedStep(step);
+				default:
+					logger.log(`Step[${step.type}] is not implemented yet.`);
+					return Promise.resolve();
+			}
+		})();
+		const page = await this.getPageOrThrow(step.uuid);
+		await this.isRemoteFinsihed(page);
 	}
 	async executeChangeStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
@@ -524,7 +549,6 @@ class Replayer {
 			// change is change only, cannot use type
 			await this.setValueToElement(element, step.value);
 		}
-		await this.isRemoteFinsihed(page);
 	}
 	async executeClickStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
@@ -572,7 +596,6 @@ class Replayer {
 		} else {
 			await element.evaluate(node => node.click());
 		}
-		await this.isRemoteFinsihed(page);
 	}
 	async executeFocusStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
@@ -587,7 +610,6 @@ class Replayer {
 			event.initEvent('focus', true, true);
 			node.dispatchEvent(event);
 		});
-		await this.isRemoteFinsihed(page);
 	}
 	async executeKeydownStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
@@ -618,10 +640,11 @@ class Replayer {
 
 		switch (step.value) {
 			case 'Enter':
-				return await page.keyboard.press('Enter');
+				await page.keyboard.press('Enter');
+				break;
 			default:
 				logger.log(`keydown [${value}] is not implemented yet.`);
-				return Promise.resolve();
+				break;
 		}
 	}
 	async executeMousedownStep(step) {
@@ -634,20 +657,18 @@ class Replayer {
 
 		const support = this.createThirdStepSupport(element);
 		const done = await support.mousedown();
-		if (done) {
-			return;
+		if (!done) {
+			const currentIndex = this.getCurrentIndex();
+			const currentPath = step.path;
+			const avoidClick = this.getSteps()
+				.filter((step, index) => index > currentIndex)
+				.some(step => step.type === 'click' && step.path === currentPath);
+			if (avoidClick) {
+				logger.log(`found click for this mousedown, just skip this mousedown`);
+				return;
+			}
+			await element.click();
 		}
-
-		const currentIndex = this.getCurrentIndex();
-		const currentPath = step.path;
-		const avoidClick = this.getSteps()
-			.filter((step, index) => index > currentIndex)
-			.some(step => step.type === 'click' && step.path === currentPath);
-		if (avoidClick) {
-			logger.log(`found click for this mousedown, just skip this mousedown`);
-			return;
-		}
-		await element.click();
 	}
 	async executeScrollStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
@@ -748,7 +769,7 @@ class Replayer {
 	createThirdStepSupport(element) {
 		return new ThirdStepSupport({
 			element,
-			tagNameRetrieve: this.createElmentTagNameRetriever(),
+			tagNameRetrieve: this.createElementTagNameRetriever(),
 			elementTypeRetrieve: this.createElementTypeRetriever(),
 			classNamesRetrieve: this.createElementClassNamesRetriever(),
 			attrValueRetrieve: this.createElementAttrValueRetriever(),
@@ -757,7 +778,7 @@ class Replayer {
 			logger
 		});
 	}
-	createElmentTagNameRetriever() {
+	createElementTagNameRetriever() {
 		let tagName;
 		return async element => {
 			if (!tagName) {
