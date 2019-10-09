@@ -1,4 +1,4 @@
-import { Device } from "../workspace-settings";
+import { Device } from '../workspace-settings';
 
 /**
  * Copyright 2017 Google Inc. All rights reserved.
@@ -945,25 +945,12 @@ const devices: Device[] = [
 		}
 	},
 	{
-		name: 'Mac 1440 * 900',
+		name: 'Mac 1404 * 686',
 		userAgent:
 			'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3765.0 Safari/537.36',
 		viewport: {
-			width: 1440,
-			height: 900,
-			deviceScaleFactor: 1,
-			isMobile: false,
-			hasTouch: false,
-			isLandscape: false
-		}
-	},
-	{
-		name: 'Mac 1920 * 1080',
-		userAgent:
-			'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3765.0 Safari/537.36',
-		viewport: {
-			width: 1920,
-			height: 1080,
+			width: 1404,
+			height: 686,
 			deviceScaleFactor: 1,
 			isMobile: false,
 			hasTouch: false,

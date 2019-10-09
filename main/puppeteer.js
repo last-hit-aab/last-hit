@@ -6,6 +6,58 @@ const getChromiumExecPath = () => {
 	return puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked');
 };
 
+class AllPagesCache {
+	constructor() {
+		this.pages = {};
+		this.ready = {};
+	}
+	/**
+	 * @param {string} uuid
+	 * @param {Page} page
+	 */
+	add(uuid, page) {
+		this.pages[uuid] = page;
+		this.prepare[uuid] = [];
+	}
+	/**
+	 * @param {string} uuid
+	 * @param {Function} preparation
+	 */
+	prepare(uuid, preparation) {
+		const chain = this.prepare[uuid];
+		if (chain && chain.length === 0) {
+			chain.push(true);
+			preparation();
+		}
+	}
+	exists(page) {
+		return this.findUuidByPage(page) != null;
+	}
+	findUuidByPage(page) {
+		return Object.keys(this.pages).find(uuid => this.pages[uuid] === page);
+	}
+	/**
+	 * @param {string} uuid
+	 */
+	removeByUuid(uuid) {
+		delete this.pages[uuid];
+		delete this.prepare[uuid];
+	}
+	/**
+	 * @param {Page} page
+	 * @returns {string}
+	 */
+	removeByPage(page) {
+		const uuid = this.findUuidByPage(page);
+		if (uuid) {
+			this.removeByUuid(uuid);
+			return uuid;
+		} else {
+			return null;
+		}
+	}
+}
+
 /** stop pick dom from page */
 const createPageWindowEventRecorder = flowKey => (eventJsonStr, onPickDOM) => {
 	if (!eventJsonStr) {
@@ -32,9 +84,14 @@ const captureScreenshot = async page => {
 	// await page.waitForNavigation({ waitUntil: 'networkidle2' });
 	return await page.screenshot({ encoding: 'base64' });
 };
-// expose function to given page
+/**
+ * expose function to given page
+ * @param {Page} page
+ * @param {string} flowKey
+ * @param {AllPagesCache} allPages
+ */
 const exposeFunctionToPage = async (page, flowKey, allPages) => {
-	const uuid = findUuidOfPage(page, allPages);
+	const uuid = allPages.findUuidByPage(page);
 	await page.exposeFunction('$lhGetUuid', () => uuid);
 	await page.exposeFunction('$lhGetFlowKey', () => flowKey);
 	await page.exposeFunction('$lhRecordEvent', createPageWindowEventRecorder(flowKey));
@@ -44,7 +101,14 @@ const exposeFunctionToPage = async (page, flowKey, allPages) => {
  * @param {Page} page
  */
 const installListenersOnPage = async page => {
-	await page.evaluateOnNewDocument(() => {
+	console.log('install listener on page');
+	const god = () => {
+		if (window.$lhGod) {
+			return;
+		}
+
+		window.$lhGod = true;
+		console.log('%c last-hit: %c evaluate on new document start...', 'color:red', 'color:brown');
 		// here we are in the browser context
 		const createXPathFromElement = elm => {
 			var allNodes = document.getElementsByTagName('*');
@@ -286,7 +350,14 @@ const installListenersOnPage = async page => {
 			});
 			return ret;
 		};
-	});
+
+		console.log('%c last-hit: %c evaluate on new document end...', 'color:red', 'color:brown');
+	};
+	// some pages postpones the page created or popup event. so evaluateOnNewDocument doesn't work.
+	// in this case, run evaluate for ensuring the god logic should be install into page
+	// anyway, monitors cannot be installed twice, so add varaiable $lhGod on window to prevent
+	await page.evaluateOnNewDocument(god);
+	await page.evaluate(god);
 };
 
 const staticResourceTypes = [
@@ -303,38 +374,57 @@ const staticResourceTypes = [
 ];
 const dynamicResourceTypes = ['xhr', 'fetch', 'websocket'];
 const isDynamicResource = resourceType => dynamicResourceTypes.includes(resourceType);
+/**
+ *
+ * @param {Page} page
+ * @param {string} flowKey
+ * @param {AllPagesCache} allPages
+ */
 const recordRemoteRequests = async (page, flowKey, allPages) => {
 	const sendRecordedEvent = createPageWindowEventRecorder(flowKey);
-	page.on('response', async response => {
-		const url = response.url();
-		const request = response.request();
+	page.on('requestfinished', async request => {
+		const url = request.url();
+		const response = request.response();
 		const resourceType = request.resourceType();
 
 		if (isDynamicResource(resourceType)) {
 			// dynamic resources
+			const sendEvent = body => {
+				try {
+					sendRecordedEvent(
+						JSON.stringify({
+							type: 'ajax',
+							uuid: allPages.findUuidByPage(page),
+							request: {
+								url,
+								method: request.method(),
+								headers: request.headers(),
+								body: request.postData(),
+								resourceType
+							},
+							response: {
+								statusCode: response.status(),
+								statusMessage: response.statusText(),
+								headers: response.headers(),
+								body
+							}
+						})
+					);
+				} catch (err) {
+					console.error(`Failed getting data from: ${url}`);
+					console.error(err);
+				}
+			};
 			try {
-				sendRecordedEvent(
-					JSON.stringify({
-						type: 'ajax',
-						uuid: findUuidOfPage(page, allPages),
-						request: {
-							url,
-							method: request.method(),
-							headers: request.headers(),
-							body: request.postData(),
-							resourceType
-						},
-						response: {
-							statusCode: response.status(),
-							statusMessage: response.statusText(),
-							headers: response.headers(),
-							body: await response.text()
-						}
-					})
-				);
-			} catch (err) {
-				console.error(`Failed getting data from: ${url}`);
-				console.error(err);
+				sendEvent(await response.text());
+			} catch {
+				setTimeout(async () => {
+					try {
+						sendEvent(await response.text());
+					} catch {
+						sendEvent();
+					}
+				}, 1000);
 			}
 		} else {
 			// static resource
@@ -356,8 +446,40 @@ const recordRemoteRequests = async (page, flowKey, allPages) => {
 			// }
 		}
 	});
+	page.on('requestfailed', async request => {
+		const url = request.url();
+		const resourceType = request.resourceType();
+
+		if (isDynamicResource(resourceType)) {
+			// dynamic resources
+			try {
+				sendRecordedEvent(
+					JSON.stringify({
+						type: 'ajax',
+						uuid: allPages.findUuidByPage(page),
+						failed: true,
+						request: {
+							url,
+							method: request.method(),
+							headers: request.headers(),
+							body: request.postData(),
+							resourceType
+						}
+					})
+				);
+			} catch (err) {
+				console.error(`Failed getting data from: ${url}`);
+				console.error(err);
+			}
+		} else {
+		}
+	});
 };
 
+/**
+ * @param {Page} page
+ * @param {string} flowKey
+ */
 const isAllRelatedPagesClosed = async (page, flowKey) => {
 	const allPages = await page.browser().pages();
 	return (
@@ -369,19 +491,11 @@ const isAllRelatedPagesClosed = async (page, flowKey) => {
 			}).length === 0
 	);
 };
-const findUuidOfPage = (page, allPages) => {
-	return Object.keys(allPages).find(uuid => allPages[uuid] === page);
-};
-const deletePageByUuid = (page, allPages) => {
-	const uuid = findUuidOfPage(page, allPages);
-	delete allPages[uuid];
-	return uuid;
-};
 /**
  *
  * @param {Page} page
  * @param {{device, flowKey}} options
- * @param {{uuid: Page}} allPages
+ * @param {AllPagesCache} allPages
  */
 const controlPage = async (page, options, allPages) => {
 	const { device, flowKey } = options;
@@ -400,7 +514,7 @@ const controlPage = async (page, options, allPages) => {
 		// RESEARCH already closed? seems like this.
 		// traverse all pages to check all related pages were closed or not
 		const allClosed = isAllRelatedPagesClosed(page, flowKey);
-		const uuid = deletePageByUuid(page, allPages);
+		const uuid = allPages.removeByPage(page);
 		if (uuid) {
 			sendRecordedEvent(JSON.stringify({ type: 'page-closed', url: page.url(), allClosed, uuid }));
 		}
@@ -408,13 +522,15 @@ const controlPage = async (page, options, allPages) => {
 	// page created by window.open or anchor
 	page.on('popup', async newPage => {
 		console.log('page event popup caught');
-		if (Object.values(allPages).indexOf(newPage) === -1) {
+		if (!allPages.exists(newPage)) {
 			// not found in pages
 			const uuid = uuidv4();
-			allPages[uuid] = newPage;
-			controlPage(newPage, { device, flowKey }, allPages);
-			const base64 = await captureScreenshot(newPage);
-			sendRecordedEvent(JSON.stringify({ type: 'page-created', url: newPage.url(), image: base64, uuid }));
+			allPages.add(uuid, newPage);
+			allPages.prepare(uuid, async () => {
+				await controlPage(newPage, { device, flowKey }, allPages);
+				const base64 = await captureScreenshot(newPage);
+				sendRecordedEvent(JSON.stringify({ type: 'page-created', url: newPage.url(), image: base64, uuid }));
+			});
 		}
 	});
 	// use scripts interception
@@ -422,7 +538,7 @@ const controlPage = async (page, options, allPages) => {
 		console.log(`page event dialog caught`);
 		if (dialog.type() === 'beforeunload') {
 			const base64 = await captureScreenshot(page);
-			const uuid = findUuidOfPage(page, allPages);
+			const uuid = allPages.findUuidByPage(page);
 			sendRecordedEvent(
 				JSON.stringify({ type: 'dialog-open', dialog: 'beforeunload', url: page.url(), image: base64, uuid })
 			);
@@ -431,7 +547,7 @@ const controlPage = async (page, options, allPages) => {
 	page.on('pageerror', async () => {
 		console.log(`page event pageerror caught`);
 		const base64 = await captureScreenshot(page);
-		const uuid = findUuidOfPage(page, allPages);
+		const uuid = allPages.findUuidByPage(page);
 		sendRecordedEvent(JSON.stringify({ type: 'page-error', url: page.url(), image: base64, uuid }));
 	});
 };
@@ -444,9 +560,9 @@ const launch = () => {
 			const {
 				viewport: { width, height }
 			} = device;
-			const chrome = { x: 0, y: 200 };
 			const browserArgs = [];
-			browserArgs.push(`--window-size=${width + chrome.x},${height + chrome.y}`);
+			console.log(height);
+			browserArgs.push(`--window-size=${width},${height + 150}`);
 			browserArgs.push('--disable-infobars');
 			// browserArgs.push('--use-mobile-user-agent');
 
@@ -466,9 +582,8 @@ const launch = () => {
 			const page = await browser.newPage();
 			pages.push(page);
 			// give uuid to pages
-			const allPages = {
-				[uuid]: page
-			};
+			const allPages = new AllPagesCache();
+			allPages.add(uuid, page);
 
 			const sendRecordedEvent = createPageWindowEventRecorder(flowKey);
 			browser.on('disconnected', () => {
@@ -476,18 +591,19 @@ const launch = () => {
 			});
 			browser.on('targetcreated', async newTarget => {
 				if (newTarget.type() === 'page') {
-					console.log('browser target created caught');
+					console.log('browser event target created caught');
 					const newPage = await newTarget.page();
-					if (Object.values(allPages).indexOf(newPage) === -1) {
+					if (!allPages.exists(newPage)) {
 						// not found in pages
 						const uuid = uuidv4();
-						allPages[uuid] = newPage;
-						controlPage(newPage, { device, flowKey }, allPages);
-
-						const base64 = await captureScreenshot(newPage);
-						sendRecordedEvent(
-							JSON.stringify({ type: 'page-created', url: newPage.url(), image: base64, uuid })
-						);
+						allPages.add(uuid, newPage);
+						allPages.prepare(uuid, async () => {
+							await controlPage(newPage, { device, flowKey }, allPages);
+							const base64 = await captureScreenshot(newPage);
+							sendRecordedEvent(
+								JSON.stringify({ type: 'page-created', url: newPage.url(), image: base64, uuid })
+							);
+						});
 					}
 				}
 			});
@@ -497,9 +613,12 @@ const launch = () => {
 					// RESEARCH the url is old when target changed event is catched, so must wait the new url.
 					// don't know the mechanism
 					const page = await target.page();
-					const uuid = findUuidOfPage(page, allPages);
+					const uuid = allPages.findUuidByPage(page);
 					const url = page.url();
-					sendRecordedEvent(JSON.stringify({ type: 'page-switched', url, uuid }));
+					allPages.prepare(uuid, async () => {
+						await controlPage(page, { device, flowKey }, allPages);
+						sendRecordedEvent(JSON.stringify({ type: 'page-switched', url, uuid }));
+					});
 					let times = 0;
 					const handle = () => {
 						setTimeout(() => {
@@ -523,7 +642,7 @@ const launch = () => {
 					console.log('browser event target destroyed caught');
 					const page = await target.page();
 					const allClosed = isAllRelatedPagesClosed(page, flowKey);
-					const uuid = deletePageByUuid(page, allPages);
+					const uuid = allPages.removeByPage(page);
 					if (uuid) {
 						sendRecordedEvent(JSON.stringify({ type: 'page-closed', url: page.url(), uuid, allClosed }));
 					}
@@ -531,10 +650,10 @@ const launch = () => {
 			});
 
 			await recordRemoteRequests(page, flowKey, allPages);
-			// TODO record file
-			await controlPage(page, { device, flowKey }, allPages);
-
 			await page.goto(url, { waitUntil: 'domcontentloaded' });
+			allPages.prepare(uuid, async () => {
+				await controlPage(page, { device, flowKey }, allPages);
+			});
 			try {
 				await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
 			} catch (e) {

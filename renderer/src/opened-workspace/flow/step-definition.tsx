@@ -55,7 +55,7 @@ const shorternUrl = (url: string): string => {
 		return url;
 	}
 };
-const IGNORED_ATTRS = ['style', 'value', 'lang'];
+const IGNORED_ATTRS = ['style', 'value', 'lang', 'data-reactid', 'accesskey', 'tabindex', 'size', 'autocomplete'];
 const shorternTarget = (target: string): string => {
 	try {
 		if (target === 'document') {
@@ -151,7 +151,13 @@ const STEP_FORKS = {
 	},
 	[StepType.VALUE_CHANGE]: {
 		icon: <FontAwesomeIcon icon={faEdit} />,
-		label: (step: ChangeStep): string => `Value changed to [${step.value}] at ${shorternTarget(step.target)}`
+		label: (step: ChangeStep): string => {
+			if (step.target.match(/type="password"/)) {
+				return `Value changed to [**********] at ${shorternTarget(step.target)}`;
+			} else {
+				return `Value changed to [${step.value}] at ${shorternTarget(step.target)}`;
+			}
+		}
 	},
 	[StepType.CLICK]: {
 		icon: <MouseIcon style={{ transform: 'translateY(4px)' }} />,

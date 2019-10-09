@@ -9,6 +9,38 @@ const ReplayResult = require('./replay-result');
 
 const inElectron = !!process.versions.electron;
 
+class CI {
+	async startCoverage(page) {
+		if (!inElectron) {
+			// Enable both JavaScript and CSS coverage only in CI
+			await page.coverage.startJSCoverage();
+			await page.coverage.startCSSCoverage();
+		}
+	}
+	async gatherCoverage(pages) {
+		if (!inElectron) {
+			return await pages.reduce(async (coverages, page) => {
+				let jsCoverage = [];
+				let cssCoverage = [];
+				try {
+					jsCoverage = await page.coverage.stopJSCoverage();
+				} catch (e) {
+					console.error(e);
+				}
+				try {
+					cssCoverage = await page.coverage.stopCSSCoverage();
+				} catch (e) {
+					console.error(e);
+				}
+				return coverages.concat(jsCoverage).concat(cssCoverage);
+			}, []);
+		} else {
+			return [];
+		}
+	}
+}
+const ci = new CI();
+
 const generateKeyByString = (storyName, flowName) => {
 	return `[${flowName}@${storyName}]`;
 };
@@ -33,11 +65,7 @@ const controlPage = async (replayer, page, device) => {
 	const setBackground = () => (document.documentElement.style.backgroundColor = 'rgba(25,25,25,0.8)');
 	await page.evaluate(setBackground);
 
-	if (!inElectron) {
-		// Enable both JavaScript and CSS coverage only in CI
-		await page.coverage.startJSCoverage();
-		await page.coverage.startCSSCoverage();
-	}
+	await ci.startCoverage(page);
 
 	page.on('load', async () => {
 		await page.evaluate(setBackground);
@@ -386,21 +414,7 @@ class Replayer {
 		} else {
 			try {
 				const pages = await browser.pages();
-				this.coverages = await pages.reduce(async (coverages, page) => {
-					let jsCoverage = [];
-					let cssCoverage = [];
-					try {
-						jsCoverage = await page.coverage.stopJSCoverage();
-					} catch (e) {
-						console.error(e);
-					}
-					try {
-						cssCoverage = await page.coverage.stopCSSCoverage();
-					} catch (e) {
-						console.error(e);
-					}
-					return coverages.concat(jsCoverage).concat(cssCoverage);
-				}, []);
+				this.coverages = await ci.gatherCoverage(pages);
 				await browser.disconnect();
 			} catch (e) {
 				logger.error('Failed to disconnect from brwoser.');
