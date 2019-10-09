@@ -446,6 +446,8 @@ class Replayer {
 				return await this.executeFocusStep(step);
 			case 'keydown':
 				return await this.executeKeydownStep(step);
+			case 'mousedown':
+				return await this.executeMousedownStep(step);
 			case 'ajax':
 				return await this.executeAjaxStep(step);
 			case 'scroll':
@@ -531,6 +533,16 @@ class Replayer {
 		const elements = await page.$x(xpath);
 		const element = elements[0];
 		const elementTagName = await this.getElementTagName(element);
+
+		//check select2 for mousedown
+		if (elementTagName === 'SPAN') {
+			const elementClass = await this.getElementAttrValue(element, "class");
+			if (elementClass.search("select2-") !== -1) {
+				logger.log(`found select2 for this click, need skip click`);
+				return;
+			}
+		}
+
 		if (elementTagName === 'INPUT') {
 			const elementType = await this.getElementType(element);
 			if (elementType && ['checkbox', 'radio'].includes(elementType.toLowerCase())) {
@@ -613,6 +625,46 @@ class Replayer {
 				logger.log(`keydown [${value}] is not implemented yet.`);
 				return Promise.resolve();
 		}
+	}
+	async executeMousedownStep(step) {
+		const page = await this.getPageOrThrow(step.uuid);
+		const xpath = step.path.replace(/"/g, "'");
+		logger.log(`Execute mouse down, step path is ${xpath}`);
+
+		const elements = await page.$x(xpath);
+		const element = elements[0];
+
+		const elementTagName = await this.getElementTagName(element);
+
+		//check select2 for mousedown
+		if (elementTagName === 'SPAN') {
+			const elementClass = await this.getElementAttrValue(element, "class");
+			if (elementClass.search("select2-") !== -1) {
+				logger.log(`found select2 for this mousedown, need execute mousedown`);
+				return await element.click();
+			}
+		}
+
+		//check select for mousedown
+		/*
+		if (elementTagName === 'DIV') {
+			const elementClass = await this.getElementAttrValue(element, "class");
+			if (elementClass != null && elementClass.search("Select-option") !== -1) {
+				logger.log(`found select2 for this mousedown, need execute mousedown`);
+				return await element.click();
+			}
+		}
+		*/
+		
+		const currentIndex = this.getCurrentIndex();
+		const steps = this.getSteps();
+		for (var i = currentIndex + 1, len = steps.length; i < len; i++) {
+			if (steps[i].type === "click" && steps[i].xpath === steps[currentIndex].xpath) {
+				logger.log(`found click for this mousedown, just skip this mousedown`)
+				return;
+			}
+		}
+		await element.click();
 	}
 	async executeScrollStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
