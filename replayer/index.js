@@ -200,9 +200,9 @@ flows
 					'UI Behavior': item.numberOfUIBehavior,
 					Passed: item.numberOfSuccess,
 					Failed: item.numberOfFailed,
-					'Ignored Errors': item.ignoreErrorList,
+					'Ignored Errors': (item.ignoreErrorList || []).length,
 					'Ajax calls': item.numberOfAjax,
-					'Slow ajax calls': item.slowAjaxRequest,
+					'Slow ajax calls': (item.slowAjaxRequest || []).length,
 					'Spent (ms)': Math.round((item.spent || '').split(' ')[1].split('ms')[0])
 				};
 			}),
