@@ -109,7 +109,7 @@ const installListenersOnPage = async page => {
 
 		window.$lhGod = true;
 		console.log('%c last-hit: %c evaluate on new document start...', 'color:red', 'color:brown');
-		const ignoredIdRegexps = [/^md-.+-.{6,16}$/, /^select2-select2-.+$/];
+		const ignoredIdRegexps = [/^md-.+-.{6,16}$/, /^select2-.+$/];
 		const shouldIgnore = id => ignoredIdRegexps.some(regexp => regexp.test(id));
 		// here we are in the browser context
 		const createXPathFromElement = elm => {

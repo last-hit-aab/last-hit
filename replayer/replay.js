@@ -6,6 +6,7 @@ const uuidv4 = require('uuid/v4');
 const atob = require('atob');
 const util = require('util');
 const ReplayResult = require('./replay-result');
+const ThirdStepSupport = require('./3rd-comps/support');
 
 const inElectron = !!process.versions.electron;
 
@@ -534,13 +535,10 @@ class Replayer {
 		const element = elements[0];
 		const elementTagName = await this.getElementTagName(element);
 
-		//check select2 for mousedown
-		if (elementTagName === 'SPAN') {
-			const elementClass = await this.getElementAttrValue(element, "class");
-			if (elementClass.search("select2-") !== -1) {
-				logger.log(`found select2 for this click, need skip click`);
-				return;
-			}
+		const support = this.createThirdStepSupport(element);
+		const done = await support.click();
+		if (done) {
+			return;
 		}
 
 		if (elementTagName === 'INPUT') {
@@ -634,35 +632,20 @@ class Replayer {
 		const elements = await page.$x(xpath);
 		const element = elements[0];
 
-		const elementTagName = await this.getElementTagName(element);
-
-		//check select2 for mousedown
-		if (elementTagName === 'SPAN') {
-			const elementClass = await this.getElementAttrValue(element, "class");
-			if (elementClass.search("select2-") !== -1) {
-				logger.log(`found select2 for this mousedown, need execute mousedown`);
-				return await element.click();
-			}
+		const support = this.createThirdStepSupport(element);
+		const done = await support.mousedown();
+		if (done) {
+			return;
 		}
 
-		//check select for mousedown
-		/*
-		if (elementTagName === 'DIV') {
-			const elementClass = await this.getElementAttrValue(element, "class");
-			if (elementClass != null && elementClass.search("Select-option") !== -1) {
-				logger.log(`found select2 for this mousedown, need execute mousedown`);
-				return await element.click();
-			}
-		}
-		*/
-		
 		const currentIndex = this.getCurrentIndex();
-		const steps = this.getSteps();
-		for (var i = currentIndex + 1, len = steps.length; i < len; i++) {
-			if (steps[i].type === "click" && steps[i].xpath === steps[currentIndex].xpath) {
-				logger.log(`found click for this mousedown, just skip this mousedown`)
-				return;
-			}
+		const currentPath = step.path;
+		const avoidClick = this.getSteps()
+			.filter((step, index) => index > currentIndex)
+			.some(step => step.type === 'click' && step.path === currentPath);
+		if (avoidClick) {
+			logger.log(`found click for this mousedown, just skip this mousedown`);
+			return;
 		}
 		await element.click();
 	}
@@ -762,14 +745,67 @@ class Replayer {
 			await page.close();
 		}
 	}
+	createThirdStepSupport(element) {
+		return new ThirdStepSupport({
+			element,
+			tagNameRetrieve: this.createElmentTagNameRetriever(),
+			elementTypeRetrieve: this.createElementTypeRetriever(),
+			classNamesRetrieve: this.createElementClassNamesRetriever(),
+			attrValueRetrieve: this.createElementAttrValueRetriever(),
+			steps: this.getSteps(),
+			currentStepIndex: this.getCurrentIndex(),
+			logger
+		});
+	}
+	createElmentTagNameRetriever() {
+		let tagName;
+		return async element => {
+			if (!tagName) {
+				tagName = await this.getElementTagName(element);
+			}
+			return tagName;
+		};
+	}
 	async getElementTagName(element) {
 		return await element.evaluate(node => node.tagName);
+	}
+	createElementTypeRetriever() {
+		let elementType;
+		return async element => {
+			if (!elementType) {
+				elementType = await this.getElementType(element);
+			}
+			return elementType;
+		};
 	}
 	async getElementType(element) {
 		return await element.evaluate(node => node.getAttribute('type'));
 	}
 	async getElementChecked(element) {
 		return await element.evaluate(node => node.checked);
+	}
+	createElementClassNamesRetriever() {
+		let classNames;
+		return async element => {
+			if (!classNames) {
+				classNames = await this.getElementAttrValue(element, 'class');
+			}
+			return classNames;
+		};
+	}
+	createElementAttrValueRetriever() {
+		const values = {};
+		return async (element, attrName) => {
+			if (!Object.keys(values).includes(attrName)) {
+				const value = await this.getElementAttrValue(element, attrName);
+				if (typeof value === 'undefined') {
+					values[attrName] = null;
+				} else {
+					values[attrName] = value;
+				}
+			}
+			return values[attrName];
+		};
 	}
 	async getElementAttrValue(element, attrName) {
 		return await element.evaluate((node, attr) => node.getAttribute(attr), attrName);

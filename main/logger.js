@@ -6,7 +6,7 @@ const pino = require('pino');
 const construct = () => {
 	app.setAppLogsPath();
 	const logFolder = path.join(app.getPath('logs'));
-	// console.log(logFolder);
+	console.log(logFolder);
 	const logFile = 'console.log';
 	const logFilePath = path.join(logFolder, logFile);
 	if (!fs.existsSync(logFolder)) {
