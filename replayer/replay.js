@@ -33,9 +33,11 @@ const controlPage = async (replayer, page, device) => {
 	const setBackground = () => (document.documentElement.style.backgroundColor = 'rgba(25,25,25,0.8)');
 	await page.evaluate(setBackground);
 
-	// Enable both JavaScript and CSS coverage
-	await page.coverage.startJSCoverage();
-	await page.coverage.startCSSCoverage();
+	if (!inElectron) {
+		// Enable both JavaScript and CSS coverage only in CI
+		await page.coverage.startJSCoverage();
+		await page.coverage.startCSSCoverage();
+	}
 
 	page.on('load', async () => {
 		await page.evaluate(setBackground);
@@ -409,7 +411,7 @@ class Replayer {
 					await browser.close();
 					delete browsers[generateKeyByString(this.getStoryName(), this.getFlow().name)];
 				} catch (e) {
-					logger.error('Failed to close brwoser.');
+					logger.error('Failed to close browser.');
 					logger.error(e);
 				}
 			}
