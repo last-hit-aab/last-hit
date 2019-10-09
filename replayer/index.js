@@ -103,6 +103,17 @@ const parallel = args.parallel || 1;
 const hanldeFlowObject = flowObject => {
 	const { story: storyName, flow: flowName } = flowObject;
 	const flowKey = `${flowName}@${storyName}`;
+
+	const timeLoggerStream = new require('stream').Transform();
+	let timeSpent;
+	timeLoggerStream._transform = function(chunk, encoding, done) {
+		this.push(chunk);
+		timeSpent = typeof chunk === 'string' ? chunk : chunk.toString();
+		done();
+	};
+	const timeLogger = new console.Console({ stdout: timeLoggerStream });
+	timeLogger.time(flowKey);
+
 	console.info(`Start to replay [${flowKey}].`.italic.blue.underline);
 	const file = path.join(workspace, storyName, `${flowName}.flow.json`);
 	let flow = null;
@@ -144,6 +155,7 @@ const hanldeFlowObject = flowObject => {
 	const promise = new Promise(resolve => {
 		handleReplayStepEnd(emitter, { name: storyName }, flow, () => {
 			const summary = replayer.current.getSummary();
+			timeLogger.timeEnd(flowKey);
 			if (summary == null || Object.keys(summary).length === 0) {
 				report.push({
 					storyName: storyName,
@@ -154,10 +166,11 @@ const hanldeFlowObject = flowObject => {
 					numberOfFailed: flow.steps.length,
 					ignoreErrorList: [],
 					numberOfAjax: '-',
-					slowAjaxRequest: []
+					slowAjaxRequest: [],
+					spent: timeSpent
 				});
 			} else {
-				report.push(summary);
+				report.push({ ...summary, spent: timeSpent });
 			}
 			resolve();
 		});
@@ -189,7 +202,8 @@ flows
 					Failed: item.numberOfFailed,
 					'Ignored Errors': item.ignoreErrorList,
 					'Ajax calls': item.numberOfAjax,
-					'Slow ajax calls': item.slowAjaxRequest
+					'Slow ajax calls': item.slowAjaxRequest,
+					'Spent (ms)': Math.round((item.spent || '').split(' ')[1].split('ms')[0])
 				};
 			}),
 			[
@@ -201,7 +215,8 @@ flows
 				'Failed',
 				'Ignored Errors',
 				'Ajax calls',
-				'Slow ajax calls'
+				'Slow ajax calls',
+				'Spent (ms)'
 			]
 		);
 	});
