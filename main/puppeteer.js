@@ -483,15 +483,8 @@ const recordRemoteRequests = async (page, flowKey, allPages) => {
  * @param {string} flowKey
  */
 const isAllRelatedPagesClosed = async (page, flowKey) => {
-	const allPages = await page.browser().pages();
-	return (
-		allPages
-			.filter(p => page !== p)
-			.filter(async p => {
-				const key = await page.evaluate(() => window.$lhGetFlowKey());
-				return key === flowKey;
-			}).length === 0
-	);
+	const pages = await page.browser().pages();
+	return pages.filter(p => page !== p).length === 0;
 };
 /**
  *
@@ -515,7 +508,7 @@ const controlPage = async (page, options, allPages) => {
 	page.on('close', async () => {
 		// RESEARCH already closed? seems like this.
 		// traverse all pages to check all related pages were closed or not
-		const allClosed = isAllRelatedPagesClosed(page, flowKey);
+		const allClosed = await isAllRelatedPagesClosed(page, flowKey);
 		const uuid = allPages.removeByPage(page);
 		if (uuid) {
 			sendRecordedEvent(JSON.stringify({ type: 'page-closed', url: page.url(), allClosed, uuid }));
@@ -642,7 +635,7 @@ const launch = () => {
 				if (target.type() === 'page') {
 					console.log('browser event target destroyed caught');
 					const page = await target.page();
-					const allClosed = isAllRelatedPagesClosed(page, flowKey);
+					const allClosed = await isAllRelatedPagesClosed(page, flowKey);
 					const uuid = allPages.removeByPage(page);
 					if (uuid) {
 						sendRecordedEvent(JSON.stringify({ type: 'page-closed', url: page.url(), uuid, allClosed }));
