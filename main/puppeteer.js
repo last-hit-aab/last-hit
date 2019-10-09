@@ -1,7 +1,6 @@
 const { ipcMain, BrowserWindow } = require('electron');
 const puppeteer = require('puppeteer');
 const uuidv4 = require('uuid/v4');
-const pti = require('puppeteer-to-istanbul');
 
 const getChromiumExecPath = () => {
 	return puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked');
@@ -394,10 +393,6 @@ const controlPage = async (page, options, allPages) => {
 	const setBackground = () => (document.documentElement.style.backgroundColor = 'rgba(25,25,25,0.8)');
 	await page.evaluate(setBackground);
 
-	// Enable both JavaScript and CSS coverage
-	await page.coverage.startJSCoverage();
-	await page.coverage.startCSSCoverage();
-
 	page.on('load', async () => {
 		await page.evaluate(setBackground);
 	});
@@ -550,22 +545,6 @@ const launch = () => {
 	});
 	const disconnectPuppeteer = async (flowKey, close) => {
 		const browser = browsers[flowKey];
-		const pages = await browser.pages();
-		const coverages = await pages.reduce(async (coverages, page) => {
-			let jsCoverage = [];
-			let cssCoverage = [];
-			try {
-				jsCoverage = await page.coverage.stopJSCoverage();
-			} catch (e) {
-				console.error(e);
-			}
-			try {
-				cssCoverage = await page.coverage.stopCSSCoverage();
-			} catch (e) {
-				console.error(e);
-			}
-			return coverages.concat(jsCoverage).concat(cssCoverage);
-		}, []);
 		try {
 			await browser.disconnect();
 		} catch (e) {
@@ -581,20 +560,17 @@ const launch = () => {
 				console.error(e);
 			}
 		}
-		return coverages;
 	};
 	ipcMain.on('disconnect-puppeteer', (event, arg) => {
 		(async () => {
 			const { flowKey } = arg;
-			const coverages = await disconnectPuppeteer(flowKey);
-			pti.write(coverages);
+			await disconnectPuppeteer(flowKey);
 		})();
 	});
 	ipcMain.on('abolish-puppeteer', (event, arg) => {
 		(async () => {
 			const { flowKey } = arg;
-			const coverages = await disconnectPuppeteer(flowKey, true);
-			pti.write(coverages);
+			await disconnectPuppeteer(flowKey, true);
 		})();
 	});
 	ipcMain.on('capture-screen', (event, arg) => {
