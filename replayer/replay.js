@@ -5,12 +5,7 @@ const fs = require('fs');
 const uuidv4 = require('uuid/v4');
 const atob = require('atob');
 const util = require('util');
-const {
-	initReplayRecord,
-	recordReplayEvent,
-	recordReplayEventError,
-	destory: destoryReplaySummary
-} = require('./replay-result');
+const ReplayResult = require('./replay-result');
 
 const inElectron = !!process.versions.electron;
 
@@ -257,7 +252,7 @@ class Replayer {
 		this.pages = {};
 		// key is uuid, value is LoggedRequests
 		this.requests = {};
-		this.summary = {};
+		this.summary = new ReplayResult({ storyName, flow });
 	}
 	getStoryName() {
 		return this.storyName;
@@ -269,10 +264,13 @@ class Replayer {
 		return `[${this.getFlow().name}@${this.getStoryName()}]`;
 	}
 	/**
-	 * @returns empty object when no summary
+	 * @returns summary object
 	 */
 	getSummary() {
 		return this.summary;
+	}
+	getSummaryData() {
+		return this.summary.getSummary();
 	}
 	getSteps() {
 		return this.flow.steps || [];
@@ -367,7 +365,6 @@ class Replayer {
 		await this.isRemoteFinsihed(page);
 	}
 	async end(close) {
-		this.summary = destoryReplaySummary();
 		const browser = this.getBrowser();
 		if (browser == null) {
 			// do nothing, seems not start
@@ -716,14 +713,14 @@ const launch = () => {
 				default:
 					try {
 						logger.log(`Continue step[${index}]@${generateKeyByString(storyName, flowName)}.`);
-						recordReplayEvent(storyName, flowName, step.type, step);
+						replayer.getSummary().handle(step);
 						await replayer.next(flow, index);
 						waitForNextStep({ event, replayer, storyName, flowName, index });
 					} catch (e) {
 						logger.error(e);
 						// failed, prepare for next step
 						// send back
-						recordReplayEventError(storyName, flowName, step.type, step, e);
+						replayer.getSummary().handleError(step, e);
 						waitForNextStep({ event, replayer, storyName, flowName, index, error: e.message });
 					}
 			}
@@ -746,8 +743,6 @@ const launch = () => {
 			// put into cache
 			browsers[generateKeyByString(storyName, flow.name)] = replayer.getBrowser();
 
-			// init replay record
-			initReplayRecord(storyName, flow);
 			// successful, prepare for next step
 			// send back
 			waitForNextStep({ event, replayer, storyName, flowName: flow.name, index });
