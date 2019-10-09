@@ -32,6 +32,11 @@ const controlPage = async (replayer, page, device) => {
 	await page.emulateMedia('screen');
 	const setBackground = () => (document.documentElement.style.backgroundColor = 'rgba(25,25,25,0.8)');
 	await page.evaluate(setBackground);
+
+	// Enable both JavaScript and CSS coverage
+	await page.coverage.startJSCoverage();
+	await page.coverage.startCSSCoverage();
+
 	page.on('load', async () => {
 		await page.evaluate(setBackground);
 	});
@@ -253,6 +258,7 @@ class Replayer {
 		// key is uuid, value is LoggedRequests
 		this.requests = {};
 		this.summary = new ReplayResult({ storyName, flow });
+		this.coverages = [];
 	}
 	getStoryName() {
 		return this.storyName;
@@ -271,6 +277,9 @@ class Replayer {
 	}
 	getSummaryData() {
 		return this.summary.getSummary();
+	}
+	getCoverageData() {
+		return this.coverages;
 	}
 	getSteps() {
 		return this.flow.steps || [];
@@ -364,13 +373,32 @@ class Replayer {
 		const page = await launchBrowser(this);
 		await this.isRemoteFinsihed(page);
 	}
+	/**
+	 * only called in CI
+	 * @param {boolean} close
+	 */
 	async end(close) {
 		const browser = this.getBrowser();
 		if (browser == null) {
 			// do nothing, seems not start
 		} else {
 			try {
-				// printRecords(this.getStoryName(), this.getFlow().name);
+				const pages = await browser.pages();
+				this.coverages = await pages.reduce(async (coverages, page) => {
+					let jsCoverage = [];
+					let cssCoverage = [];
+					try {
+						jsCoverage = await page.coverage.stopJSCoverage();
+					} catch (e) {
+						console.error(e);
+					}
+					try {
+						cssCoverage = await page.coverage.stopCSSCoverage();
+					} catch (e) {
+						console.error(e);
+					}
+					return coverages.concat(jsCoverage).concat(cssCoverage);
+				}, []);
 				await browser.disconnect();
 			} catch (e) {
 				logger.error('Failed to disconnect from brwoser.');

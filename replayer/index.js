@@ -6,6 +6,8 @@ const jsonfile = require('jsonfile');
 const ReplayEmitter = require('./replay-emitter');
 const replay = require('./replay');
 const console = require('console');
+const pti = require('puppeteer-to-istanbul');
+const spawn = require('cross-spawn');
 
 const workspace = args.workspace;
 if (!workspace) {
@@ -155,6 +157,8 @@ const hanldeFlowObject = flowObject => {
 	const promise = new Promise(resolve => {
 		handleReplayStepEnd(emitter, { name: storyName }, flow, () => {
 			const summary = replayer.current.getSummaryData();
+			coverages.push(...replayer.current.getCoverageData());
+			// console.log(coverages.length);
 			timeLogger.timeEnd(flowKey);
 			report.push({ ...summary, spent: timeSpent });
 			resolve();
@@ -165,6 +169,7 @@ const hanldeFlowObject = flowObject => {
 };
 
 const report = [];
+const coverages = [];
 
 flows
 	.reduce(async (promise, flowObject) => {
@@ -176,6 +181,8 @@ flows
 		}
 	}, Promise.resolve())
 	.finally(() => {
+		pti.write(coverages);
+		spawn.sync('nyc', ['report', '--reporter=html'], { stdio: 'inherit' });
 		console.table(
 			report.map(item => {
 				return {
