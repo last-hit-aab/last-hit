@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
-const { app } = require('electron')
+const { app } = require('electron');
+const pino = require('pino');
 
 const construct = () => {
 	app.setAppLogsPath();
@@ -12,8 +13,9 @@ const construct = () => {
 		fs.mkdirSync(logFolder, { recursive: true });
 	}
 	fs.appendFileSync(logFilePath, '\n');
-	const logger = require('pino')({ prettyPrint: true }, logFilePath);
+	const logger = pino({ prettyPrint: true }, logFilePath);
 	logger.level = 'debug';
+	logger.log = logger.debug;
 	return logger;
 };
 
