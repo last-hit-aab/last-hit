@@ -1,120 +1,58 @@
-const uuidv4 = require('uuid/v4');
-
 class ReplaySummary {
 	constructor(options) {
-		const { storyName, flowName, replayId } = options;
+		const { storyName, flow } = options;
 		this.storyName = storyName;
-		this.flowName = flowName;
-		this.replayId = replayId;
-		this.numberOfStep = 0;
-		this.numberOfUIBehavior = 0;
-		this.numberOfSuccess = 0;
-		this.numberOfFailed = 0;
-		this.numberOfAssert = 0;
-		this.ignoreErrorList = [];
-		this.numberOfAjax = 0;
-		this.slowAjaxRequest = [];
+		this.flowName = flow.name;
+		this.summary = {
+			storyName,
+			flowName: flow.name,
+			numberOfStep: (flow.steps || []).length,
+			numberOfUIBehavior: 0,
+			numberOfSuccess: 0,
+			numberOfFailed: 0,
+			numberOfAssert: 0,
+			ignoreErrorList: [],
+			numberOfAjax: 0,
+			slowAjaxRequest: []
+		};
+	}
+	getSummary() {
+		return this.summary;
+	}
+	async handleError(step, error) {
+		if (step.type == 'ajax') {
+			this.summary.numberOfAjax += 1;
+		} else {
+			this.summary.numberOfFailed += 1;
+		}
+		return Promise.resolve(true);
+	}
+	async handle(step) {
+		if (step.type == 'ajax') {
+			this.summary.numberOfAjax += 1;
+			this.summary.numberOfSuccess += 1;
+		} else {
+			this.summary.numberOfUIBehavior += 1;
+			this.summary.numberOfSuccess += 1;
+		}
+		return Promise.resolve(true);
+	}
+	async print() {
+		console.table(
+			[this.summary],
+			[
+				'storyName',
+				'flowName',
+				'numberOfStep',
+				'numberOfUIBehavior',
+				'numberOfSuccess',
+				'numberOfFailed',
+				'ignoreErrorList',
+				'numberOfAjax',
+				'slowAjaxRequest'
+			]
+		);
 	}
 }
 
-const replayRecords = new Map();
-let currentReplayId = '';
-let replaySummary = null;
-
-const recordReplayEventError = async (storyName, flowName, replayType, data, e) => {
-	return new Promise((resolve, reject) => {
-		try {
-			const replayKey = _buildKey(storyName, flowName, currentReplayId);
-			if (replayType == 'ajax') {
-				replaySummary.numberOfAjax += 1;
-			} else {
-				// console.log('replayKey', replayKey);
-				replaySummary.numberOfFailed += 1;
-				// replayRecords.get(replayKey).push(data)
-			}
-
-			resolve(true);
-		} catch (e) {
-			console.error(e);
-			reject(e);
-		}
-	});
-};
-
-const recordReplayEvent = async (storyName, flowName, replayType, data) => {
-	return new Promise((resolve, reject) => {
-		try {
-			const replayKey = _buildKey(storyName, flowName, currentReplayId);
-			if (replayType == 'ajax') {
-				replaySummary.numberOfAjax += 1;
-				replaySummary.numberOfSuccess += 1;
-			} else {
-				replaySummary.numberOfUIBehavior += 1;
-				replaySummary.numberOfSuccess += 1;
-			}
-
-			resolve(true);
-		} catch (e) {
-			console.error(e);
-			reject(e);
-		}
-	});
-};
-
-const initReplayRecord = (storyName, flow) => {
-	const flowName = flow.name;
-	const numberOfStep = flow.steps.length - 1;
-	// console.log(this.replayRecords);
-	replayRecords.clear();
-	const replayId = uuidv4();
-	replaySummary = new ReplaySummary({ storyName, flowName, replayId });
-	replaySummary.numberOfStep = numberOfStep;
-	currentReplayId = replayId;
-	const key = _buildKey(storyName, flowName, replayId);
-	// console.log('key', key);
-	replayRecords.set(key, []);
-};
-
-const _buildKey = (storyName, flow, replayId) => {
-	return `${storyName}+${flow}+${replayId}`;
-};
-
-const getReplayRecords = (storyName, flowName) => {
-	const replayKey = _buildKey(storyName, flowName, currentReplayId);
-	return replayRecords.get(replayKey);
-};
-
-const printRecords = (storyName, flowName) => {
-	// const replayKey = _buildKey(storyName, flowName, currentReplayId);
-	console.table(
-		[replaySummary],
-		[
-			'storyName',
-			'flowName',
-			'numberOfStep',
-			'numberOfUIBehavior',
-			'numberOfSuccess',
-			'numberOfFailed',
-			'ignoreErrorList',
-			'numberOfAjax',
-			'slowAjaxRequest'
-		]
-	);
-};
-
-const destory = () => {
-	replayRecords.clear();
-	currentReplayId = '';
-	const summary = replaySummary;
-	replaySummary = null;
-	return summary;
-};
-
-module.exports = {
-	initReplayRecord,
-	recordReplayEvent,
-	getReplayRecords,
-	destory,
-	printRecords,
-	recordReplayEventError
-};
+module.exports = ReplaySummary;

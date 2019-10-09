@@ -154,24 +154,9 @@ const hanldeFlowObject = flowObject => {
 
 	const promise = new Promise(resolve => {
 		handleReplayStepEnd(emitter, { name: storyName }, flow, () => {
-			const summary = replayer.current.getSummary();
+			const summary = replayer.current.getSummaryData();
 			timeLogger.timeEnd(flowKey);
-			if (summary == null || Object.keys(summary).length === 0) {
-				report.push({
-					storyName: storyName,
-					flowName: flow.name,
-					numberOfStep: flow.steps.length,
-					numberOfUIBehavior: '-',
-					numberOfSuccess: 0,
-					numberOfFailed: flow.steps.length,
-					ignoreErrorList: [],
-					numberOfAjax: '-',
-					slowAjaxRequest: [],
-					spent: timeSpent
-				});
-			} else {
-				report.push({ ...summary, spent: timeSpent });
-			}
+			report.push({ ...summary, spent: timeSpent });
 			resolve();
 		});
 	});
