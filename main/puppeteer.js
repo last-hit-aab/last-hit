@@ -530,9 +530,9 @@ const controlPage = async (page, options, allPages) => {
 			allPages.add(uuid, newPage);
 			allPages.prepare(uuid, async () => {
 				await controlPage(newPage, { device, flowKey }, allPages);
-				const base64 = await captureScreenshot(newPage);
-				sendRecordedEvent(JSON.stringify({ type: 'page-created', url: newPage.url(), image: base64, uuid }));
 			});
+			const base64 = await captureScreenshot(newPage);
+			sendRecordedEvent(JSON.stringify({ type: 'page-created', url: newPage.url(), image: base64, uuid }));
 		}
 	});
 	// use scripts interception
@@ -563,7 +563,6 @@ const launch = () => {
 				viewport: { width, height }
 			} = device;
 			const browserArgs = [];
-			console.log(height);
 			browserArgs.push(`--window-size=${width},${height + 150}`);
 			browserArgs.push('--disable-infobars');
 			// browserArgs.push('--use-mobile-user-agent');
@@ -601,11 +600,11 @@ const launch = () => {
 						allPages.add(uuid, newPage);
 						allPages.prepare(uuid, async () => {
 							await controlPage(newPage, { device, flowKey }, allPages);
-							const base64 = await captureScreenshot(newPage);
-							sendRecordedEvent(
-								JSON.stringify({ type: 'page-created', url: newPage.url(), image: base64, uuid })
-							);
 						});
+						const base64 = await captureScreenshot(newPage);
+						sendRecordedEvent(
+							JSON.stringify({ type: 'page-created', url: newPage.url(), image: base64, uuid })
+						);
 					}
 				}
 			});
@@ -619,8 +618,8 @@ const launch = () => {
 					const url = page.url();
 					allPages.prepare(uuid, async () => {
 						await controlPage(page, { device, flowKey }, allPages);
-						sendRecordedEvent(JSON.stringify({ type: 'page-switched', url, uuid }));
 					});
+					sendRecordedEvent(JSON.stringify({ type: 'page-switched', url, uuid }));
 					let times = 0;
 					const handle = () => {
 						setTimeout(() => {
