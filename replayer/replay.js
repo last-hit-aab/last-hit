@@ -93,7 +93,7 @@ const controlPage = async (replayer, page, device) => {
 			throw new Error('Cannot find page created step for current popup, flow is broken for replay.');
 		}
 
-		replayer.putPage(pageCreateStep.uuid, newPage);
+		replayer.putPage(pageCreateStep.uuid, newPage, true);
 		await controlPage(replayer, newPage, device);
 	});
 	page.on('dialog', async dialog => {
@@ -194,7 +194,7 @@ const launchBrowser = async replayer => {
 	}
 	// set back to replayer
 	replayer.setBrowser(browser);
-	replayer.putPage(uuid, page);
+	replayer.putPage(uuid, page, true);
 	replayer.setDevice(device);
 	// add control into page
 	await controlPage(replayer, page, device);
@@ -269,8 +269,9 @@ class LoggedRequests {
 			}
 		} else if (this.used > this.timeout) {
 			const usedTime = this.used;
+			const msg = `Wait for all requests done, ${this.requests.length} sent and ${this.offsets.length} received, timeout after ${usedTime}ms.`;
 			this.clear();
-			reject(new Error(`Wait for all requests done, timeout after ${usedTime}ms.`));
+			reject(new Error(msg));
 		} else {
 			this.poll(resolve, reject);
 		}
@@ -369,12 +370,38 @@ class Replayer {
 		return page;
 	}
 	/**
+	 * sometimes page speed is very slow, the page-create, page-switch, popup events are not always in correct order on recording.
+	 *
 	 * @param {string} uuid
 	 * @param {Page} page
+	 * @param {boolean} force force close exists page when true, force close myself when false
+	 * @returns {boolean} true when successfully put, false means given page has been closed forcely
 	 */
-	putPage(uuid, page) {
-		this.pages[uuid] = page;
-		this.requests[uuid] = new LoggedRequests(page);
+	putPage(uuid, page, force) {
+		if (this.pages[uuid] != null) {
+			// already exists
+			if (force) {
+				// force is true means given is from popup, then exists is from page-created or page-switched
+				// force close exists and put given to cache
+				const exists = this.pages[uuid];
+				delete this.pages[uuid];
+				delete this.requests[uuid];
+				exists.close();
+				this.pages[uuid] = page;
+				this.requests[uuid] = new LoggedRequests(page);
+				return true;
+			} else {
+				// force is true means given is from page-created or page-switched, then force close given itself
+				// keep cache
+				page.close();
+				return false;
+			}
+		} else {
+			// not found, put into cache
+			this.pages[uuid] = page;
+			this.requests[uuid] = new LoggedRequests(page);
+			return true;
+		}
 	}
 	/**
 	 * @param {string|Page} uuidOrPage
@@ -742,12 +769,17 @@ class Replayer {
 			} else {
 				logger.debug(`To creat pop up page, and add page uuid is ${step.uuid}.`);
 				const newPage = await this.browser.newPage();
-				this.putPage(step.uuid, newPage);
-				await controlPage(this, newPage, this.device);
-				await Promise.all([
-					newPage.waitForNavigation(), // The promise resolves after navigation has finished
-					newPage.goto(step.url, { waitUntil: 'domcontentloaded' }) // Go to the url will indirectly cause a navigation
-				]);
+				if (this.putPage(step.uuid, newPage, false)) {
+					try {
+						await controlPage(this, newPage, this.device);
+						await Promise.all([
+							newPage.waitForNavigation(), // The promise resolves after navigation has finished
+							newPage.goto(step.url, { waitUntil: 'domcontentloaded' }) // Go to the url will indirectly cause a navigation
+						]);
+					} catch {
+						// maybe force closed by popup
+					}
+				}
 			}
 		}
 	}
@@ -755,18 +787,20 @@ class Replayer {
 		logger.debug(`Execute page switched, step url is ${step.url}.`);
 		const page = this.getPage(step.uuid);
 		if (page) {
+			// if query string or hash is different, treat as not changed
+			// since sometimes they have random token
 			const url = getUrlPath(page.url());
 			const newUrl = getUrlPath(step.url);
 			if (newUrl !== url) {
-				setTimeout(async () => {
-					const url = getUrlPath(page.url());
-					if (newUrl !== url) {
-						await Promise.all([
-							page.waitForNavigation(),
-							page.goto(step.url, { waitUntil: 'domcontentloaded' })
-						]);
-					}
-				}, 1000);
+				const sleep = util.promisify(setTimeout);
+				await sleep(1000);
+				const url = getUrlPath(page.url());
+				if (newUrl !== url) {
+					await Promise.all([
+						page.waitForNavigation(),
+						page.goto(step.url, { waitUntil: 'domcontentloaded' })
+					]);
+				}
 			}
 		} else {
 			// TODO really 1s?
@@ -778,12 +812,17 @@ class Replayer {
 			} else {
 				logger.debug(`To creat switched page, and add page uuid is ${step.uuid}.`);
 				const newPage = await this.browser.newPage();
-				this.putPage(step.uuid, newPage);
-				await controlPage(this, newPage, this.device);
-				await Promise.all([
-					newPage.waitForNavigation(),
-					newPage.goto(step.url, { waitUntil: 'domcontentloaded' })
-				]);
+				if (this.putPage(step.uuid, newPage, false)) {
+					try {
+						await controlPage(this, newPage, this.device);
+						await Promise.all([
+							newPage.waitForNavigation(),
+							newPage.goto(step.url, { waitUntil: 'domcontentloaded' })
+						]);
+					} catch {
+						// maybe force closed by popup
+					}
+				}
 			}
 		}
 	}
