@@ -243,7 +243,7 @@ class LoggedRequests {
 		this.used = 0;
 	}
 	async poll(resolve, reject, canResolve) {
-		await this.getPage().waitFor(500);
+		await this.getPage().waitFor(1000);
 		this.used += 1000;
 
 		for (var i = 0, len = this.requests.length; i < len; i++) {
@@ -394,32 +394,38 @@ class Replayer {
 		}
 	}
 	putRequest(uuid, request) {
-		this.requests[uuid].create(request);
+		const requests = this.requests[uuid];
+		if (requests) {
+			this.requests[uuid].create(request);
+		}
 	}
 	offsetRequest(uuid, request) {
-		this.requests[uuid].offset(request);
+		const requests = this.requests[uuid];
+		if (requests) {
+			requests.offset(request);
+		}
 	}
 	async isRemoteFinsihed(page) {
 		const uuid = this.findUuid(page);
 		const requests = this.requests[uuid];
-		return requests.waitForAllDone();
+		// return requests.waitForAllDone();
 
 		// peep next step, if not ajax step, resolve directly to speed up
-		// const { type } = this.getCurrentStep();
-		// if (['page-switched', 'page-created', 'scroll'].includes(type)) {
-		// 	return requests.waitForAllDone();
-		// }
-		// if (['scroll'].includes(type)) {
-		// 	return new Promise(resolve => setTimeout(resolve, 30));
-		// }
+		const { type } = this.getCurrentStep();
+		if (['page-switched', 'page-created', 'scroll'].includes(type)) {
+			return requests.waitForAllDone();
+		}
+		if (['scroll'].includes(type)) {
+			return new Promise(resolve => setTimeout(resolve, 30));
+		}
 
-		// const currentStepIndex = this.getCurrentIndex();
-		// const nextStep = this.getSteps()[currentStepIndex + 1];
-		// if (nextStep && nextStep.type === 'ajax') {
-		// 	return requests.waitForAllDone();
-		// } else {
-		// 	return Promise.resolve();
-		// }
+		const currentStepIndex = this.getCurrentIndex();
+		const nextStep = this.getSteps()[currentStepIndex + 1];
+		if (nextStep && nextStep.type === 'ajax') {
+			return requests.waitForAllDone();
+		} else {
+			return Promise.resolve();
+		}
 	}
 	async start() {
 		const page = await launchBrowser(this);
@@ -461,7 +467,7 @@ class Replayer {
 			return;
 		}
 
-		await (async () => {
+		const ret = await (async () => {
 			switch (step.type) {
 				case 'change':
 					return await this.executeChangeStep(step);
@@ -474,7 +480,10 @@ class Replayer {
 				case 'mousedown':
 					return await this.executeMousedownStep(step);
 				case 'ajax':
-					return await this.executeAjaxStep(step);
+					return await (async () => {
+						await this.executeAjaxStep(step);
+						return Promise.resolve({ wait: false });
+					})();
 				case 'scroll':
 					return await this.executeScrollStep(step);
 				case 'dialog-open':
@@ -486,14 +495,21 @@ class Replayer {
 				case 'page-switched':
 					return await this.executePageSwitchedStep(step);
 				case 'page-closed':
-					return await this.executePageClosedStep(step);
+					return await (async () => {
+						await this.executePageClosedStep(step);
+						return Promise.resolve({ wait: false });
+					})();
+				case 'end':
+					return Promise.resolve({ wait: false });
 				default:
 					logger.log(`Step[${step.type}] is not implemented yet.`);
 					return Promise.resolve();
 			}
 		})();
-		const page = await this.getPageOrThrow(step.uuid);
-		await this.isRemoteFinsihed(page);
+		if (!ret || ret.wait !== false) {
+			const page = await this.getPageOrThrow(step.uuid);
+			await this.isRemoteFinsihed(page);
+		}
 	}
 	async executeChangeStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
@@ -728,9 +744,9 @@ class Replayer {
 				const newPage = await this.browser.newPage();
 				this.putPage(step.uuid, newPage);
 				await controlPage(this, newPage, this.device);
-				const [response] = await Promise.all([
+				await Promise.all([
 					newPage.waitForNavigation(), // The promise resolves after navigation has finished
-					await newPage.goto(step.url, { waitUntil: 'domcontentloaded' }) // Go to the url will indirectly cause a navigation
+					newPage.goto(step.url, { waitUntil: 'domcontentloaded' }) // Go to the url will indirectly cause a navigation
 				]);
 			}
 		}
@@ -739,7 +755,19 @@ class Replayer {
 		logger.debug(`Execute page switched, step url is ${step.url}.`);
 		const page = this.getPage(step.uuid);
 		if (page) {
-			// await page.bringToFront();
+			const url = getUrlPath(page.url());
+			const newUrl = getUrlPath(step.url);
+			if (newUrl !== url) {
+				setTimeout(async () => {
+					const url = getUrlPath(page.url());
+					if (newUrl !== url) {
+						await Promise.all([
+							page.waitForNavigation(),
+							page.goto(step.url, { waitUntil: 'domcontentloaded' })
+						]);
+					}
+				}, 1000);
+			}
 		} else {
 			// TODO really 1s?
 			const sleep = util.promisify(setTimeout);
@@ -752,9 +780,9 @@ class Replayer {
 				const newPage = await this.browser.newPage();
 				this.putPage(step.uuid, newPage);
 				await controlPage(this, newPage, this.device);
-				const [response] = await Promise.all([
+				await Promise.all([
 					newPage.waitForNavigation(),
-					await newPage.goto(step.url, { waitUntil: 'domcontentloaded' })
+					newPage.goto(step.url, { waitUntil: 'domcontentloaded' })
 				]);
 			}
 		}
