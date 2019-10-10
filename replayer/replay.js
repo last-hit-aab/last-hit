@@ -182,8 +182,8 @@ const launchBrowser = async replayer => {
 	const browser = await puppeteer.launch({
 		headless: !inElectron,
 		executablePath: getChromiumExecPath(),
-		args: browserArgs
-		// slowMo: 5
+		args: browserArgs,
+		defaultViewport: null
 	});
 	const pages = await browser.pages();
 	let page;

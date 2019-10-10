@@ -564,7 +564,8 @@ const launch = () => {
 			const browser = await puppeteer.launch({
 				headless: false,
 				executablePath: getChromiumExecPath(),
-				args: browserArgs
+				args: browserArgs,
+				defaultViewport: null
 			});
 			// cache browser on global
 			browsers[flowKey] = browser;
