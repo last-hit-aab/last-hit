@@ -12,19 +12,19 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://gitlab.com/last-hit/last-hit.git"
+		"url": "git+https://github.com/last-hit-aab/last-hit.git"
 	},
 	"keywords": [
-		"automation",
 		"test",
-		"ci"
+		"web",
+		"automation"
 	],
 	"author": "last-hit-team",
 	"license": "UNLICENSED",
 	"bugs": {
-		"url": "https://gitlab.com/last-hit/last-hit/issues"
+		"url": "https://github.com/last-hit-aab/last-hit/issues"
 	},
-	"homepage": "https://gitlab.com/last-hit/last-hit#readme",
+	"homepage": "https://www.last-hit.com",
 	"dependencies": {
 		"atob": "^2.1.2",
 		"colors": "^1.4.0",
