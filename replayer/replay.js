@@ -54,6 +54,7 @@ const getChromiumExecPath = () => {
 };
 const getUrlPath = url => {
 	const parsed = new URL(url);
+	console.log(parsed, JSON.stringify(parsed))
 	parsed.search = '';
 	parsed.hash = '';
 	return parsed.href;
@@ -243,7 +244,7 @@ class LoggedRequests {
 		this.used = 0;
 	}
 	async poll(resolve, reject, canResolve) {
-		await this.getPage().waitFor(500);
+		await this.getPage().waitFor(100);
 		this.used += 1000;
 
 		for (var i = 0, len = this.requests.length; i < len; i++) {
@@ -461,6 +462,9 @@ class Replayer {
 			return;
 		}
 
+
+		console.log("step", JSON.stringify(step))
+
 		await (async () => {
 			switch (step.type) {
 				case 'change':
@@ -657,12 +661,16 @@ class Replayer {
 
 		const support = this.createThirdStepSupport(element);
 		const done = await support.mousedown();
+
+		console.log("done", done)
 		if (!done) {
 			const currentIndex = this.getCurrentIndex();
 			const currentPath = step.path;
+			console.log("currentPath", currentPath)
 			const avoidClick = this.getSteps()
 				.filter((step, index) => index > currentIndex)
 				.some(step => step.type === 'click' && step.path === currentPath);
+			console.log("avoidClick", avoidClick)
 			if (avoidClick) {
 				logger.log(`found click for this mousedown, just skip this mousedown`);
 				return;
@@ -809,7 +817,7 @@ class Replayer {
 		let classNames;
 		return async element => {
 			if (!classNames) {
-				classNames = await this.getElementAttrValue(element, 'class');
+				classNames = (await this.getElementAttrValue(element, 'class')) || '';
 			}
 			return classNames;
 		};
@@ -871,6 +879,7 @@ const launch = () => {
 						waitForNextStep({ event, replayer, storyName, flowName, index });
 					} catch (e) {
 						logger.error(e);
+						console.log(e)
 						// failed, prepare for next step
 						// send back
 						replayer.getSummary().handleError(step, e);
