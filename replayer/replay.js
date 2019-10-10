@@ -439,7 +439,7 @@ class Replayer {
 
 		// peep next step, if not ajax step, resolve directly to speed up
 		const { type } = this.getCurrentStep();
-		if (['page-switched', 'page-created', 'scroll'].includes(type)) {
+		if (['page-switched', 'page-created'].includes(type)) {
 			return requests.waitForAllDone();
 		}
 		if (['scroll'].includes(type)) {
@@ -701,15 +701,12 @@ class Replayer {
 		const support = this.createThirdStepSupport(element);
 		const done = await support.mousedown();
 
-		console.log("done", done)
 		if (!done) {
 			const currentIndex = this.getCurrentIndex();
 			const currentPath = step.path;
-			console.log("currentPath", currentPath)
 			const avoidClick = this.getSteps()
 				.filter((step, index) => index > currentIndex)
 				.some(step => step.type === 'click' && step.path === currentPath);
-			console.log("avoidClick", avoidClick)
 			if (avoidClick) {
 				logger.log(`found click for this mousedown, just skip this mousedown`);
 				return;
@@ -871,7 +868,7 @@ class Replayer {
 		};
 	}
 	async getElementType(element) {
-		return await element.evaluate(node => node.getAttribute('type'));
+		return (await element.evaluate(node => node.getAttribute('type'))) || '';
 	}
 	async getElementChecked(element) {
 		return await element.evaluate(node => node.checked);
@@ -942,7 +939,7 @@ const launch = () => {
 						waitForNextStep({ event, replayer, storyName, flowName, index });
 					} catch (e) {
 						logger.error(e);
-						console.log(e)
+						console.log(e);
 						// failed, prepare for next step
 						// send back
 						replayer.getSummary().handleError(step, e);
