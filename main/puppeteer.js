@@ -246,8 +246,8 @@ const installListenersOnPage = async page => {
 				document.body.removeChild(mask);
 				const { clientX, clientY } = event;
 				const elements = document.elementsFromPoint(clientX, clientY);
-				if (elements.length > 1) {
-					element = elements[1];
+				if (elements.length > 0) {
+					element = elements[0];
 				}
 			}
 
