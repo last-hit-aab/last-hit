@@ -439,7 +439,7 @@ class Replayer {
 
 		// peep next step, if not ajax step, resolve directly to speed up
 		const { type } = this.getCurrentStep();
-		if (['page-switched', 'page-created', 'scroll'].includes(type)) {
+		if (['page-switched', 'page-created'].includes(type)) {
 			return requests.waitForAllDone();
 		}
 		if (['scroll'].includes(type)) {
@@ -451,7 +451,8 @@ class Replayer {
 		if (nextStep && nextStep.type === 'ajax') {
 			return requests.waitForAllDone();
 		} else {
-			return Promise.resolve();
+			// wait for several milliseconds, maybe there is some animation or dom changes
+			return new Promise(resolve => setTimeout(resolve, 30));
 		}
 	}
 	async start() {
@@ -868,7 +869,7 @@ class Replayer {
 		};
 	}
 	async getElementType(element) {
-		return await element.evaluate(node => node.getAttribute('type'));
+		return (await element.evaluate(node => node.getAttribute('type'))) || '';
 	}
 	async getElementChecked(element) {
 		return await element.evaluate(node => node.checked);

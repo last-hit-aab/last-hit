@@ -6,7 +6,7 @@ const jsonfile = require('jsonfile');
 const ReplayEmitter = require('./replay-emitter');
 const replay = require('./replay');
 const console = require('console');
-const pti = require('puppeteer-to-istanbul');
+const pti = require('./pti-rewrite');
 const spawn = require('cross-spawn');
 const { generate_report } = require('./result-report')
 

@@ -1,6 +1,6 @@
 {
 	"name": "last-hit",
-	"version": "0.3.4",
+	"version": "0.3.6",
 	"description": "last hit on enterprise web",
 	"private": true,
 	"main": "main/index.js",
@@ -17,7 +17,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://gitlab.com/last-hit/last-hit.git"
+		"url": "git+https://github.com/last-hit-aab/last-hit.git"
 	},
 	"keywords": [
 		"test",
@@ -27,9 +27,9 @@
 	"author": "last-hit-team",
 	"license": "UNLICENSED",
 	"bugs": {
-		"url": "https://gitlab.com/last-hit/last-hit/issues"
+		"url": "https://github.com/last-hit-aab/last-hit/issues"
 	},
-	"homepage": "https://gitlab.com/last-hit/last-hit#readme",
+	"homepage": "https://www.last-hit.com",
 	"devDependencies": {
 		"electron": "^6.0.11",
 		"electron-builder": "^21.2.0",
