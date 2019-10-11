@@ -183,7 +183,9 @@ const launchBrowser = async replayer => {
 		headless: !inElectron,
 		executablePath: getChromiumExecPath(),
 		args: browserArgs,
-		defaultViewport: null
+		defaultViewport: null,
+		slowMo: 12
+
 	});
 	const pages = await browser.pages();
 	let page;
