@@ -77,6 +77,11 @@ const buildResultRow = (ci_results) => {
                     attributes: { class: "test-result-step-command-cell" },
                     content: Math.round((ci_result.spent || '').split(' ')[1].split('ms')[0]).toString()
                 },
+                {
+                    type: "td",
+                    attributes: { class: "test-result-step-command-cell" },
+                    content: Math.floor(ci_result.numberOfSuccess / ci_result.numberOfStep * 100).toString()
+                },
             ]
         }
     })
@@ -205,6 +210,12 @@ function buildHtml(ci_results_content) {
                                             type: "td",
                                             attributes: { class: "test-result-table-header-cell" },
                                             content: "Spent (ms)"
+                                        },
+
+                                        {
+                                            type: "td",
+                                            attributes: { class: "test-result-table-header-cell" },
+                                            content: "Pass Rate (%)"
                                         },
 
 
