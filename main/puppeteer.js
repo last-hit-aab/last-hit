@@ -59,7 +59,7 @@ class AllPagesCache {
 }
 
 /** stop pick dom from page */
-const createPageWindowEventRecorder = flowKey => (eventJsonStr, onPickDOM) => {
+const createPageWindowEventRecorder = flowKey => eventJsonStr => {
 	if (!eventJsonStr) {
 		console.warn('Argument is null.');
 		return;
@@ -67,14 +67,7 @@ const createPageWindowEventRecorder = flowKey => (eventJsonStr, onPickDOM) => {
 	try {
 		const windows = BrowserWindow.getAllWindows();
 		const jsonEvent = JSON.parse(eventJsonStr);
-		if (onPickDOM) {
-			windows[0].show();
-			windows[0].focus();
-			windows[0].focusOnWebView();
-			windows[0].webContents.send(`dom-on-page-picked`, { path: jsonEvent.path });
-		} else {
-			windows[0].webContents.send(`message-captured-${flowKey}`, jsonEvent);
-		}
+		windows[0].webContents.send(`message-captured-${flowKey}`, jsonEvent);
 	} catch (e) {
 		console.error(e);
 	}
@@ -134,6 +127,8 @@ const installListenersOnPage = async page => {
 					// } else if (elm.hasAttribute('class')) {
 					// 	segs.unshift(elm.localName.toLowerCase() + '[@class="' + elm.getAttribute('class') + '"]');
 				} else {
+					var i = 1;
+					var sib;
 					for (i = 1, sib = elm.previousSibling; sib; sib = sib.previousSibling) {
 						if (sib.localName == elm.localName) i++;
 					}
@@ -233,24 +228,7 @@ const installListenersOnPage = async page => {
 				return;
 			}
 
-			const mask = document.getElementById('$lh-mask');
-			const isOnMask = e.target === mask;
-			if (isOnMask && e.type !== 'click') {
-				// on pick dom mode, only click is cared,
-				// otherwise ignored
-				return;
-			}
-
 			let element = e.target;
-			if (isOnMask) {
-				document.body.removeChild(mask);
-				const { clientX, clientY } = event;
-				const elements = document.elementsFromPoint(clientX, clientY);
-				if (elements.length > 0) {
-					element = elements[0];
-				}
-			}
-
 			const data = transformEvent(e, element);
 			data.uuid = window.$lhUuid;
 			if (e.type === 'scroll') {
@@ -258,7 +236,7 @@ const installListenersOnPage = async page => {
 					clearTimeout(scrollTimeoutHandle);
 				}
 				scrollTimeoutHandle = setTimeout(() => {
-					window.$lhRecordEvent(JSON.stringify(data), isOnMask);
+					window.$lhRecordEvent(JSON.stringify(data));
 					scrollTimeoutHandle = null;
 				}, 100);
 			} else if (
@@ -272,7 +250,7 @@ const installListenersOnPage = async page => {
 					const reader = new FileReader();
 					reader.onload = () => {
 						data.file = reader.result;
-						window.$lhRecordEvent(JSON.stringify(data), isOnMask);
+						window.$lhRecordEvent(JSON.stringify(data));
 					};
 					reader.readAsDataURL(file);
 				}
@@ -282,9 +260,9 @@ const installListenersOnPage = async page => {
 			) {
 				// record checked
 				data.checked = element.checked;
-				window.$lhRecordEvent(JSON.stringify(data), isOnMask);
+				window.$lhRecordEvent(JSON.stringify(data));
 			} else {
-				window.$lhRecordEvent(JSON.stringify(data), isOnMask);
+				window.$lhRecordEvent(JSON.stringify(data));
 			}
 		};
 
@@ -712,6 +690,111 @@ const launch = () => {
 			}
 		})();
 	});
+
+	class NodesMap {
+		constructor() {
+			this.ignoredIdRegexps = [/^md-.+-.{6,16}$/, /^select2-.+$/];
+			this.attrIdMap = new Map();
+			this.nodeIdMap = new Map();
+		}
+		shouldIgnore(id) {
+			return this.ignoredIdRegexps.some(regexp => regexp.test(id));
+		}
+		put(node) {
+			const attrIdValue = node.getAttribute('id');
+			if (attrIdValue) {
+				let data = this.attrIdMap.get(attrIdValue);
+				if (!data) {
+					data = [];
+					this.attrIdMap.set(attrIdValue, data);
+				}
+				data.push(node);
+			}
+			this.nodeIdMap.set(node.nodeId, node);
+		}
+		get(nodeId) {
+			return this.nodeIdMap.get(nodeId);
+		}
+		isIdAttrUnique(attrIdValue) {
+			const data = this.attrIdMap.get(attrIdValue);
+			return data && data.length === 1;
+		}
+	}
+	class Node {
+		/**
+		 * @param {*} node
+		 * @param {NodesMap} nodesMap
+		 */
+		constructor(node, nodesMap) {
+			this.nodeId = node.nodeId;
+			this.backendNodeId = node.backendNodeId;
+			this.nodeType = node.nodeType;
+			this.pseudoType = node.pseudoType;
+			this.localName = node.localName;
+
+			this.attributes = {};
+			if (node.attributes && node.attributes.length > 0) {
+				for (let index = 0, count = node.attributes.length / 2; index < count; index = index + 2) {
+					this.attributes[node.attributes[index]] = node.attributes[index + 1];
+				}
+			}
+			this.children = (node.children || []).map(child => {
+				const childNode = new Node(child, nodesMap);
+				childNode.parentNode = this;
+				return childNode;
+			});
+			for (let index = 0, count = this.children.length - 1; index < count; index++) {
+				const prev = this.children[index];
+				const next = this.children[index + 1];
+				next.previousSibling = prev;
+				prev.nextSibling = next;
+			}
+			this.pseudoElements = (node.pseudoElements || []).map(pseudo => {
+				const pseudoNode = new Node(pseudo, nodesMap);
+				pseudoNode.parentNode = this;
+				return pseudoNode;
+			});
+			nodesMap.put(this);
+		}
+		hasAttribute(name) {
+			return typeof this.attributes[name] !== 'undefined';
+		}
+		getAttribute(name) {
+			return this.attributes[name] || '';
+		}
+	}
+	/**
+	 * @param {Node} node
+	 * @param {NodesMap} nodesMap
+	 */
+	const createXPathFromNode = (node, nodesMap) => {
+		let segs = [];
+		for (; node && node.nodeType == 1; node = node.parentNode) {
+			const attrIdValue = node.getAttribute('id');
+			if (node.hasAttribute('id') && !nodesMap.shouldIgnore(attrIdValue)) {
+				if (nodesMap.isIdAttrUnique(attrIdValue)) {
+					segs.unshift(`//*[@id="${attrIdValue}"]`);
+					return segs.join('/');
+				} else {
+					segs.unshift(`${node.localName.toLowerCase()}[@id="${attrIdValue}"]`);
+				}
+			} else {
+				let index = 1;
+				let sib;
+				for (index = 1, sib = node.previousSibling; sib; sib = sib.previousSibling) {
+					if (sib.localName == node.localName) {
+						index++;
+					}
+				}
+				if (index > 1) {
+					segs.unshift(`${node.localName.toLowerCase()}[${index}]`);
+				} else {
+					segs.unshift(node.localName.toLowerCase());
+				}
+			}
+		}
+		return segs.length ? '/' + segs.join('/') : null;
+	};
 	ipcMain.on('start-pick-dom', (event, arg) => {
 		(async () => {
 			const { flowKey, uuid } = arg;
@@ -727,53 +810,42 @@ const launch = () => {
 			if (page == null) {
 				event.reply('dom-on-page-picked', { error: 'page not found.' });
 			} else {
-				await page.evaluate(() => {
-					const mask = document.createElement('div');
-					mask.id = '$lh-mask';
-					mask.style.position = 'fixed';
-					mask.style.top = 0;
-					mask.style.left = 0;
-					mask.style.bottom = 0;
-					mask.style.right = 0;
-					mask.style.backgroundColor = 'rgba(0,0,0,0.3)';
-					mask.style.zIndex = 9999999;
-
-					const topBorder = document.createElement('div');
-					const rightBorder = document.createElement('div');
-					const bottomBorder = document.createElement('div');
-					const leftBorder = document.createElement('div');
-					[topBorder, bottomBorder].forEach(element => (element.style.height = '2px'));
-					[rightBorder, leftBorder].forEach(element => (element.style.width = '2px'));
-					[topBorder, rightBorder, bottomBorder, leftBorder].forEach(element => {
-						element.style.backgroundColor = 'red';
-						element.style.position = 'fixed';
-						element.style.zIndex = 10000000;
-						element.style.transition = 'all 200ms ease';
-						mask.appendChild(element);
-					});
-
-					mask.addEventListener('mousemove', event => {
-						const { clientX, clientY } = event;
-						const elements = document.elementsFromPoint(clientX, clientY);
-						if (elements.length > 1) {
-							const element = elements[1];
-							const { top, left, height, width } = element.getBoundingClientRect();
-							// console.log(top, left, height, width, element);
-							topBorder.style.left = `${left - 6}px`;
-							topBorder.style.top = `${top - 6}px`;
-							topBorder.style.width = `${width + 12}px`;
-							rightBorder.style.left = `${left + width + 4}px`;
-							rightBorder.style.top = `${top - 6}px`;
-							rightBorder.style.height = `${height + 12}px`;
-							bottomBorder.style.left = `${left - 6}px`;
-							bottomBorder.style.top = `${top + height + 4}px`;
-							bottomBorder.style.width = `${width + 12}px`;
-							leftBorder.style.left = `${left - 6}px`;
-							leftBorder.style.top = `${top - 6}px`;
-							leftBorder.style.height = `${height + 12}px`;
+				const client = await page.target().createCDPSession();
+				await client.send('DOM.enable');
+				await client.send('Overlay.enable');
+				client.on('Overlay.inspectNodeRequested', async data => {
+					const { backendNodeId } = data;
+					if (backendNodeId) {
+						const { root } = await client.send('DOM.getDocument', { depth: -1 });
+						const nodesMap = new NodesMap();
+						new Node(root, nodesMap);
+						const {
+							nodeIds: [nodeId]
+						} = await client.send('DOM.pushNodesByBackendIdsToFrontend', {
+							backendNodeIds: [backendNodeId]
+						});
+						let node = nodesMap.get(nodeId);
+						if (node.pseudoType) {
+							node = node.parentNode;
 						}
-					});
-					document.body.appendChild(mask);
+						const xpath = createXPathFromNode(node, nodesMap);
+						const windows = BrowserWindow.getAllWindows();
+						windows[0].show();
+						windows[0].focus();
+						windows[0].focusOnWebView();
+						event.reply(`dom-on-page-picked`, { path: xpath });
+					}
+					await client.send('Overlay.setInspectMode', { mode: 'none', highlightConfig: {} });
+				});
+				await client.send('Overlay.setInspectMode', {
+					mode: 'searchForNode',
+					highlightConfig: {
+						showInfo: true,
+						showStyles: true,
+						contentColor: { r: 143, g: 184, b: 227, a: 0.7 },
+						marginColor: { r: 246, g: 194, b: 141, a: 0.7 },
+						paddingColor: { r: 184, g: 216, b: 169, a: 0.7 }
+					}
 				});
 				await page.bringToFront();
 			}
