@@ -451,7 +451,8 @@ class Replayer {
 		if (nextStep && nextStep.type === 'ajax') {
 			return requests.waitForAllDone();
 		} else {
-			return Promise.resolve();
+			// wait for several milliseconds, maybe there is some animation or dom changes
+			return new Promise(resolve => setTimeout(resolve, 30));
 		}
 	}
 	async start() {
