@@ -10,3 +10,4 @@ replayer/upload-temp
 .DS_Store
 replayer/stderr.log
 replayer/stdout.log
+replayer/report.html
