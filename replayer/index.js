@@ -8,6 +8,7 @@ const replay = require('./replay');
 const console = require('console');
 const pti = require('puppeteer-to-istanbul');
 const spawn = require('cross-spawn');
+const { generate_report } = require('./result-report')
 
 const workspace = args.workspace;
 if (!workspace) {
@@ -108,7 +109,7 @@ const hanldeFlowObject = flowObject => {
 
 	const timeLoggerStream = new require('stream').Transform();
 	let timeSpent;
-	timeLoggerStream._transform = function(chunk, encoding, done) {
+	timeLoggerStream._transform = function (chunk, encoding, done) {
 		this.push(chunk);
 		timeSpent = typeof chunk === 'string' ? chunk : chunk.toString();
 		done();
@@ -183,6 +184,10 @@ flows
 	.finally(() => {
 		pti.write(coverages);
 		spawn.sync('nyc', ['report', '--reporter=html'], { stdio: 'inherit' });
+
+		generate_report({ file_name: "report.html", results: report })
+
+
 		console.table(
 			report.map(item => {
 				return {

@@ -41,6 +41,7 @@
 		"canvas": "^2.6.0",
 		"cross-spawn": "^6.0.5",
 		"express": "^4.17.1",
+		"html-creator": "^0.4.3",
 		"node-gyp": "^6.0.0",
 		"pino": "^5.13.4",
 		"pino-pretty": "^3.2.1",

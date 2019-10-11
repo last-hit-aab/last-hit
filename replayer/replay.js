@@ -701,15 +701,12 @@ class Replayer {
 		const support = this.createThirdStepSupport(element);
 		const done = await support.mousedown();
 
-		console.log("done", done)
 		if (!done) {
 			const currentIndex = this.getCurrentIndex();
 			const currentPath = step.path;
-			console.log("currentPath", currentPath)
 			const avoidClick = this.getSteps()
 				.filter((step, index) => index > currentIndex)
 				.some(step => step.type === 'click' && step.path === currentPath);
-			console.log("avoidClick", avoidClick)
 			if (avoidClick) {
 				logger.log(`found click for this mousedown, just skip this mousedown`);
 				return;
@@ -942,7 +939,6 @@ const launch = () => {
 						waitForNextStep({ event, replayer, storyName, flowName, index });
 					} catch (e) {
 						logger.error(e);
-						console.log(e)
 						// failed, prepare for next step
 						// send back
 						replayer.getSummary().handleError(step, e);
