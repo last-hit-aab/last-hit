@@ -28,6 +28,7 @@
 	"dependencies": {
 		"atob": "^2.1.2",
 		"colors": "^1.4.0",
+		"html-creator": "^0.4.3",
 		"cross-spawn": "^7.0.1",
 		"jsonfile": "^5.0.0",
 		"nyc": "^14.1.1",
