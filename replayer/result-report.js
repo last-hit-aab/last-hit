@@ -80,7 +80,7 @@ const buildResultRow = (ci_results) => {
                 {
                     type: "td",
                     attributes: { class: "test-result-step-command-cell" },
-                    content: Math.floor(ci_result.numberOfSuccess / ci_result.numberOfStep * 100).toString()
+                    content: (ci_result.numberOfSuccess / ci_result.numberOfStep).toFixed(2).toString()
                 },
             ]
         }
