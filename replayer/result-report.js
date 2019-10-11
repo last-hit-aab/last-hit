@@ -6,7 +6,6 @@ const path = require('path');
 const generate_report = (options) => {
     const { file_name, results } = options;
     const html = buildHtml(buildResultRow(results));
-    console.log(html.renderHTML())
     html.renderHTMLToFile(path.join(process.cwd(), file_name));
 }
 
@@ -17,10 +16,11 @@ const buildResultRow = (ci_results) => {
 
     const rows = ci_results.map(ci_result => {
 
-        var class_failed = ".test-result-step-result-cell"
-        if (ci_result.numberOfFailed > 0) {
-            class_failed = "test-result-step-command-cell_failure"
+        var class_failed = "test-result-step-result-cell-failure"
+        if (ci_result.numberOfFailed <= 0) {
+            class_failed = "test-result-step-result-cell"
         }
+
 
         return {
             type: "tr",
@@ -81,14 +81,12 @@ const buildResultRow = (ci_results) => {
         }
     })
 
-    console.log(JSON.stringify(rows))
     return rows
 }
 
 
 // generate_report()
 function buildHtml(ci_results_content) {
-    console.log("ci_results_content", JSON.stringify(ci_results_content))
     const html = new htmlCreator([
         {
             type: 'head',
