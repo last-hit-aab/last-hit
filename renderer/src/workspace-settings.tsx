@@ -33,7 +33,7 @@ export enum StepType {
 	DIALOG_CLOSE = 'dialog-close', // done in replay
 	RESOURCE_LOAD = 'resource-load', // ignore on capture 20190925
 	LOAD = 'load', // ignore on capture 20190925
-	MOUSE_DOWN = 'mousedown',	// done in replay
+	MOUSE_DOWN = 'mousedown', // done in replay
 	KEY_DOWN = 'keydown', // done in replay
 	FOCUS = 'focus', // done in replay
 	SCROLL = 'scroll', // done in replay
@@ -241,7 +241,8 @@ const loadWorkspaceStructure = (settings: WorkspaceSettings): WorkspaceStructure
 								const flowFileData = jsonfile.readFileSync(path.join(storyFolder, file));
 								const { description, ...rest } = flowFileData;
 								flow = { name: asFlowName(file), description, ...rest };
-							} catch {
+							} catch (e) {
+								console.error(e);
 								flow = {
 									name: asFlowName(file),
 									description: 'File is broken! But never mind, just go on!'
