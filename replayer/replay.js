@@ -601,6 +601,16 @@ class Replayer {
 		} else {
 			// change is change only, cannot use type
 			await this.setValueToElement(element, step.value);
+			if (!inElectron) {
+				// in CI, headless puppeteer cannot invoke blur
+				// see https://github.com/GoogleChrome/puppeteer/issues/1462
+				const uuid = uuidv4();
+				await page.screenshot({
+					path: `capture-screenshot-to-ensure-blur-${uuid}.png`,
+					type: 'png'
+				});
+				fs.unlinkSync(`capture-screenshot-to-ensure-blur-${uuid}.png`);
+			}
 		}
 	}
 	async executeClickStep(step) {
@@ -925,11 +935,6 @@ class Replayer {
 			const event = document.createEvent('HTMLEvents');
 			event.initEvent('change', true, true);
 			node.dispatchEvent(event);
-			setTimeout(() => {
-				const event = document.createEvent('HTMLEvents');
-				event.initEvent('blur', true, true);
-				node.dispatchEvent(event);
-			}, 20);
 		}, value);
 	}
 }
