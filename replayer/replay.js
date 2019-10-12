@@ -982,6 +982,7 @@ const launch = () => {
 		handle.current = replayer;
 		try {
 			await replayer.start();
+			replayer.getSummary().handle((flow.steps || [])[0] || {});
 			// put into cache
 			browsers[generateKeyByString(storyName, flow.name)] = replayer.getBrowser();
 
@@ -990,6 +991,7 @@ const launch = () => {
 			waitForNextStep({ event, replayer, storyName, flowName: flow.name, index });
 		} catch (e) {
 			logger.error(e);
+			replayer.getSummary().handleError((flow.steps || [])[0] || {}, e);
 			// failed, prepare for next step
 			// send back
 			waitForNextStep({ event, replayer, storyName, flowName: flow.name, index, error: e.message });
