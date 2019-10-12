@@ -601,15 +601,9 @@ class Replayer {
 		} else {
 			// change is change only, cannot use type
 			await this.setValueToElement(element, step.value);
-			if (!inElectron) {
-				// in CI, headless puppeteer cannot invoke blur
-				// see https://github.com/GoogleChrome/puppeteer/issues/1462
-				const uuid = uuidv4();
-				await page.screenshot({
-					path: `capture-screenshot-to-ensure-blur-${uuid}.png`,
-					type: 'png'
-				});
-				fs.unlinkSync(`capture-screenshot-to-ensure-blur-${uuid}.png`);
+			if (settings.sleepAfterChange) {
+				const wait = util.promisify(setTimeout);
+				await wait(settings.sleepAfterChange);
 			}
 		}
 	}
@@ -735,6 +729,7 @@ class Replayer {
 		}
 	}
 	async executeAnimationStep(step) {
+		logger.log(`Execute animation, step path is ${xpath}`);
 		const wait = util.promisify(setTimeout);
 		await wait(step.duration);
 	}
@@ -1024,10 +1019,12 @@ const destory = () => {
 
 let emitter;
 let logger;
+let settings;
 
 module.exports = options => {
 	emitter = options.emitter;
 	logger = options.logger;
+	settings = options.settings || {};
 
 	return {
 		initialize: () => launch(),

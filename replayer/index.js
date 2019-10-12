@@ -8,7 +8,7 @@ const replay = require('./replay');
 const console = require('console');
 const pti = require('./pti-rewrite');
 const spawn = require('cross-spawn');
-const { generate_report } = require('./result-report')
+const { generate_report } = require('./result-report');
 
 const workspace = args.workspace;
 if (!workspace) {
@@ -20,6 +20,13 @@ const env = args.env;
 if (env) {
 	// TODO environment appointment
 }
+
+const settings = Object.keys(args)
+	.filter(key => key.startsWith('settings-'))
+	.reduce((all, key) => {
+		all[key.replace('settings-', '')] = args[key];
+		return all;
+	}, {});
 
 // story and flow name can be specified
 // if story is not given, flow name should be ingored
@@ -109,7 +116,7 @@ const hanldeFlowObject = flowObject => {
 
 	const timeLoggerStream = new require('stream').Transform();
 	let timeSpent;
-	timeLoggerStream._transform = function (chunk, encoding, done) {
+	timeLoggerStream._transform = function(chunk, encoding, done) {
 		this.push(chunk);
 		timeSpent = typeof chunk === 'string' ? chunk : chunk.toString();
 		done();
@@ -148,7 +155,8 @@ const hanldeFlowObject = flowObject => {
 	try {
 		replayer = replay({
 			emitter,
-			logger
+			logger,
+			settings
 		}).initialize();
 	} catch (e) {
 		logger.error(e);
@@ -185,8 +193,7 @@ flows
 		pti.write(coverages);
 		spawn.sync('nyc', ['report', '--reporter=html'], { stdio: 'inherit' });
 
-		generate_report({ file_name: "report.html", results: report })
-
+		generate_report({ file_name: 'report.html', results: report });
 
 		console.table(
 			report.map(item => {
