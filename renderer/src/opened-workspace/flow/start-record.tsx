@@ -94,7 +94,7 @@ export default (props: {
 			uuid: uuidv4()
 		};
 		ipcRenderer.send('launch-puppeteer', { ...options, flowKey: generateKeyByObject(story, flow) });
-		flow.steps = [{ type: StepType.START, ...options }];
+		flow.steps = [{ type: StepType.START, stepIndex: 0, stepUuid: uuidv4(), ...options }];
 		saveFlow(story, flow);
 		close(true);
 	};

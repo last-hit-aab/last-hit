@@ -61,6 +61,8 @@ export type Step = {
 	human?: string;
 	/** page uuid */
 	uuid: string;
+	stepIndex: number;
+	stepUuid: string;
 	/** screenshot, base64 */
 	image?: string;
 	/** breakpoint */
@@ -405,8 +407,18 @@ export const saveFlow = async (story: Story, flow: Flow) => {
 	// const storyFolder = getStoryFolder(settings, story);
 	try {
 		// properties name and state are no need to persist
-		const { name, ...rest } = flow;
-		await jsonfile.writeFile(getFlowFilePath(settings, story, flow), rest, { encoding: 'UTF-8', spaces: '\t' });
+		const { name, steps, ...rest } = flow;
+		await jsonfile.writeFile(
+			getFlowFilePath(settings, story, flow),
+			{
+				steps: (steps || []).map((step, index) => {
+					step.stepIndex = index;
+					return step;
+				}),
+				...rest
+			},
+			{ encoding: 'UTF-8', spaces: '\t' }
+		);
 		return Promise.resolve();
 	} catch (e) {
 		return Promise.reject(e);

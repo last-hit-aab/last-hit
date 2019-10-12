@@ -496,50 +496,56 @@ class Replayer {
 			return;
 		}
 
-		const ret = await (async () => {
-			switch (step.type) {
-				case 'change':
-					return await this.executeChangeStep(step);
-				case 'click':
-					return await this.executeClickStep(step);
-				case 'focus':
-					return await this.executeFocusStep(step);
-				case 'keydown':
-					return await this.executeKeydownStep(step);
-				case 'mousedown':
-					return await this.executeMousedownStep(step);
-				case 'animation':
-					return await this.executeAnimationStep(step);
-				case 'ajax':
-					return await (async () => {
-						await this.executeAjaxStep(step);
+		try {
+			const ret = await (async () => {
+				switch (step.type) {
+					case 'change':
+						return await this.executeChangeStep(step);
+					case 'click':
+						return await this.executeClickStep(step);
+					case 'focus':
+						return await this.executeFocusStep(step);
+					case 'keydown':
+						return await this.executeKeydownStep(step);
+					case 'mousedown':
+						return await this.executeMousedownStep(step);
+					case 'animation':
+						return await this.executeAnimationStep(step);
+					case 'ajax':
+						return await (async () => {
+							await this.executeAjaxStep(step);
+							return Promise.resolve({ wait: false });
+						})();
+					case 'scroll':
+						return await this.executeScrollStep(step);
+					case 'dialog-open':
+						return await this.executeDialogOpenStep(step);
+					case 'dialog-close':
+						return await this.executeDialogCloseStep(step);
+					case 'page-created':
+						return await this.executePageCreatedStep(step);
+					case 'page-switched':
+						return await this.executePageSwitchedStep(step);
+					case 'page-closed':
+						return await (async () => {
+							await this.executePageClosedStep(step);
+							return Promise.resolve({ wait: false });
+						})();
+					case 'end':
 						return Promise.resolve({ wait: false });
-					})();
-				case 'scroll':
-					return await this.executeScrollStep(step);
-				case 'dialog-open':
-					return await this.executeDialogOpenStep(step);
-				case 'dialog-close':
-					return await this.executeDialogCloseStep(step);
-				case 'page-created':
-					return await this.executePageCreatedStep(step);
-				case 'page-switched':
-					return await this.executePageSwitchedStep(step);
-				case 'page-closed':
-					return await (async () => {
-						await this.executePageClosedStep(step);
-						return Promise.resolve({ wait: false });
-					})();
-				case 'end':
-					return Promise.resolve({ wait: false });
-				default:
-					logger.log(`Step[${step.type}] is not implemented yet.`);
-					return Promise.resolve();
+					default:
+						logger.log(`Step[${step.type}] is not implemented yet.`);
+						return Promise.resolve();
+				}
+			})();
+			if (!ret || ret.wait !== false) {
+				const page = await this.getPageOrThrow(step.uuid);
+				await this.isRemoteFinsihed(page);
 			}
-		})();
-		if (!ret || ret.wait !== false) {
-			const page = await this.getPageOrThrow(step.uuid);
-			await this.isRemoteFinsihed(page);
+		} catch (e) {
+			const page = this.getPage(step.uuid);
+			await page.screenshot({ path: `error-${step.uuid}-${this.getSteps().indexOf(step)}.png`, type: 'png' });
+			throw e;
 		}
 	}
 	async executeChangeStep(step) {
@@ -919,6 +925,11 @@ class Replayer {
 			const event = document.createEvent('HTMLEvents');
 			event.initEvent('change', true, true);
 			node.dispatchEvent(event);
+			setTimeout(() => {
+				const event = document.createEvent('HTMLEvents');
+				event.initEvent('blur', true, true);
+				node.dispatchEvent(event);
+			}, 20);
 		}, value);
 	}
 }
