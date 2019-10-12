@@ -185,7 +185,6 @@ const launchBrowser = async replayer => {
 		args: browserArgs,
 		defaultViewport: null,
 		slowMo: 12
-
 	});
 	const pages = await browser.pages();
 	let page;
@@ -509,6 +508,8 @@ class Replayer {
 					return await this.executeKeydownStep(step);
 				case 'mousedown':
 					return await this.executeMousedownStep(step);
+				case 'animation':
+					return await this.executeAnimationStep(step);
 				case 'ajax':
 					return await (async () => {
 						await this.executeAjaxStep(step);
@@ -716,6 +717,10 @@ class Replayer {
 			}
 			await element.click();
 		}
+	}
+	async executeAnimationStep(step) {
+		const wait = util.promisify(setTimeout);
+		await wait(step.duration);
 	}
 	async executeScrollStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
@@ -941,6 +946,8 @@ const launch = () => {
 						await replayer.next(flow, index);
 						waitForNextStep({ event, replayer, storyName, flowName, index });
 					} catch (e) {
+						logger.error('Step execution failed, failed step as below:');
+						logger.error(step);
 						logger.error(e);
 						// failed, prepare for next step
 						// send back

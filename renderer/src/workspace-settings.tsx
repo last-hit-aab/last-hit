@@ -33,12 +33,13 @@ export enum StepType {
 	DIALOG_CLOSE = 'dialog-close', // done in replay
 	RESOURCE_LOAD = 'resource-load', // ignore on capture 20190925
 	LOAD = 'load', // ignore on capture 20190925
-	MOUSE_DOWN = 'mousedown',
+	MOUSE_DOWN = 'mousedown',	// done in replay
 	KEY_DOWN = 'keydown', // done in replay
 	FOCUS = 'focus', // done in replay
 	SCROLL = 'scroll', // done in replay
 	UNLOAD = 'unload', // ignore on capture 20190925
-	VALUE_CHANGE = 'valuechange' // ignore on capture 20190925
+	VALUE_CHANGE = 'valuechange', // ignore on capture 20190925
+	ANIMATION = 'animation' // done in replay
 }
 export type StepAssertion = {
 	element?: string;
@@ -135,6 +136,7 @@ export type TextChangeEvent = DomEventStep & { type: StepType.CHANGE };
 export type FocusStep = DomEventStep & { type: StepType.FOCUS };
 export type ChangeStep = DomEventStep & { type: StepType.CHANGE; value: string };
 export type DomChangeStep = Step & { type: StepType.DOM_CHANGE };
+export type AnimationStep = Step & { type: StepType.ANIMATION };
 export enum StepAssertOperator {
 	EQUALS = '==',
 	NOT_EQUALS = '<>',

@@ -40,15 +40,17 @@ const useStyles = makeStyles(theme => ({
 			display: 'block',
 			fontSize: '0.5rem',
 			color: theme.palette.secondary.light,
-			width: 14,
+			width: 'auto',
+			minWidth: 14,
 			height: 14,
 			border: `1px solid ${theme.palette.secondary.light}`,
-			borderRadius: '100%',
+			borderRadius: '7px',
 			textAlign: 'center',
 			lineHeight: '14px',
 			overflow: 'hidden',
 			whiteSpace: 'nowrap',
-			left: 2
+			left: 2,
+			padding: '0 2px'
 		},
 		'&:before': {
 			content: 'attr(data-index)',

@@ -2,6 +2,7 @@ import { faHtml5 } from '@fortawesome/free-brands-svg-icons';
 import {
 	faEdit,
 	faPaperPlane,
+	faFire,
 	faQuestionCircle,
 	faRoute,
 	faSnowboarding,
@@ -187,6 +188,10 @@ const STEP_FORKS = {
 	[StepType.SUBMIT]: {
 		icon: <FontAwesomeIcon icon={faPaperPlane} />,
 		label: (step: Step): string => 'Tranditional sumbit triggered, your deserve it!'
+	},
+	[StepType.ANIMATION]: {
+		icon: <FontAwesomeIcon icon={faFire} />,
+		label: (step: Step): string => 'Animation is running.'
 	}
 } as { [key in StepType]: { icon: JSX.Element; label: (step: Step) => string } };
 
@@ -220,7 +225,8 @@ export const IRRELEVANT_STEPS = [
 	StepType.LOAD,
 	StepType.UNLOAD,
 	StepType.RESOURCE_LOAD,
-	StepType.PAGE_ERROR
+	StepType.PAGE_ERROR,
+	StepType.ANIMATION
 ];
 export enum ReplayType {
 	SMART = 1,

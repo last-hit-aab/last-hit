@@ -67,6 +67,7 @@ const createPageWindowEventRecorder = flowKey => eventJsonStr => {
 	try {
 		const windows = BrowserWindow.getAllWindows();
 		const jsonEvent = JSON.parse(eventJsonStr);
+		jsonEvent.stepUuid = uuidv4();
 		windows[0].webContents.send(`message-captured-${flowKey}`, jsonEvent);
 	} catch (e) {
 		console.error(e);
@@ -480,6 +481,18 @@ const controlPage = async (page, options, allPages) => {
 	const setBackground = () => (document.documentElement.style.backgroundColor = 'rgba(25,25,25,0.8)');
 	await page.evaluate(setBackground);
 
+	const client = await page.target().createCDPSession();
+	await client.send('Animation.enable');
+	client.on('Animation.animationStarted', ({ animation }) => {
+		sendRecordedEvent(
+			JSON.stringify({
+				type: 'animation',
+				duration: (animation.source || {}).duration,
+				uuid: allPages.findUuidByPage(page)
+			})
+		);
+	});
+
 	page.on('load', async () => {
 		await page.evaluate(setBackground);
 	});
@@ -491,6 +504,10 @@ const controlPage = async (page, options, allPages) => {
 		if (uuid) {
 			sendRecordedEvent(JSON.stringify({ type: 'page-closed', url: page.url(), allClosed, uuid }));
 		}
+
+		try {
+			client.detach();
+		} catch {}
 	});
 	// page created by window.open or anchor
 	page.on('popup', async newPage => {
