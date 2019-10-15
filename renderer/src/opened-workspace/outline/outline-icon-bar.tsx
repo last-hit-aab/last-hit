@@ -81,9 +81,9 @@ export default (props: {
 				<DevicesOtherIcon />
 			</IconButton>
 			<Grid item className={classes.verticalIconBarPlaceholder} />
-			<IconButton color="inherit" aria-label="outline settings" title="Workspace Settings">
+			{/* <IconButton color="inherit" aria-label="outline settings" title="Workspace Settings">
 				<SettingsIcon />
-			</IconButton>
+			</IconButton> */}
 			{/* <IconButton color="inherit" aria-label="outline help" title="Help">
 				<HelpIcon />
 			</IconButton> */}
