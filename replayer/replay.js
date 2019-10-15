@@ -287,7 +287,13 @@ class Replayer {
 	constructor(options) {
 		const { storyName, flow } = options;
 		this.storyName = storyName;
-		this.flow = flow;
+		this.flow = (() => {
+			const { steps = [], ...rest } = flow;
+			return {
+				...rest,
+				steps: steps.map(step => env.wrap(step))
+			};
+		})();
 		this.currentIndex = 0;
 		this.browser = null;
 		// key is uuid, value is page
@@ -1022,14 +1028,34 @@ const destory = () => {
 let emitter;
 let logger;
 let settings;
+let env;
 
-module.exports = options => {
+/**
+ * there is only one replayer environment for one process
+ *
+ * @param {{
+ * 	emitter: ReplayEmitter,
+ * 	logger: Console,
+ * 	settings?: {
+ * 		sleepAfterChange?: number
+ * 	},
+ * 	env?: Environment
+ * }} options
+ */
+const create = options => {
 	emitter = options.emitter;
 	logger = options.logger;
 	settings = options.settings || {};
+	env =
+		options.env ||
+		(() => {
+			const Environment = require('./lib/env');
+			return new Environment();
+		})();
 
 	return {
 		initialize: () => launch(),
 		destory
 	};
 };
+module.exports = create;

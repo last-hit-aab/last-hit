@@ -10,7 +10,7 @@ import KeyboardArrowLeftRoundedIcon from '@material-ui/icons/KeyboardArrowLeftRo
 import KeyboardArrowRightRoundedIcon from '@material-ui/icons/KeyboardArrowRightRounded';
 import StoryAddIcon from '@material-ui/icons/LibraryAdd';
 // import StoryPlayIcon from '@material-ui/icons/PlayCircleOutline';
-import SettingsIcon from '@material-ui/icons/Settings';
+// import SettingsIcon from '@material-ui/icons/Settings';
 import React from 'react';
 import { getTheme } from '../../global-settings';
 import { Flow, Story } from '../../workspace-settings';

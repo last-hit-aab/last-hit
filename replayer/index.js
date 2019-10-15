@@ -29,10 +29,30 @@ if (configFile) {
 	config.workspace = workspace;
 }
 
-const env = config.env;
-if (env) {
-	// TODO environment appointment
+const workspaceSettingsFile = fs.readdirSync(workspace).find(name => name.endsWith('.lhw'));
+let workspaceSettings;
+if (workspaceSettingsFile) {
+	workspaceSettings = jsonfile.readFileSync(path.join(workspace, workspaceSettingsFile));
+} else {
+	// workspace file not found
+	workspaceSettings = {
+		envs: []
+	};
 }
+
+let env;
+const envName = config.env;
+if (envName) {
+	env = (workspaceSettings.envs || []).find(env => env.name === envName);
+	if (env == null) {
+		console.error(`Process[${processId}] Given environment[${envName}] not found.`.bold.red);
+		process.exit(1);
+	}
+} else {
+	env = {};
+}
+const Environment = require('./lib/env');
+env = new Environment(env);
 
 const settings = Object.keys(config)
 	.filter(key => key.startsWith('settings-'))
@@ -143,7 +163,8 @@ const hanldeFlowObject = flowObject => {
 		replayer = replay({
 			emitter,
 			logger,
-			settings
+			settings,
+			env
 		}).initialize();
 	} catch (e) {
 		logger.error(e);
