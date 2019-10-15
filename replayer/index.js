@@ -206,7 +206,13 @@ const print = () => {
 	);
 };
 // start
-const parallel = config.parallel || 1;
+let parallel = config.parallel;
+
+if (parallel == null) {
+	parallel = 1;
+} else if (parallel <= 1) {
+	parallel = Math.round(require('os').cpus().length * parallel);
+}
 
 if (parallel === 1) {
 	flows
