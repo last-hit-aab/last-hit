@@ -188,9 +188,9 @@ const installListenersOnPage = async page => {
 					element === document
 						? 'document'
 						: `<${element.tagName.toLowerCase()} ${element
-								.getAttributeNames()
-								.map(name => `${name}="${element.getAttribute(name)}"`)
-								.join(' ')}>`
+							.getAttributeNames()
+							.map(name => `${name}="${element.getAttribute(name)}"`)
+							.join(' ')}>`
 				// bubbles: e.bubbles,
 				// cancelBubble: e.cancelBubble,
 				// cancelable: e.cancelable,
@@ -482,16 +482,16 @@ const controlPage = async (page, options, allPages) => {
 	await page.evaluate(setBackground);
 
 	const client = await page.target().createCDPSession();
-	await client.send('Animation.enable');
-	client.on('Animation.animationStarted', ({ animation }) => {
-		sendRecordedEvent(
-			JSON.stringify({
-				type: 'animation',
-				duration: (animation.source || {}).duration,
-				uuid: allPages.findUuidByPage(page)
-			})
-		);
-	});
+	// await client.send('Animation.enable');
+	// client.on('Animation.animationStarted', ({ animation }) => {
+	// 	sendRecordedEvent(
+	// 		JSON.stringify({
+	// 			type: 'animation',
+	// 			duration: (animation.source || {}).duration,
+	// 			uuid: allPages.findUuidByPage(page)
+	// 		})
+	// 	);
+	// });
 
 	page.on('load', async () => {
 		await page.evaluate(setBackground);
@@ -507,7 +507,7 @@ const controlPage = async (page, options, allPages) => {
 
 		try {
 			client.detach();
-		} catch {}
+		} catch { }
 	});
 	// page created by window.open or anchor
 	page.on('popup', async newPage => {
