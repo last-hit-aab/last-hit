@@ -735,7 +735,6 @@ class Replayer {
 		}
 	}
 	async executeAnimationStep(step) {
-		logger.log(`Execute animation, step path is ${xpath}`);
 		const wait = util.promisify(setTimeout);
 		await wait(step.duration);
 	}
