@@ -145,8 +145,10 @@ const installListenersOnPage = async page => {
 
 		const transformEvent = (e, element) => {
 			let xpath = createXPathFromElement(element);
-			if (e.type === 'click' && xpath.indexOf('/svg') !== -1) {
+			if ((e.type === 'click'||e.type === 'mousedown') && xpath.indexOf('/svg') !== -1) {
+				console.log("svg in ")
 				const newXpath = xpath.replace(/^(.*button.*)\/svg.*$/, '$1');
+				console.log("newXpath",newXpath)
 				if (newXpath !== xpath) {
 					// replaced
 					let parent = element;

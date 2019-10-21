@@ -554,8 +554,20 @@ class Replayer {
 		} catch (e) {
 			const page = this.getPage(step.uuid);
 
-			console.log(e)
-			await page.screenshot({ path: `error-${step.uuid}-${this.getSteps().indexOf(step)}.png`, type: 'png' });
+
+			//TODO count ignore error 
+			if(inElectron){
+				const { app } = require('electron');
+				const logFolder = path.join(app.getPath('logs'));
+				console.log(logFolder)
+				await page.screenshot({ path: `${logFolder}/error-${step.uuid}-${this.getSteps().indexOf(step)}.png`, type: 'png' });
+
+
+			}else{
+				await page.screenshot({ path: `error-${step.uuid}-${this.getSteps().indexOf(step)}.png`, type: 'png' });
+			}
+
+			
 			throw e;
 		}
 	}
