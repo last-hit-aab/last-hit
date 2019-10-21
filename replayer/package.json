@@ -1,6 +1,6 @@
 {
 	"name": "last-hit-replayer",
-	"version": "0.3.8",
+	"version": "0.3.9",
 	"description": "Replayer for last-hit recorded data.",
 	"main": "index.js",
 	"bin": {
