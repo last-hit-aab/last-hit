@@ -951,9 +951,10 @@ class Replayer {
 		return await element.evaluate(node => node.offsetWidth > 0 && node.offsetHeight > 0);
 	}
 	async setValueToElement(element, value) {
-		await element.type(value);
+		// await element.type(value);
+
 		await element.evaluate((node) => {
-			// node.value = value;
+			node.value = value;
 			const event = document.createEvent('HTMLEvents');
 			event.initEvent('change', true, true);
 			node.dispatchEvent(event);
