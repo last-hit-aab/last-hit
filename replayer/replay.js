@@ -23,7 +23,7 @@ class CI {
 			return await pages.reduce(async (coverages, page) => {
 				try {
 					let jsCoverage = [];
-					// let cssCoverage = [];
+					let cssCoverage = [];
 					try {
 						jsCoverage = await page.coverage.stopJSCoverage();
 					} catch (e) {
@@ -503,7 +503,7 @@ class Replayer {
 		}
 
 
-		console.log("step",JSON.stringify(step))
+		// console.log("step",JSON.stringify(step))
 
 		try {
 			const ret = await (async () => {
