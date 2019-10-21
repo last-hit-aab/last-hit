@@ -103,7 +103,7 @@ const installListenersOnPage = async page => {
 
 		window.$lhGod = true;
 		console.log('%c last-hit: %c evaluate on new document start...', 'color:red', 'color:brown');
-		const ignoredIdRegexps = [/^md-.+-.{6,16}$/,/rainbow-ui/, /^select2-.+$/];
+		const ignoredIdRegexps = [/^md-.+-.{6,16}$/, /rainbow-ui/, /^select2-.+$/];
 		const shouldIgnore = id => ignoredIdRegexps.some(regexp => regexp.test(id));
 		// here we are in the browser context
 		const createXPathFromElement = elm => {
@@ -145,10 +145,10 @@ const installListenersOnPage = async page => {
 
 		const transformEvent = (e, element) => {
 			let xpath = createXPathFromElement(element);
-			if ((e.type === 'click'||e.type === 'mousedown') && xpath.indexOf('/svg') !== -1) {
-				console.log("svg in ")
+			if ((e.type === 'click' || e.type === 'mousedown') && xpath.indexOf('/svg') !== -1) {
+				console.log('xpath contains svg dom node.');
 				const newXpath = xpath.replace(/^(.*button.*)\/svg.*$/, '$1');
-				console.log("newXpath",newXpath)
+				console.log(`new xpath after svg cut-off is ${newXpath}.`);
 				if (newXpath !== xpath) {
 					// replaced
 					let parent = element;
@@ -190,9 +190,9 @@ const installListenersOnPage = async page => {
 					element === document
 						? 'document'
 						: `<${element.tagName.toLowerCase()} ${element
-							.getAttributeNames()
-							.map(name => `${name}="${element.getAttribute(name)}"`)
-							.join(' ')}>`
+								.getAttributeNames()
+								.map(name => `${name}="${element.getAttribute(name)}"`)
+								.join(' ')}>`
 				// bubbles: e.bubbles,
 				// cancelBubble: e.cancelBubble,
 				// cancelable: e.cancelable,
@@ -509,7 +509,7 @@ const controlPage = async (page, options, allPages) => {
 
 		try {
 			client.detach();
-		} catch { }
+		} catch {}
 	});
 	// page created by window.open or anchor
 	page.on('popup', async newPage => {
@@ -712,7 +712,7 @@ const launch = () => {
 
 	class NodesMap {
 		constructor() {
-			this.ignoredIdRegexps = [/^md-.+-.{6,16}$/,/rainbow-ui/, /^select2-.+$/];
+			this.ignoredIdRegexps = [/^md-.+-.{6,16}$/, /rainbow-ui/, /^select2-.+$/];
 			this.attrIdMap = new Map();
 			this.nodeIdMap = new Map();
 		}

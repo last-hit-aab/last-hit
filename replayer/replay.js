@@ -34,7 +34,7 @@ class CI {
 					} catch (e) {
 						console.error(e);
 					}
-					return coverages.concat(jsCoverage)
+					return coverages.concat(jsCoverage);
 				} catch {
 					return coverages;
 				}
@@ -502,7 +502,6 @@ class Replayer {
 			return;
 		}
 
-
 		// console.log("step",JSON.stringify(step))
 
 		try {
@@ -554,23 +553,18 @@ class Replayer {
 		} catch (e) {
 			const page = this.getPage(step.uuid);
 
-			
-
 			// getSummary().handleScreenshot(step, file_path);
-			//TODO count ignore error 
-			if(inElectron){
+			//TODO count ignore error
+			if (inElectron) {
 				const { app } = require('electron');
 				const logFolder = path.join(app.getPath('logs'));
-				const file_path = `${logFolder}/error-${step.uuid}-${this.getSteps().indexOf(step)}.png`
+				const file_path = `${logFolder}/error-${step.uuid}-${this.getSteps().indexOf(step)}.png`;
 				// console.log(logFolder)
 				await page.screenshot({ path: file_path, type: 'png' });
-
-
-			}else{
+			} else {
 				await page.screenshot({ path: `error-${step.uuid}-${this.getSteps().indexOf(step)}.png`, type: 'png' });
 			}
 
-			
 			throw e;
 		}
 	}
@@ -627,7 +621,7 @@ class Replayer {
 		} else {
 			// change is change only, cannot use type
 			await this.setValueToElement(element, step.value);
-		
+
 			if (settings.sleepAfterChange) {
 				const wait = util.promisify(setTimeout);
 				await wait(settings.sleepAfterChange);
@@ -951,20 +945,24 @@ class Replayer {
 		return await element.evaluate(node => node.offsetWidth > 0 && node.offsetHeight > 0);
 	}
 	async setValueToElement(element, value) {
-
-		await element.evaluate((node)=>{
-			node.value = ""
-		})
+		// sometimes key event was bound in input
+		// force trigger change event cannot cover this scenario
+		// in this case, as the following steps
+		// 1. force clear input value
+		// 2. invoke type
+		// 3. force trigger change event
+		await element.evaluate(node => {
+			node.value = '';
+		});
 
 		await element.type(value);
 
-		await element.evaluate((node) => {
+		await element.evaluate(node => {
 			// node.value = value;
 			const event = document.createEvent('HTMLEvents');
 			event.initEvent('change', true, true);
 			node.dispatchEvent(event);
 		});
-
 	}
 }
 
