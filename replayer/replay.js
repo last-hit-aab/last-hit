@@ -23,7 +23,7 @@ class CI {
 			return await pages.reduce(async (coverages, page) => {
 				try {
 					let jsCoverage = [];
-					let cssCoverage = [];
+					// let cssCoverage = [];
 					try {
 						jsCoverage = await page.coverage.stopJSCoverage();
 					} catch (e) {
@@ -34,7 +34,7 @@ class CI {
 					} catch (e) {
 						console.error(e);
 					}
-					return coverages.concat(jsCoverage).concat(cssCoverage);
+					return coverages.concat(jsCoverage)
 				} catch {
 					return coverages;
 				}
@@ -502,6 +502,9 @@ class Replayer {
 			return;
 		}
 
+
+		console.log("step",JSON.stringify(step))
+
 		try {
 			const ret = await (async () => {
 				switch (step.type) {
@@ -550,6 +553,8 @@ class Replayer {
 			}
 		} catch (e) {
 			const page = this.getPage(step.uuid);
+
+			console.log(e)
 			await page.screenshot({ path: `error-${step.uuid}-${this.getSteps().indexOf(step)}.png`, type: 'png' });
 			throw e;
 		}
@@ -607,6 +612,7 @@ class Replayer {
 		} else {
 			// change is change only, cannot use type
 			await this.setValueToElement(element, step.value);
+		
 			if (settings.sleepAfterChange) {
 				const wait = util.promisify(setTimeout);
 				await wait(settings.sleepAfterChange);
@@ -930,12 +936,13 @@ class Replayer {
 		return await element.evaluate(node => node.offsetWidth > 0 && node.offsetHeight > 0);
 	}
 	async setValueToElement(element, value) {
-		await element.evaluate((node, value) => {
-			node.value = value;
+		await element.type(value);
+		await element.evaluate((node) => {
+			// node.value = value;
 			const event = document.createEvent('HTMLEvents');
 			event.initEvent('change', true, true);
 			node.dispatchEvent(event);
-		}, value);
+		});
 	}
 }
 
