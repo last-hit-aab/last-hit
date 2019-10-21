@@ -10,6 +10,19 @@ const ThirdStepSupport = require('./3rd-comps/support');
 
 const inElectron = !!process.versions.electron;
 
+/**
+ * get logs folder.
+ * @returns {string|null} null if not in electron
+ */
+const getTempFolder = fallbackFolder => {
+	if (inElectron) {
+		const { app } = require('electron');
+		return app.getPath('logs');
+	} else {
+		return fallbackFolder;
+	}
+};
+
 class CI {
 	async startCoverage(page) {
 		if (!inElectron) {
@@ -554,16 +567,10 @@ class Replayer {
 			const page = this.getPage(step.uuid);
 
 			// getSummary().handleScreenshot(step, file_path);
-			//TODO count ignore error
-			if (inElectron) {
-				const { app } = require('electron');
-				const logFolder = path.join(app.getPath('logs'));
-				const file_path = `${logFolder}/error-${step.uuid}-${this.getSteps().indexOf(step)}.png`;
-				// console.log(logFolder)
-				await page.screenshot({ path: file_path, type: 'png' });
-			} else {
-				await page.screenshot({ path: `error-${step.uuid}-${this.getSteps().indexOf(step)}.png`, type: 'png' });
-			}
+			// TODO count ignore error
+			const file_path = `${getTempFolder(__dirname)}/error-${step.uuid}-${this.getSteps().indexOf(step)}.png`;
+			// console.log(logFolder)
+			await page.screenshot({ path: file_path, type: 'png' });
 
 			throw e;
 		}
@@ -590,7 +597,7 @@ class Replayer {
 			let segments = value.split('\\');
 			segments = segments[segments.length - 1].split('/');
 			const filename = segments[segments.length - 1];
-			const dir = path.join(__dirname, 'upload-temp', uuidv4());
+			const dir = path.join(getTempFolder(__dirname), 'upload-temp', uuidv4());
 			const filepath = path.join(dir, filename);
 			const byteString = atob(step.file.split(',')[1]);
 			// separate out the mime component
@@ -951,11 +958,14 @@ class Replayer {
 		// 1. force clear input value
 		// 2. invoke type
 		// 3. force trigger change event
-		await element.evaluate(node => {
-			node.value = '';
-		});
+		const tagName = this.getElementTagName(element);
+		if (tagName === 'INPUT') {
+			await element.evaluate(node => {
+				node.value = '';
+			});
 
-		await element.type(value);
+			await element.type(value);
+		}
 
 		await element.evaluate(node => {
 			// node.value = value;
