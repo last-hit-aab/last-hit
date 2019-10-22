@@ -8,6 +8,7 @@ const replay = require('./replay');
 const console = require('console');
 const pti = require('./pti-rewrite');
 const { spawn } = require('child_process');
+const spawnSync = require('child_process').spawnSync;
 const { generate_report } = require('./result-report');
 const compose = require('./lib/compose');
 const uuidv4 = require('uuid/v4');
@@ -123,7 +124,7 @@ const hanldeFlowObject = flowObject => {
 
 	const timeLoggerStream = new require('stream').Transform();
 	let timeSpent;
-	timeLoggerStream._transform = function(chunk, encoding, done) {
+	timeLoggerStream._transform = function (chunk, encoding, done) {
 		this.push(chunk);
 		timeSpent = typeof chunk === 'string' ? chunk : chunk.toString();
 		done();
@@ -174,6 +175,8 @@ const hanldeFlowObject = flowObject => {
 	const promise = new Promise(resolve => {
 		handleReplayStepEnd(emitter, { name: storyName }, flow, () => {
 			const summary = replayer.current.getSummaryData();
+
+			//TODO merge 
 			coverages.push(...replayer.current.getCoverageData());
 			timeLogger.timeEnd(flowKey);
 			report.push({ ...summary, spent: timeSpent });
@@ -209,7 +212,8 @@ const print = () => {
 				'Ignored Errors': (item.ignoreErrorList || []).length,
 				'Ajax calls': item.numberOfAjax,
 				'Slow ajax calls': (item.slowAjaxRequest || []).length,
-				'Spent (ms)': Math.round((item.spent || '').split(' ')[1].split('ms')[0])
+				'Spent (ms)': Math.round((item.spent || '').split(' ')[1].split('ms')[0]),
+				'Pass Rate(%)': ((item.numberOfSuccess / item.numberOfStep) * 100).toFixed(2).toString()
 			};
 		}),
 		[
@@ -222,7 +226,8 @@ const print = () => {
 			'Ignored Errors',
 			'Ajax calls',
 			'Slow ajax calls',
-			'Spent (ms)'
+			'Spent (ms)',
+			'Pass Rate(%)'
 		]
 	);
 };
@@ -247,8 +252,9 @@ if (parallel === 1) {
 			}
 		}, Promise.resolve())
 		.finally(() => {
-			// pti.write(coverages);
-			// spawn.sync('nyc', ['report', '--reporter=html'], { stdio: 'inherit' });
+			pti.write(coverages);
+
+			spawnSync('nyc', ['report', '--reporter=html'], { stdio: 'inherit' });
 			const isChildProcess = config.child === 'true' || config.child;
 
 			const resultTempFolder = path.join(workspace, 'result-temp');
@@ -291,6 +297,7 @@ if (parallel === 1) {
 					if (!fs.existsSync(composeTempFolder)) {
 						fs.mkdirSync(composeTempFolder);
 					}
+
 					const filename = path.join('compose-temp', `compose-${uuidv4()}.json`);
 					const childConfig = Object.keys(config)
 						.filter(key => !['workspace', 'story', 'flow', 'config-file', 'parallel'].includes(key))

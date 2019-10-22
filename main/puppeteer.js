@@ -190,9 +190,9 @@ const installListenersOnPage = async page => {
 					element === document
 						? 'document'
 						: `<${element.tagName.toLowerCase()} ${element
-								.getAttributeNames()
-								.map(name => `${name}="${element.getAttribute(name)}"`)
-								.join(' ')}>`
+							.getAttributeNames()
+							.map(name => `${name}="${element.getAttribute(name)}"`)
+							.join(' ')}>`
 				// bubbles: e.bubbles,
 				// cancelBubble: e.cancelBubble,
 				// cancelable: e.cancelable,
@@ -509,7 +509,7 @@ const controlPage = async (page, options, allPages) => {
 
 		try {
 			client.detach();
-		} catch {}
+		} catch { }
 	});
 	// page created by window.open or anchor
 	page.on('popup', async newPage => {
@@ -555,6 +555,7 @@ const launch = () => {
 			const browserArgs = [];
 			browserArgs.push(`--window-size=${width},${height + 150}`);
 			browserArgs.push('--disable-infobars');
+			browserArgs.push('--ignore-certificate-errors')
 			// browserArgs.push('--use-mobile-user-agent');
 
 			// create browser
