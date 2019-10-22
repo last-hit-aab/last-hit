@@ -177,10 +177,6 @@ const hanldeFlowObject = flowObject => {
 			const summary = replayer.current.getSummaryData();
 
 			//TODO merge 
-
-
-			// console.log(JSON.stringify(replayer.current.getCoverageData()))
-
 			coverages.push(...replayer.current.getCoverageData());
 			timeLogger.timeEnd(flowKey);
 			report.push({ ...summary, spent: timeSpent });
@@ -301,6 +297,7 @@ if (parallel === 1) {
 					if (!fs.existsSync(composeTempFolder)) {
 						fs.mkdirSync(composeTempFolder);
 					}
+
 					const filename = path.join('compose-temp', `compose-${uuidv4()}.json`);
 					const childConfig = Object.keys(config)
 						.filter(key => !['workspace', 'story', 'flow', 'config-file', 'parallel'].includes(key))
