@@ -31,6 +31,7 @@ class CI {
 			await page.coverage.startCSSCoverage();
 		}
 	}
+
 	async gatherCoverage(pages) {
 		if (!inElectron) {
 			return await pages.reduce(async (coverages, page) => {
@@ -566,6 +567,7 @@ class Replayer {
 		} catch (e) {
 			const page = this.getPage(step.uuid);
 
+			this.getSummary().handleError(step, e);
 			// getSummary().handleScreenshot(step, file_path);
 			// TODO count ignore error
 			const file_path = `${getTempFolder(__dirname)}/error-${step.uuid}-${this.getSteps().indexOf(step)}.png`;
@@ -952,7 +954,9 @@ class Replayer {
 		return await element.evaluate(node => node.offsetWidth > 0 && node.offsetHeight > 0);
 	}
 	async setValueToElement(element, value) {
-		const tagName = this.getElementTagName(element);
+		const tagName = await this.getElementTagName(element);
+
+		// console.log("tagName", tagName)
 		if (tagName === 'INPUT') {
 			// sometimes key event was bound in input
 			// force trigger change event cannot cover this scenario
