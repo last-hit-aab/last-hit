@@ -22,6 +22,7 @@
 		"@types/react-router-dom": "^4.3.4",
 		"@types/uuid": "^3.4.5",
 		"@types/xml2json": "^0.11.0",
+		"eslint-utils": "^1.4.3",
 		"fs-extra": "^8.1.0",
 		"jsonfile": "^5.0.0",
 		"lodash": "^4.17.15",
