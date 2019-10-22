@@ -199,7 +199,7 @@ const launchBrowser = async replayer => {
 		executablePath: getChromiumExecPath(),
 		args: browserArgs,
 		defaultViewport: null,
-		slowMo: 12
+		slowMo: 20
 	});
 	const pages = await browser.pages();
 	let page;
