@@ -192,7 +192,7 @@ const launchBrowser = async replayer => {
 	const browserArgs = [];
 	browserArgs.push(`--window-size=${width + chrome.x},${height + chrome.y}`);
 	browserArgs.push('--disable-infobars');
-	browserArgs.push('--ignore-certificate-errors')
+	browserArgs.push('--ignore-certificate-errors');
 
 	const browser = await puppeteer.launch({
 		headless: !inElectron,
@@ -580,7 +580,7 @@ class Replayer {
 	}
 	async executeChangeStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
-		const xpath = step.path.replace(/"/g, "'");
+		const xpath = this.transformStepPathToXPath(step.path);
 		logger.log(`Execute change, step path is ${xpath}, step value is ${step.value}.`);
 
 		const elements = await page.$x(xpath);
@@ -603,11 +603,6 @@ class Replayer {
 			const dir = path.join(getTempFolder(__dirname), 'upload-temp', uuidv4());
 			const filepath = path.join(dir, filename);
 			const byteString = atob(step.file.split(',')[1]);
-			// separate out the mime component
-			const mimeString = step.file
-				.split(',')[0]
-				.split(':')[1]
-				.split(';')[0];
 
 			// write the bytes of the string to an ArrayBuffer
 			const ab = new ArrayBuffer(byteString.length);
@@ -618,7 +613,6 @@ class Replayer {
 				ia[i] = byteString.charCodeAt(i);
 			}
 			// write the ArrayBuffer to a blob, and you're done
-			// const blob = new Blob([ab], { type: mimeString });
 			fs.mkdirSync(dir, { recursive: true });
 			fs.writeFileSync(filepath, Buffer.from(ia));
 
@@ -640,14 +634,14 @@ class Replayer {
 	}
 	async executeClickStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
-		const xpath = step.path.replace(/"/g, "'");
+		const xpath = this.transformStepPathToXPath(step.path);
 		logger.log(`Execute click, step path is ${xpath}.`);
 
 		const elements = await page.$x(xpath);
 		const element = elements[0];
 		const elementTagName = await this.getElementTagName(element);
 
-		const support = this.createThirdStepSupport(element);
+		const support = this.createThirdStepSupport(page, element);
 		const done = await support.click();
 		if (done) {
 			return;
@@ -687,7 +681,7 @@ class Replayer {
 	}
 	async executeFocusStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
-		const xpath = step.path.replace(/"/g, "'");
+		const xpath = this.transformStepPathToXPath(step.path);
 		logger.log(`Execute focus, step path is ${xpath}.`);
 
 		const elements = await page.$x(xpath);
@@ -701,7 +695,7 @@ class Replayer {
 	}
 	async executeKeydownStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
-		const xpath = step.path.replace(/"/g, "'");
+		const xpath = this.transformStepPathToXPath(step.path);
 		const value = step.value;
 		logger.log(`Execute keydown, step path is ${xpath}, key is ${value}`);
 
@@ -712,7 +706,7 @@ class Replayer {
 		if (steps[currentIndex].type === 'keydown' && steps[currentIndex + 1].type === 'change') {
 			if (steps[currentIndex].target === steps[currentIndex + 1].target) {
 				if (steps[currentIndex + 2].type === 'click') {
-					const elements = await page.$x(steps[currentIndex + 2].path.replace(/"/g, "'"));
+					const elements = await page.$x(this.transformStepPathToXPath(steps[currentIndex + 2].path));
 					const element = elements[0];
 					const elementTagName = await this.getElementTagName(element);
 					const elementType = await this.getElementType(element);
@@ -737,13 +731,13 @@ class Replayer {
 	}
 	async executeMousedownStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
-		const xpath = step.path.replace(/"/g, "'");
+		const xpath = this.transformStepPathToXPath(step.path);
 		logger.log(`Execute mouse down, step path is ${xpath}`);
 
 		const elements = await page.$x(xpath);
 		const element = elements[0];
 
-		const support = this.createThirdStepSupport(element);
+		const support = this.createThirdStepSupport(page, element);
 		const done = await support.mousedown();
 
 		if (!done) {
@@ -779,7 +773,7 @@ class Replayer {
 				scrollLeft
 			);
 		} else {
-			const xpath = step.path.replace(/"/g, "'");
+			const xpath = this.transformStepPathToXPath(step.path);
 			const elements = await page.$x(xpath);
 			const element = elements[0];
 			await element.evaluate(
@@ -883,8 +877,9 @@ class Replayer {
 			await page.close();
 		}
 	}
-	createThirdStepSupport(element) {
+	createThirdStepSupport(page, element) {
 		return new ThirdStepSupport({
+			page,
 			element,
 			tagNameRetrieve: this.createElementTagNameRetriever(),
 			elementTypeRetrieve: this.createElementTypeRetriever(),
@@ -965,7 +960,7 @@ class Replayer {
 			// 1. force clear input value
 			// 2. invoke type
 			// 3. force trigger change event
-			await element.evaluate(node => node.value = '');
+			await element.evaluate(node => (node.value = ''));
 			await element.type(value);
 			await element.evaluate(node => {
 				// node.value = value;
@@ -983,6 +978,9 @@ class Replayer {
 			}, value);
 		}
 	}
+	transformStepPathToXPath(stepPath) {
+		return stepPath.replace(/"/g, "'");
+	}
 }
 
 const browsers = {};
@@ -991,7 +989,7 @@ const launch = () => {
 		const { storyName, flowName, replayer } = options;
 		emitter.once(`continue-replay-step-${generateKeyByString(storyName, flowName)}`, async (event, arg) => {
 			const { flow, index, command } = arg;
-			const step = replayer.getCurrentStep();
+			const step = replayer.getSteps()[index];
 			switch (command) {
 				case 'disconnect':
 					await replayer.end(false);

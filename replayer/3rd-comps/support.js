@@ -6,6 +6,7 @@ class ThirdStepSupport {
 	/**
 	 *
 	 * @param {{
+	 * 	page: Page
 	 * 	element: HTMLElement,
 	 * 	tagNameRetrieve: (element: HTMLElement) => string,
 	 * 	elementTypeRetrieve: (element: HTMLElement) => string,
@@ -17,6 +18,7 @@ class ThirdStepSupport {
 	 * }} options
 	 */
 	constructor(options) {
+		this.page = options.page;
 		this.element = options.element;
 		this.tagNameRetrieve = options.tagNameRetrieve;
 		this.elementTypeRetrieve = options.elementTypeRetrieve;
@@ -25,6 +27,13 @@ class ThirdStepSupport {
 		this.steps = options.steps;
 		this.currentStepIndex = options.currentStepIndex;
 		this.logger = options.logger;
+	}
+	/**
+	 * get page
+	 * @returns {Page} puppeteer page
+	 */
+	getPage() {
+		return this.page;
 	}
 	/**
 	 * get element
@@ -64,6 +73,9 @@ class ThirdStepSupport {
 	}
 	getSteps() {
 		return this.steps;
+	}
+	getCurrentStep() {
+		return this.steps[this.getCurrentStepIndex()];
 	}
 	getCurrentStepIndex() {
 		return this.currentStepIndex;
