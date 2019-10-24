@@ -989,29 +989,37 @@ class Replayer {
 
 		// console.log("tagName", tagName)
 		if (tagName === 'INPUT') {
-			// sometimes key event was bound in input
-			// force trigger change event cannot cover this scenario
-			// in this case, as the following steps
-			// 1. force clear input value
-			// 2. invoke type
-			// 3. force trigger change event
-			await element.evaluate(node => (node.value = ''));
-			await element.type(value);
-			await element.evaluate(node => {
-				// node.value = value;
-				const event = document.createEvent('HTMLEvents');
-				event.initEvent('change', true, true);
-				node.dispatchEvent(event);
-			});
-		} else {
-			await element.evaluate((node, value) => {
-				node.value = value;
-				// node.value = value;
-				const event = document.createEvent('HTMLEvents');
-				event.initEvent('change', true, true);
-				node.dispatchEvent(event);
-			}, value);
+			const type = await this.getElementType(element);
+			if (
+				!type ||
+				['text', 'password', 'url', 'search', 'email', 'hidden', 'number', 'tel'].includes(type.toLowerCase())
+			) {
+				// sometimes key event was bound in input
+				// force trigger change event cannot cover this scenario
+				// in this case, as the following steps
+				// 1. force clear input value
+				// 2. invoke type
+				// 3. force trigger change event
+				await element.evaluate(node => (node.value = ''));
+				await element.type(value);
+				await element.evaluate(node => {
+					// node.value = value;
+					const event = document.createEvent('HTMLEvents');
+					event.initEvent('change', true, true);
+					node.dispatchEvent(event);
+				});
+				return;
+			}
 		}
+
+		// other
+		await element.evaluate((node, value) => {
+			node.value = value;
+			// node.value = value;
+			const event = document.createEvent('HTMLEvents');
+			event.initEvent('change', true, true);
+			node.dispatchEvent(event);
+		}, value);
 	}
 	transformStepPathToXPath(stepPath) {
 		return stepPath.replace(/"/g, "'");
