@@ -83,6 +83,13 @@ const controlPage = async (replayer, page, device) => {
 	await page.emulateMedia('screen');
 	const setBackground = () => (document.documentElement.style.backgroundColor = 'rgba(25,25,25,0.8)');
 	await page.evaluate(setBackground);
+	const client = await page.target().createCDPSession();
+	if (device.viewport.isMobile) {
+		await client.send('Emulation.setFocusEmulationEnabled', { enabled: true });
+		await client.send('Emulation.setEmitTouchEventsForMouse', { enabled: true, configuration: 'mobile' });
+		await client.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+	}
+	await client.detach();
 
 	await ci.startCoverage(page);
 
