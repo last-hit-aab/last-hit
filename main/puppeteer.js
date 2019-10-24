@@ -6,6 +6,15 @@ const getChromiumExecPath = () => {
 	return puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked');
 };
 
+/**
+ * @param {string} storyName
+ * @param {string} flowName
+ * @returns {string}
+ */
+const generateKeyByString = (storyName, flowName) => {
+	return `[${flowName}@${storyName}]`;
+};
+
 class AllPagesCache {
 	constructor() {
 		this.pages = {};
@@ -86,7 +95,12 @@ const captureScreenshot = async page => {
  */
 const exposeFunctionToPage = async (page, flowKey, allPages) => {
 	const uuid = allPages.findUuidByPage(page);
-	await page.exposeFunction('$lhGetUuid', () => uuid);
+
+	// may already installed by replayer
+	let exists = await page.evaluate(() => window.$lhGetUuid != null);
+	if (!exists) {
+		await page.exposeFunction('$lhGetUuid', () => uuid);
+	}
 	await page.exposeFunction('$lhGetFlowKey', () => flowKey);
 	await page.exposeFunction('$lhRecordEvent', createPageWindowEventRecorder(flowKey));
 };
@@ -845,6 +859,72 @@ const controlPage = async (page, options, allPages) => {
 
 const browsers = {};
 const launch = () => {
+	const initializeBrowser = async (browser, allPages, device, flowKey) => {
+		const sendRecordedEvent = createPageWindowEventRecorder(flowKey);
+		browser.on('disconnected', () => {
+			sendRecordedEvent(JSON.stringify({ type: 'end' }));
+		});
+		browser.on('targetcreated', async newTarget => {
+			if (newTarget.type() === 'page') {
+				console.log('browser event target created caught');
+				const newPage = await newTarget.page();
+				if (!allPages.exists(newPage)) {
+					// not found in pages
+					const uuid = uuidv4();
+					allPages.add(uuid, newPage);
+					allPages.prepare(uuid, async () => {
+						await controlPage(newPage, { device, flowKey }, allPages);
+					});
+					const base64 = await captureScreenshot(newPage);
+					sendRecordedEvent(
+						JSON.stringify({ type: 'page-created', url: newPage.url(), image: base64, uuid })
+					);
+				}
+			}
+		});
+		browser.on('targetchanged', async target => {
+			if (target.type() === 'page') {
+				console.log('browser event target changed caught');
+				// RESEARCH the url is old when target changed event is catched, so must wait the new url.
+				// don't know the mechanism
+				const page = await target.page();
+				const uuid = allPages.findUuidByPage(page);
+				const url = page.url();
+				// allPages.prepare(uuid, async () => {
+				// 	await controlPage(page, { device, flowKey }, allPages);
+				// });
+				sendRecordedEvent(JSON.stringify({ type: 'page-switched', url, uuid }));
+				let times = 0;
+				const handle = () => {
+					setTimeout(() => {
+						times++;
+						const anUrl = page.url();
+						if (url === anUrl) {
+							if (times < 10) {
+								// max 10 times
+								handle();
+							}
+						} else {
+							sendRecordedEvent(JSON.stringify({ type: 'page-switched', url: anUrl, uuid }));
+						}
+					}, 100);
+				};
+				handle();
+			}
+		});
+		browser.on('targetdestroyed', async target => {
+			if (target.type() === 'page') {
+				console.log('browser event target destroyed caught');
+				const page = await target.page();
+				const allClosed = await isAllRelatedPagesClosed(page, flowKey);
+				const uuid = allPages.removeByPage(page);
+				if (uuid) {
+					sendRecordedEvent(JSON.stringify({ type: 'page-closed', url: page.url(), uuid, allClosed }));
+				}
+			}
+		});
+	};
+
 	ipcMain.on('launch-puppeteer', (event, arg) => {
 		(async () => {
 			const { url, device, flowKey, uuid } = arg;
@@ -872,74 +952,11 @@ const launch = () => {
 				await pages[0].close();
 			}
 			const page = await browser.newPage();
-			pages.push(page);
 			// give uuid to pages
 			const allPages = new AllPagesCache();
 			allPages.add(uuid, page);
 
-			const sendRecordedEvent = createPageWindowEventRecorder(flowKey);
-			browser.on('disconnected', () => {
-				sendRecordedEvent(JSON.stringify({ type: 'end' }));
-			});
-			browser.on('targetcreated', async newTarget => {
-				if (newTarget.type() === 'page') {
-					console.log('browser event target created caught');
-					const newPage = await newTarget.page();
-					if (!allPages.exists(newPage)) {
-						// not found in pages
-						const uuid = uuidv4();
-						allPages.add(uuid, newPage);
-						allPages.prepare(uuid, async () => {
-							await controlPage(newPage, { device, flowKey }, allPages);
-						});
-						const base64 = await captureScreenshot(newPage);
-						sendRecordedEvent(
-							JSON.stringify({ type: 'page-created', url: newPage.url(), image: base64, uuid })
-						);
-					}
-				}
-			});
-			browser.on('targetchanged', async target => {
-				if (target.type() === 'page') {
-					console.log('browser event target changed caught');
-					// RESEARCH the url is old when target changed event is catched, so must wait the new url.
-					// don't know the mechanism
-					const page = await target.page();
-					const uuid = allPages.findUuidByPage(page);
-					const url = page.url();
-					allPages.prepare(uuid, async () => {
-						await controlPage(page, { device, flowKey }, allPages);
-					});
-					sendRecordedEvent(JSON.stringify({ type: 'page-switched', url, uuid }));
-					let times = 0;
-					const handle = () => {
-						setTimeout(() => {
-							times++;
-							const anUrl = page.url();
-							if (url === anUrl) {
-								if (times < 10) {
-									// max 10 times
-									handle();
-								}
-							} else {
-								sendRecordedEvent(JSON.stringify({ type: 'page-switched', url: anUrl, uuid }));
-							}
-						}, 100);
-					};
-					handle();
-				}
-			});
-			browser.on('targetdestroyed', async target => {
-				if (target.type() === 'page') {
-					console.log('browser event target destroyed caught');
-					const page = await target.page();
-					const allClosed = await isAllRelatedPagesClosed(page, flowKey);
-					const uuid = allPages.removeByPage(page);
-					if (uuid) {
-						sendRecordedEvent(JSON.stringify({ type: 'page-closed', url: page.url(), uuid, allClosed }));
-					}
-				}
-			});
+			initializeBrowser(browser, allPages, device, flowKey);
 
 			await recordRemoteRequests(page, flowKey, allPages);
 			await page.goto(url, { waitUntil: 'domcontentloaded' });
@@ -983,6 +1000,26 @@ const launch = () => {
 			const { flowKey } = arg;
 			await disconnectPuppeteer(flowKey, true);
 		})();
+	});
+	ipcMain.on('switch-puppeteer', async (event, arg) => {
+		const { storyName, flowName } = arg;
+		const flowKey = generateKeyByString(storyName, flowName);
+		const replayer = replayers.abandon(storyName, flowName);
+		const browser = replayer.getBrowser();
+		browsers[flowKey] = browser;
+		const device = replayer.getDevice();
+
+		const pages = await browser.pages();
+		const allPages = new AllPagesCache();
+		for (let index = 0, count = pages.length; index < count; index++) {
+			const page = pages[index];
+			const uuid = await page.evaluate(() => $lhGetUuid());
+			allPages.add(uuid, page);
+			await recordRemoteRequests(page, flowKey, allPages);
+			await controlPage(page, { device, flowKey }, allPages);
+		}
+		await initializeBrowser(browser, allPages, device, flowKey);
+		event.reply(`puppeteer-switched-${flowKey}`);
 	});
 	ipcMain.on('capture-screen', (event, arg) => {
 		(async () => {
@@ -1191,4 +1228,12 @@ const destory = () => {
 	});
 };
 
-module.exports = { initialize: () => launch(), destory };
+let replayers;
+
+module.exports = {
+	initialize: replay => {
+		replayers = replay;
+		launch();
+	},
+	destory
+};

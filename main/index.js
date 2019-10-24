@@ -90,7 +90,7 @@ const createWindow = () => {
 };
 
 monitors.initialize();
-puppeteer.initialize();
+puppeteer.initialize(replay);
 replay.initialize();
 
 // This method will be called when Electron has finished

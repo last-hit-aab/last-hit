@@ -1,4 +1,4 @@
-import { faBan, faShoePrints } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faShoePrints, faSwimmingPool } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button, ButtonGroup, Grid, TextField } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
@@ -85,7 +85,7 @@ const useStyles = makeStyles(theme => ({
 		gridColumn: '1 / span 2',
 		justifySelf: 'stretch',
 		display: 'grid',
-		gridTemplateColumns: 'auto auto auto 1fr auto',
+		gridTemplateColumns: 'auto auto auto auto 1fr auto',
 		gridColumnGap: theme.spacing(1)
 	},
 	statusButton: {
@@ -289,6 +289,8 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	// 1. there has step, and not on recording, and not on replaying,
 	// 2. or on step by step replaying, but current step is finished
 	const canStartStepReplay = canStartPlay || (onReplay === ReplayType.STEP && !stepReplaying);
+	const canSwitchToRecord =
+		[ReplayType.REGULAR, ReplayType.SMART, ReplayType.STEP].includes(onReplay) && !stepReplaying;
 	const status = (() => {
 		if (onPause) {
 			return 'Record Paused';
@@ -321,6 +323,52 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	const onStartStepReplayClicked = (): void => {
 		handleStartReplay(ReplayType.STEP);
 	};
+	const onSwitchToRecordClicked = async () => {
+		const ret: Electron.MessageBoxReturnValue = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+			type: 'info',
+			title: 'Switch to record',
+			message:
+				'Are you sure to switch to record? Cannot recover replay again, steps after breakpoint will be replaced and cannot be recovered.',
+			buttons: ['OK', 'Cancel']
+		});
+		switch (ret.response) {
+			case 0:
+				ipcRenderer.once(`replay-browser-ready-to-switch-${generateKeyByObject(story, flow)}`, () => {
+					ipcRenderer.once(`puppeteer-switched-${generateKeyByObject(story, flow)}`, async () => {
+						if (flow.steps) {
+							flow.steps.length = Math.min(flow.steps.length, currentReplayStepIndex + 1);
+						}
+						saveFlow(story, flow);
+
+						// recover state
+						setState({
+							...state,
+							openStartReplay: ReplayType.NONE,
+							onReplay: ReplayType.NONE,
+							openStartRecord: false,
+							onRecord: true,
+							showAllSteps: true
+						});
+						setCurrentReplayStepIndex(-1);
+						setStepReplaying(false);
+						await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+							type: 'info',
+							title: 'Switch to record',
+							message: 'Switch successfully, enjoy record again.',
+							buttons: ['OK']
+						});
+					});
+					ipcRenderer.send('switch-puppeteer', { storyName: story.name, flowName: flow.name });
+				});
+				ipcRenderer.send(`continue-replay-step-${generateKeyByObject(story, flow)}`, {
+					command: 'switch-to-record'
+				});
+				break;
+			case 1:
+				break;
+		}
+	};
+
 	const replayNextStep = (story: Story, flow: Flow, type: ReplayType, index: number): void => {
 		setCurrentReplayStepIndex(index + 1);
 		// set as step replaying anyway, it will disable the step play button
@@ -617,6 +665,15 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 							>
 								<FontAwesomeIcon icon={faShoePrints} />
 								{showAllSteps ? <FontAwesomeIcon icon={faBan} /> : null}
+							</Button>
+						</ButtonGroup>
+						<ButtonGroup variant="contained" color="primary" size="small">
+							<Button
+								title="Switch to record"
+								onClick={onSwitchToRecordClicked}
+								disabled={!canSwitchToRecord}
+							>
+								<FontAwesomeIcon icon={faSwimmingPool} />
 							</Button>
 						</ButtonGroup>
 						<div />

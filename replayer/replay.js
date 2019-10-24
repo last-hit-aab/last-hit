@@ -78,11 +78,12 @@ const getUrlPath = url => {
  * @param {Page} page
  * @param {*} device
  */
-const controlPage = async (replayer, page, device) => {
+const controlPage = async (replayer, page, device, uuid) => {
 	await page.emulate(device);
 	await page.emulateMedia('screen');
 	const setBackground = () => (document.documentElement.style.backgroundColor = 'rgba(25,25,25,0.8)');
 	await page.evaluate(setBackground);
+	await page.exposeFunction('$lhGetUuid', () => uuid);
 	const client = await page.target().createCDPSession();
 	if (device.viewport.isMobile) {
 		await client.send('Emulation.setFocusEmulationEnabled', { enabled: true });
@@ -94,14 +95,26 @@ const controlPage = async (replayer, page, device) => {
 	await ci.startCoverage(page);
 
 	page.on('load', async () => {
+		if (replayer.isOnRecord()) {
+			// do nothing when on record
+			return;
+		}
 		await page.evaluate(setBackground);
 	});
 	page.on('close', async () => {
+		if (replayer.isOnRecord()) {
+			// do nothing when on record
+			return;
+		}
 		replayer.removePage(page);
 	});
 
 	// page created by window.open or anchor
 	page.on('popup', async newPage => {
+		if (replayer.isOnRecord()) {
+			// do nothing when on record
+			return;
+		}
 		const newUrl = getUrlPath(newPage.url());
 		// find steps from next step of current step, the closest page-created event
 		const steps = replayer.getSteps();
@@ -115,9 +128,13 @@ const controlPage = async (replayer, page, device) => {
 		}
 
 		replayer.putPage(pageCreateStep.uuid, newPage, true);
-		await controlPage(replayer, newPage, device);
+		await controlPage(replayer, newPage, device, pageCreateStep.uuid);
 	});
 	page.on('dialog', async dialog => {
+		if (replayer.isOnRecord()) {
+			// do nothing when on record
+			return;
+		}
 		const dialogType = dialog.type();
 		if (dialogType === 'alert') {
 			// accept is the only way to alert dialog
@@ -179,12 +196,24 @@ const controlPage = async (replayer, page, device) => {
 		}
 	});
 	page.on('request', request => {
+		if (replayer.isOnRecord()) {
+			// do nothing when on record
+			return;
+		}
 		replayer.putRequest(replayer.findUuid(page), request);
 	});
 	page.on('requestfinished', request => {
+		if (replayer.isOnRecord()) {
+			// do nothing when on record
+			return;
+		}
 		replayer.offsetRequest(replayer.findUuid(page), request);
 	});
 	page.on('requestfailed', request => {
+		if (replayer.isOnRecord()) {
+			// do nothing when on record
+			return;
+		}
 		replayer.offsetRequest(replayer.findUuid(page), request);
 	});
 };
@@ -220,7 +249,7 @@ const launchBrowser = async replayer => {
 	replayer.putPage(uuid, page, true);
 	replayer.setDevice(device);
 	// add control into page
-	await controlPage(replayer, page, device);
+	await controlPage(replayer, page, device, uuid);
 	// open url, timeout to 2 mins
 	await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
 	// RESEARCH too much time, remove
@@ -324,6 +353,20 @@ class Replayer {
 		this.requests = {};
 		this.summary = new ReplayResult({ storyName, flow });
 		this.coverages = [];
+
+		this.onRecord = false;
+	}
+	/**
+	 * switch to record mode. cannot switch to replay again.
+	 *
+	 * @returns {Browser}
+	 */
+	switchToRecord() {
+		this.onRecord = true;
+		return this.browser;
+	}
+	isOnRecord() {
+		return this.onRecord;
 	}
 	getStoryName() {
 		return this.storyName;
@@ -508,7 +551,7 @@ class Replayer {
 			if (close) {
 				try {
 					await browser.close();
-					delete browsers[generateKeyByString(this.getStoryName(), this.getFlow().name)];
+					delete replayers[generateKeyByString(this.getStoryName(), this.getFlow().name)];
 				} catch (e) {
 					logger.error('Failed to close browser.');
 					logger.error(e);
@@ -760,8 +803,6 @@ class Replayer {
 	}
 	async executeScrollStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
-		const xpath = this.transformStepPathToXPath(step.path);
-		logger.log(`Execute scroll, step path is ${xpath}.`);
 
 		const scrollTop = step.scrollTop || 0;
 		const scrollLeft = step.scrollLeft || 0;
@@ -816,7 +857,7 @@ class Replayer {
 				const newPage = await this.browser.newPage();
 				if (this.putPage(step.uuid, newPage, false)) {
 					try {
-						await controlPage(this, newPage, this.device);
+						await controlPage(this, newPage, this.device, step.uuid);
 						await Promise.all([
 							newPage.waitForNavigation(), // The promise resolves after navigation has finished
 							newPage.goto(step.url, { waitUntil: 'domcontentloaded' }) // Go to the url will indirectly cause a navigation
@@ -859,7 +900,7 @@ class Replayer {
 				const newPage = await this.browser.newPage();
 				if (this.putPage(step.uuid, newPage, false)) {
 					try {
-						await controlPage(this, newPage, this.device);
+						await controlPage(this, newPage, this.device, step.uuid);
 						await Promise.all([
 							newPage.waitForNavigation(),
 							newPage.goto(step.url, { waitUntil: 'domcontentloaded' })
@@ -1026,7 +1067,6 @@ class Replayer {
 	}
 }
 
-const browsers = {};
 const launch = () => {
 	/**
 	 * @param {Object} options
@@ -1047,6 +1087,11 @@ const launch = () => {
 				case 'abolish':
 					await replayer.end(true);
 					event.reply(`replay-browser-abolish-${generateKeyByString(storyName, flowName)}`, {});
+					break;
+				case 'switch-to-record':
+					// keep replayer instance in replayers map
+					replayer.switchToRecord();
+					event.reply(`replay-browser-ready-to-switch-${generateKeyByString(storyName, flowName)}`, {});
 					break;
 				default:
 					try {
@@ -1082,7 +1127,7 @@ const launch = () => {
 			await replayer.start();
 			replayer.getSummary().handle((flow.steps || [])[0] || {});
 			// put into cache
-			browsers[generateKeyByString(storyName, flow.name)] = replayer.getBrowser();
+			replayers[generateKeyByString(storyName, flow.name)] = replayer;
 
 			// successful, prepare for next step
 			// send back
@@ -1100,10 +1145,10 @@ const launch = () => {
 
 const destory = () => {
 	logger.info('destory all puppeteer browsers.');
-	Object.keys(browsers).forEach(async key => {
+	Object.keys(replayers).forEach(async key => {
 		logger.info(`destory puppeteer browser[${key}]`);
-		const browser = browsers[key];
-		delete browsers[key];
+		const browser = replayers[key].getBrowser();
+		delete replayers[key];
 		try {
 			await browser.disconnect();
 		} catch {
@@ -1117,9 +1162,29 @@ const destory = () => {
 	});
 };
 
+const find = (storyName, flowName) => {
+	const key = generateKeyByString(storyName, flowName);
+	return replayers[key];
+};
+
+const abandon = (storyName, flowName) => {
+	const key = generateKeyByString(storyName, flowName);
+	const replayer = replayers[key];
+	delete replayers[key];
+	return replayer;
+};
+
+/** @type {Object.<string, Replayer>} */
+const replayers = {};
+/** @type {ReplayEmitter} */
 let emitter;
+/** @type {Console} */
 let logger;
+/**
+ * @property {number} sleepAfterChange
+ */
 let settings;
+/** @type {Environment} */
 let env;
 
 /**
@@ -1151,7 +1216,8 @@ const create = options => {
 
 	return {
 		initialize: () => launch(),
-		destory
+		destory,
+		abandon
 	};
 };
 module.exports = create;
