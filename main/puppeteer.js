@@ -106,48 +106,329 @@ const installListenersOnPage = async page => {
 		const ignoredIdRegexps = [/^md-.+-.{6,16}$/, /^select2-.+$/, /^.+\d{10,}$/, /^\s*$/];
 		const shouldIgnore = id => ignoredIdRegexps.some(regexp => regexp.test(id));
 		// here we are in the browser context
-		const createXPathFromElement = elm => {
-			var allNodes = document.getElementsByTagName('*');
-			for (var segs = []; elm && elm.nodeType == 1; elm = elm.parentNode) {
-				if (elm.hasAttribute('id') && !shouldIgnore(elm.getAttribute('id'))) {
-					var uniqueIdCount = 0;
-					for (var n = 0; n < allNodes.length; n++) {
-						if (allNodes[n].hasAttribute('id') && allNodes[n].id == elm.id) {
-							uniqueIdCount++;
-						}
-						if (uniqueIdCount > 1) {
-							break;
-						}
+
+		// css path createor copy from chrome dev-tools, and make some changes
+		const StepPath = class {
+			/**
+			 * @param {string} value
+			 * @param {boolean} optimized
+			 */
+			constructor(value, optimized) {
+				this.value = value;
+				this.optimized = optimized || false;
+			}
+
+			/**
+			 * @override
+			 * @return {string}
+			 */
+			toString() {
+				return this.value;
+			}
+		};
+		/**
+		 * @param {string} id
+		 * @return {string}
+		 */
+		const idSelector = id => {
+			return '#' + CSS.escape(id);
+		};
+		/**
+		 * @param {HTMLElement} elm
+		 * @return {string}
+		 */
+		const nodeNameInCorrectCase = elm => {
+			// IMPORTANT shadow root is not concerned now, by last-hit-b 2019/10/24.
+			// const shadowRootType = this.shadowRootType();
+			// if (shadowRootType) {
+			// 	return '#shadow-root (' + shadowRootType + ')';
+			// }
+
+			// If there is no local name, it's case sensitive
+			if (!elm.localName) {
+				return elm.nodeName;
+			}
+
+			// If the names are different lengths, there is a prefix and it's case sensitive
+			if (elm.localName.length !== elm.nodeName.length) {
+				return elm.nodeName;
+			}
+
+			// Return the localname, which will be case insensitive if its an html node
+			return elm.localName;
+		};
+		/**
+		 * @param {HTMLElement} left
+		 * @param {HTMLElement} right
+		 * @return {boolean}
+		 */
+		const areNodesSimilar = (left, right) => {
+			if (left === right) {
+				return true;
+			}
+
+			if (left.nodeType === Node.ELEMENT_NODE && right.nodeType === Node.ELEMENT_NODE) {
+				return left.localName === right.localName;
+			}
+
+			if (left.nodeType === right.nodeType) {
+				return true;
+			}
+
+			// XPath treats CDATA as text nodes.
+			const leftType = left.nodeType === Node.CDATA_SECTION_NODE ? Node.TEXT_NODE : left.nodeType;
+			const rightType = right.nodeType === Node.CDATA_SECTION_NODE ? Node.TEXT_NODE : right.nodeType;
+			return leftType === rightType;
+		};
+		/**
+		 * @param {HTMLElement} elm
+		 * @return {number} -1 in case of error,
+		 * 0 if no siblings matching the same expression,
+		 * <XPath index among the same expression-matching sibling nodes> otherwise.
+		 */
+		const getNodeIndexForXPath = elm => {
+			const siblings = elm.parentNode ? elm.parentNode.children : null;
+			if (!siblings) {
+				return 0;
+			} // Root node - no siblings.
+			let hasSameNamedElements;
+			for (let i = 0; i < siblings.length; ++i) {
+				if (areNodesSimilar(elm, siblings[i]) && siblings[i] !== elm) {
+					hasSameNamedElements = true;
+					break;
+				}
+			}
+			if (!hasSameNamedElements) {
+				return 0;
+			}
+			let ownIndex = 1; // XPath indices start with 1.
+			for (let i = 0; i < siblings.length; ++i) {
+				if (areNodesSimilar(elm, siblings[i])) {
+					if (siblings[i] === elm) {
+						return ownIndex;
 					}
-					if (uniqueIdCount == 1) {
-						segs.unshift('//*[@id="' + elm.getAttribute('id') + '"]');
-						return segs.join('/');
-					} else {
-						segs.unshift(elm.localName.toLowerCase() + '[@id="' + elm.getAttribute('id') + '"]');
+					++ownIndex;
+				}
+			}
+			return -1; // An error occurred: |node| not found in parent's children.
+		};
+		/**
+		 * @param {HTMLElement} elm
+		 * @param {boolean} optimized
+		 * @return {StepPath}
+		 */
+		const createXPathStep = (elm, optimized) => {
+			let ownValue;
+			const ownIndex = getNodeIndexForXPath(elm);
+			if (ownIndex === -1) {
+				return null;
+			} // Error.
+
+			switch (elm.nodeType) {
+				case Node.ELEMENT_NODE:
+					const id = elm.getAttribute('id');
+					if (optimized && id && !shouldIgnore(id)) {
+						return new StepPath('//*[@id="' + id + '"]', true);
 					}
-					// } else if (elm.hasAttribute('class')) {
-					// 	segs.unshift(elm.localName.toLowerCase() + '[@class="' + elm.getAttribute('class') + '"]');
-				} else {
-					var i = 1;
-					var sib;
-					for (i = 1, sib = elm.previousSibling; sib; sib = sib.previousSibling) {
-						if (sib.localName == elm.localName) i++;
+					ownValue = elm.localName;
+					break;
+				case Node.ATTRIBUTE_NODE:
+					ownValue = '@' + elm.nodeName;
+					break;
+				case Node.TEXT_NODE:
+				case Node.CDATA_SECTION_NODE:
+					ownValue = 'text()';
+					break;
+				case Node.PROCESSING_INSTRUCTION_NODE:
+					ownValue = 'processing-instruction()';
+					break;
+				case Node.COMMENT_NODE:
+					ownValue = 'comment()';
+					break;
+				case Node.DOCUMENT_NODE:
+					ownValue = '';
+					break;
+				default:
+					ownValue = '';
+					break;
+			}
+
+			if (ownIndex > 0) {
+				ownValue += '[' + ownIndex + ']';
+			}
+
+			return new StepPath(ownValue, elm.nodeType === Node.DOCUMENT_NODE);
+		};
+		const createXPathFromElement = (elm, optimized) => {
+			if (elm.nodeType === Node.DOCUMENT_NODE) {
+				return '/';
+			}
+
+			const steps = [];
+			let contextNode = elm;
+			while (contextNode) {
+				const step = createXPathStep(contextNode, optimized);
+				if (!step) {
+					break;
+				} // Error - bail out early.
+				steps.push(step);
+				if (step.optimized) {
+					break;
+				}
+				contextNode = contextNode.parentNode;
+			}
+
+			steps.reverse();
+			return (steps.length && steps[0].optimized ? '' : '/') + steps.join('/');
+		};
+		/**
+		 * @param {HTMLElement} elm
+		 * @return {string[]}
+		 */
+		const prefixedElementClassNames = elm => {
+			const classNames = elm.getAttribute('class');
+			if (!classNames) {
+				return [];
+			}
+
+			return classNames
+				.split(/\s+/g)
+				.filter(Boolean)
+				.map(name => {
+					// The prefix is required to store "__proto__" in a object-based map.
+					return '$' + name;
+				});
+		};
+		/**
+		 * @param {HTMLElement} elm
+		 * @param {boolean} optimized
+		 * @param {boolean} isTargetNode
+		 * @return {StepPath}
+		 */
+		const createCssPathStep = (elm, optimized, isTargetNode) => {
+			if (elm.nodeType !== Node.ELEMENT_NODE) {
+				return null;
+			}
+
+			const id = elm.getAttribute('id');
+			if (optimized) {
+				if (id && !shouldIgnore(id)) {
+					return new StepPath(idSelector(id), true);
+				}
+				const nodeNameLower = elm.nodeName.toLowerCase();
+				if (nodeNameLower === 'body' || nodeNameLower === 'head' || nodeNameLower === 'html') {
+					return new StepPath(nodeNameInCorrectCase(elm), true);
+				}
+			}
+			const nodeName = nodeNameInCorrectCase(elm);
+
+			if (id && !shouldIgnore(id)) {
+				return new StepPath(nodeName + idSelector(id), true);
+			}
+			const parent = elm.parentNode;
+			if (!parent || parent.nodeType === Node.DOCUMENT_NODE) {
+				return new StepPath(nodeName, true);
+			}
+
+			const prefixedOwnClassNamesArray = prefixedElementClassNames(elm);
+			let needsClassNames = false;
+			let needsNthChild = false;
+			let ownIndex = -1;
+			let elementIndex = -1;
+			const siblings = parent.children;
+			for (let i = 0; (ownIndex === -1 || !needsNthChild) && i < siblings.length; ++i) {
+				const sibling = siblings[i];
+				if (sibling.nodeType !== Node.ELEMENT_NODE) {
+					continue;
+				}
+				elementIndex += 1;
+				if (sibling === elm) {
+					ownIndex = elementIndex;
+					continue;
+				}
+				if (needsNthChild) {
+					continue;
+				}
+				if (nodeNameInCorrectCase(sibling) !== nodeName) {
+					continue;
+				}
+
+				needsClassNames = true;
+				const ownClassNames = new Set(prefixedOwnClassNamesArray);
+				if (!ownClassNames.size) {
+					needsNthChild = true;
+					continue;
+				}
+				const siblingClassNamesArray = prefixedElementClassNames(sibling);
+				for (let j = 0; j < siblingClassNamesArray.length; ++j) {
+					const siblingClass = siblingClassNamesArray[j];
+					if (!ownClassNames.has(siblingClass)) {
+						continue;
 					}
-					if (i > 1) {
-						segs.unshift(elm.localName.toLowerCase() + '[' + i + ']');
-					} else {
-						segs.unshift(elm.localName.toLowerCase());
+					ownClassNames.delete(siblingClass);
+					if (!ownClassNames.size) {
+						needsNthChild = true;
+						break;
 					}
 				}
 			}
-			return segs.length ? '/' + segs.join('/') : null;
+
+			let result = nodeName;
+			if (
+				isTargetNode &&
+				nodeName.toLowerCase() === 'input' &&
+				elm.getAttribute('type') &&
+				(!id || shouldIgnore(id)) &&
+				!elm.getAttribute('class')
+			) {
+				result += '[type=' + CSS.escape(elm.getAttribute('type')) + ']';
+			}
+			if (needsNthChild) {
+				result += ':nth-child(' + (ownIndex + 1) + ')';
+			} else if (needsClassNames) {
+				for (const prefixedName of prefixedOwnClassNamesArray) {
+					result += '.' + CSS.escape(prefixedName.slice(1));
+				}
+			}
+
+			return new StepPath(result, false);
+		};
+		/**
+		 * @param {HTMLElement} elm
+		 * @param {boolean} optimized
+		 * @return {string}
+		 */
+		const createCssPathFromElement = (elm, optimized) => {
+			if (elm.nodeType !== Node.ELEMENT_NODE) {
+				return '';
+			}
+
+			const steps = [];
+			let contextNode = elm;
+			while (contextNode) {
+				const step = createCssPathStep(contextNode, !!optimized, contextNode === elm);
+				if (!step) {
+					// Error - bail out early.
+					break;
+				}
+				steps.push(step);
+				if (step.optimized) {
+					break;
+				}
+				contextNode = contextNode.parentNode;
+			}
+
+			steps.reverse();
+			return steps.join(' > ');
 		};
 
 		const transformEvent = (e, element) => {
-			let xpath = createXPathFromElement(element);
+			let xpath = createXPathFromElement(element, true);
+			let csspath = createCssPathFromElement(element, true);
 			if ((e.type === 'click' || e.type === 'mousedown') && xpath.indexOf('/svg') !== -1) {
 				console.log('xpath contains svg dom node.');
 				const newXpath = xpath.replace(/^(.*button.*)\/svg.*$/, '$1');
+				const newCssPaath = csspath.replace(/^(.*button.*)\s>\ssvg.*$/, '$1');
 				console.log(`new xpath after svg cut-off is ${newXpath}.`);
 				if (newXpath !== xpath) {
 					// replaced
@@ -157,6 +438,7 @@ const installListenersOnPage = async page => {
 					}
 					element = parent;
 					xpath = newXpath;
+					csspath = newCssPaath;
 				}
 			}
 
@@ -186,13 +468,14 @@ const installListenersOnPage = async page => {
 				value: e.type !== 'keydown' ? element.value : e.key,
 				// computed
 				path: xpath,
+				csspath: csspath,
 				target:
 					element === document
 						? 'document'
 						: `<${element.tagName.toLowerCase()} ${element
-							.getAttributeNames()
-							.map(name => `${name}="${element.getAttribute(name)}"`)
-							.join(' ')}>`
+								.getAttributeNames()
+								.map(name => `${name}="${element.getAttribute(name)}"`)
+								.join(' ')}>`
 				// bubbles: e.bubbles,
 				// cancelBubble: e.cancelBubble,
 				// cancelable: e.cancelable,
@@ -509,7 +792,7 @@ const controlPage = async (page, options, allPages) => {
 
 		try {
 			client.detach();
-		} catch { }
+		} catch {}
 	});
 	// page created by window.open or anchor
 	page.on('popup', async newPage => {
@@ -555,7 +838,7 @@ const launch = () => {
 			const browserArgs = [];
 			browserArgs.push(`--window-size=${width},${height + 150}`);
 			browserArgs.push('--disable-infobars');
-			browserArgs.push('--ignore-certificate-errors')
+			browserArgs.push('--ignore-certificate-errors');
 			// browserArgs.push('--use-mobile-user-agent');
 
 			// create browser

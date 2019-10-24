@@ -583,8 +583,7 @@ class Replayer {
 		const xpath = this.transformStepPathToXPath(step.path);
 		logger.log(`Execute change, step path is ${xpath}, step value is ${step.value}.`);
 
-		const elements = await page.$x(xpath);
-		const element = elements[0];
+		const element = await this.findElement(step, page);
 		const elementTagName = await this.getElementTagName(element);
 		const elementType = await this.getElementType(element);
 
@@ -637,8 +636,7 @@ class Replayer {
 		const xpath = this.transformStepPathToXPath(step.path);
 		logger.log(`Execute click, step path is ${xpath}.`);
 
-		const elements = await page.$x(xpath);
-		const element = elements[0];
+		const element = await this.findElement(step, page);
 		const elementTagName = await this.getElementTagName(element);
 
 		const support = this.createThirdStepSupport(page, element);
@@ -674,7 +672,7 @@ class Replayer {
 		}
 		const visible = await this.isElementVisible(element);
 		if (visible) {
-			await elements[0].click();
+			await element.click();
 		} else {
 			await element.evaluate(node => node.click());
 		}
@@ -684,8 +682,7 @@ class Replayer {
 		const xpath = this.transformStepPathToXPath(step.path);
 		logger.log(`Execute focus, step path is ${xpath}.`);
 
-		const elements = await page.$x(xpath);
-		const element = elements[0];
+		const element = await this.findElement(step, page);
 		await element.evaluate(node => {
 			node.focus();
 			const event = document.createEvent('HTMLEvents');
@@ -706,8 +703,7 @@ class Replayer {
 		if (steps[currentIndex].type === 'keydown' && steps[currentIndex + 1].type === 'change') {
 			if (steps[currentIndex].target === steps[currentIndex + 1].target) {
 				if (steps[currentIndex + 2].type === 'click') {
-					const elements = await page.$x(this.transformStepPathToXPath(steps[currentIndex + 2].path));
-					const element = elements[0];
+					const element = await this.findElement(steps[currentIndex + 2], page);
 					const elementTagName = await this.getElementTagName(element);
 					const elementType = await this.getElementType(element);
 					if (elementTagName === 'INPUT' && elementType === 'submit') {
@@ -734,9 +730,7 @@ class Replayer {
 		const xpath = this.transformStepPathToXPath(step.path);
 		logger.log(`Execute mouse down, step path is ${xpath}`);
 
-		const elements = await page.$x(xpath);
-		const element = elements[0];
-
+		const element = await this.findElement(step, page);
 		const support = this.createThirdStepSupport(page, element);
 		const done = await support.mousedown();
 
@@ -759,6 +753,8 @@ class Replayer {
 	}
 	async executeScrollStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
+		const xpath = this.transformStepPathToXPath(step.path);
+		logger.log(`Execute scroll, step path is ${xpath}.`);
 
 		const scrollTop = step.scrollTop || 0;
 		const scrollLeft = step.scrollLeft || 0;
@@ -773,9 +769,7 @@ class Replayer {
 				scrollLeft
 			);
 		} else {
-			const xpath = this.transformStepPathToXPath(step.path);
-			const elements = await page.$x(xpath);
-			const element = elements[0];
+			const element = await this.findElement(step, page);
 			await element.evaluate(
 				(node, scrollTop, scrollLeft) => {
 					node.scrollTo({ top: scrollTop, left: scrollLeft });
@@ -889,6 +883,21 @@ class Replayer {
 			currentStepIndex: this.getCurrentIndex(),
 			logger
 		});
+	}
+	async findElement(step, page) {
+		const xpath = this.transformStepPathToXPath(step.path);
+		const elements = await page.$x(xpath);
+		if (elements && elements.length > 0) {
+			return elements[0];
+		}
+
+		// fallback to css path
+		const csspath = step.csspath;
+		const element = await page.$(csspath);
+		if (element) {
+			return element;
+		}
+		throw new Error(`Cannot find element by xpath[${xpath}] or csspath[${csspath}].`);
 	}
 	createElementTagNameRetriever() {
 		let tagName;

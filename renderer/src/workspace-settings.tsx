@@ -63,6 +63,10 @@ export type Step = {
 	uuid: string;
 	stepIndex: number;
 	stepUuid: string;
+	/** xpath */
+	path?: string;
+	/** css path */
+	csspath?: string;
 	/** screenshot, base64 */
 	image?: string;
 	/** breakpoint */

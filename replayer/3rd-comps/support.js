@@ -7,11 +7,11 @@ class ThirdStepSupport {
 	 *
 	 * @param {{
 	 * 	page: Page
-	 * 	element: HTMLElement,
-	 * 	tagNameRetrieve: (element: HTMLElement) => string,
-	 * 	elementTypeRetrieve: (element: HTMLElement) => string,
-	 * 	classNamesRetrieve: (element: HTMLElement) => string,
-	 * 	attrValueRetrieve: (element: HTMLElement) => string,
+	 * 	element: ElementHandle,
+	 * 	tagNameRetrieve: (element: ElementHandle) => string,
+	 * 	elementTypeRetrieve: (element: ElementHandle) => string,
+	 * 	classNamesRetrieve: (element: ElementHandle) => string,
+	 * 	attrValueRetrieve: (element: ElementHandle) => string,
 	 * 	steps: Step[],
 	 * 	currentStepIndex: number,
 	 * 	logger: console
@@ -37,7 +37,7 @@ class ThirdStepSupport {
 	}
 	/**
 	 * get element
-	 * @returns {HTMLElement}
+	 * @returns {ElementHandle} puppeteer element handle
 	 */
 	getElement() {
 		return this.element;
