@@ -893,11 +893,30 @@ class Replayer {
 
 		// fallback to css path
 		const csspath = step.csspath;
-		const element = await page.$(csspath);
-		if (element) {
-			return element;
+		if (csspath) {
+			const element = await page.$(csspath);
+			if (element) {
+				return element;
+			}
 		}
-		throw new Error(`Cannot find element by xpath[${xpath}] or csspath[${csspath}].`);
+
+		const custompath = step.custompath;
+		if (custompath) {
+			const element = await page.$(custompath);
+			if (element) {
+				return element;
+			}
+		}
+
+		const paths = (() => {
+			const paths = { xpath, csspath, custompath };
+			return Object.keys(paths)
+				.filter(key => paths[key])
+				.map(key => `${key}[${paths[key]}]`)
+				.join(' or ');
+		})();
+
+		throw new Error(`Cannot find element by ${paths}.`);
 	}
 	createElementTagNameRetriever() {
 		let tagName;
