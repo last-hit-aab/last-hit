@@ -1028,6 +1028,12 @@ class Replayer {
 
 const browsers = {};
 const launch = () => {
+	/**
+	 * @param {Object} options
+	 * @param {string} options.storyName
+	 * @param {string} options.flowName
+	 * @param {Replayer} options.replayer
+	 */
 	const waitForNextStep = options => {
 		const { storyName, flowName, replayer } = options;
 		emitter.once(`continue-replay-step-${generateKeyByString(storyName, flowName)}`, async (event, arg) => {
@@ -1127,6 +1133,10 @@ let env;
  * 	},
  * 	env?: Environment
  * }} options
+ * @returns {{
+ * 	initialize: () => Replayer,
+ * 	destory: () => void
+ * }}
  */
 const create = options => {
 	emitter = options.emitter;

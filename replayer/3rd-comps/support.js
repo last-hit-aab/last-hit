@@ -1,3 +1,10 @@
+/**
+ * This callback is displayed as a global member.
+ * @callback ElementRetriever
+ * @param {ElementHandle} element
+ * @returns {string}
+ */
+
 const Select2 = require('./select2');
 
 const thirdParties = [new Select2()];
@@ -5,17 +12,16 @@ const thirdParties = [new Select2()];
 class ThirdStepSupport {
 	/**
 	 *
-	 * @param {{
-	 * 	page: Page
-	 * 	element: ElementHandle,
-	 * 	tagNameRetrieve: (element: ElementHandle) => string,
-	 * 	elementTypeRetrieve: (element: ElementHandle) => string,
-	 * 	classNamesRetrieve: (element: ElementHandle) => string,
-	 * 	attrValueRetrieve: (element: ElementHandle) => string,
-	 * 	steps: Step[],
-	 * 	currentStepIndex: number,
-	 * 	logger: console
-	 * }} options
+	 * @param {Object} options
+	 * @param {Page} options.page
+	 * @param {ElementHandle} options.element
+	 * @param {ElementRetriever} options.tagNameRetrieve
+	 * @param {ElementRetriever} options.elementTypeRetrieve
+	 * @param {ElementRetriever} options.classNamesRetrieve
+	 * @param {ElementRetriever} options.attrValueRetrieve
+	 * @param {Step[]} options.steps
+	 * @param {number} options.currentStepIndex
+	 * @param {Console} options.logger
 	 */
 	constructor(options) {
 		this.page = options.page;

@@ -753,7 +753,18 @@ const isAllRelatedPagesClosed = async (page, flowKey) => {
 /**
  *
  * @param {Page} page
- * @param {{device, flowKey}} options
+ * @param {Object} options
+ * @param {Object} options.device
+ * @param {string} options.device.name
+ * @param {string} options.device.userAgent
+ * @param {Object} options.device.viewport
+ * @param {number} options.device.viewport.width
+ * @param {number} options.device.viewport.height
+ * @param {number} options.device.viewport.deviceScaleFactor
+ * @param {boolean} options.device.viewport.isMobile
+ * @param {boolean} options.device.viewport.hasTouch
+ * @param {boolean} options.device.viewport.isLandscape
+ * @param {string} options.flowKey
  * @param {AllPagesCache} allPages
  */
 const controlPage = async (page, options, allPages) => {
