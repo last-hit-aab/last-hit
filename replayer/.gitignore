@@ -1,0 +1,14 @@
+.DS_Store
+
+node_modules
+
+.nyc_output
+coverage
+upload-temp
+
+report.html
+error-*.png
+
+package-lock.json
+stderr.log
+stdout.log
