@@ -398,6 +398,9 @@ class Replayer {
 	getCurrentStep() {
 		return this.getSteps()[this.getCurrentIndex()];
 	}
+	getPreviousStep() {
+		return this.getSteps()[this.getCurrentIndex() - 1];
+	}
 	/**
 	 * @returns null only if not start
 	 */
@@ -582,6 +585,10 @@ class Replayer {
 						return await this.executeKeydownStep(step);
 					case 'mousedown':
 						return await this.executeMousedownStep(step);
+					case 'touchstart':
+						return await this.executeTouchstartStep(step);
+					case 'touchend':
+						return await this.executeTouchendStep(step);
 					case 'animation':
 						return await this.executeAnimationStep(step);
 					case 'ajax':
@@ -795,6 +802,51 @@ class Replayer {
 				return;
 			}
 			await element.click();
+		}
+	}
+	async executeTouchstartStep(step) {
+		const page = await this.getPageOrThrow(step.uuid);
+		const xpath = this.transformStepPathToXPath(step.path);
+		logger.log(`Execute touch start, step path is ${xpath}`);
+
+		const currentIndex = this.getCurrentIndex();
+		const currentPath = step.path;
+		const avoidClick = this.getSteps()
+			.filter((step, index) => index > currentIndex)
+			.some(step => step.type === 'click' && step.path === currentPath);
+		if (avoidClick) {
+			logger.log(`found click for this touchend, just skip this touchend`);
+			return;
+		} else {
+			// send mouse down to invoke touch start event
+			await page.mouse.move(step.pageX, step.pageY);
+			await page.mouse.down();
+		}
+	}
+	async executeTouchendStep(step) {
+		const page = await this.getPageOrThrow(step.uuid);
+		const xpath = this.transformStepPathToXPath(step.path);
+		logger.log(`Execute touch end, step path is ${xpath}`);
+
+		const currentIndex = this.getCurrentIndex();
+		const currentPath = step.path;
+		const avoidClick = this.getSteps()
+			.filter((step, index) => index > currentIndex)
+			.some(step => step.type === 'click' && step.path === currentPath);
+		if (avoidClick) {
+			logger.log(`found click for this touchend, just skip this touchend`);
+			return;
+		} else {
+			// send mouse up to invoke touch end event
+			let { pageX, pageY } = step;
+			if (!pageX) {
+				// previous step is touch start or touch move
+				const prevStep = this.getPreviousStep();
+				pageX = prevStep.pageX;
+				pageY = prevStep.pageY;
+			}
+			await page.mouse.move(pageX, pageY);
+			await page.mouse.up();
 		}
 	}
 	async executeAnimationStep(step) {
