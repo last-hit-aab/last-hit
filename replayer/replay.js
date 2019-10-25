@@ -7,6 +7,7 @@ const atob = require('atob');
 const util = require('util');
 const ReplayResult = require('./replay-result');
 const ThirdStepSupport = require('./3rd-comps/support');
+const campareScreen = require('./campare-screen');
 
 const inElectron = !!process.versions.electron;
 
@@ -517,8 +518,6 @@ class Replayer {
 			return;
 		}
 
-		// console.log("step",JSON.stringify(step))
-
 		try {
 			const ret = await (async () => {
 				switch (step.type) {
@@ -561,11 +560,44 @@ class Replayer {
 						return Promise.resolve();
 				}
 			})();
+
+			const page = await this.getPageOrThrow(step.uuid);
 			if (!ret || ret.wait !== false) {
-				const page = await this.getPageOrThrow(step.uuid);
+				// const page = await this.getPageOrThrow(step.uuid);
 				await this.isRemoteFinsihed(page);
 			}
+
+			if (step.image) {
+				const srceen_record_path = path.join(getTempFolder(__dirname), "screen_record")
+				if (!fs.existsSync(srceen_record_path)) {
+					fs.mkdirSync(srceen_record_path);
+				}
+
+				const flow_name_path = path.join(srceen_record_path, flow.name)
+				console.log("flow_name", flow_name_path)
+				if (!fs.existsSync(flow_name_path)) {
+					fs.mkdirSync(flow_name_path);
+				}
+
+				const replay_path = path.join(flow_name_path, step.uuid + "_replay.png");
+				const replay = await page.screenshot({ encoding: 'base64' });
+				fs.writeFileSync(replay_path, Buffer.from(replay, "base64"));
+
+				const current_path = path.join(flow_name_path, step.uuid + "_baseline.png");
+				fs.writeFileSync(current_path, Buffer.from(step.image, "base64"));
+
+				const diff = await campareScreen(step.image, replay)
+				const diff_path = path.join(flow_name_path, step.uuid + "_diff.png");
+				diff.onComplete(function (data) {
+					// console.log(data)
+					data.getDiffImage().pack().pipe(fs.createWriteStream(diff_path));
+				});
+
+			}
+
 		} catch (e) {
+
+			console.error(e)
 			const page = this.getPage(step.uuid);
 
 			this.getSummary().handleError(step, e);
@@ -1006,6 +1038,7 @@ const launch = () => {
 						logger.log(`Continue step[${index}]@${generateKeyByString(storyName, flowName)}.`);
 						replayer.getSummary().handle(step);
 						await replayer.next(flow, index);
+
 						waitForNextStep({ event, replayer, storyName, flowName, index });
 					} catch (e) {
 						logger.error('Step execution failed, failed step as below:');
@@ -1018,14 +1051,27 @@ const launch = () => {
 					}
 			}
 		});
+
 		logger.log(
 			`Reply message step[${options.index}]@[replay-step-end-${generateKeyByString(storyName, flowName)}].`
 		);
+
 		options.event.reply(`replay-step-end-${generateKeyByString(storyName, flowName)}`, {
 			index: options.index,
 			error: options.error
 		});
 	};
+
+	// const compareScreenshot = (step) => {
+	// 	if (step.image) {
+
+	// 		await page.screenshot({ path: file_path, type: 'png' });
+
+	// 	}
+	// }
+
+
+
 	const handle = {};
 	emitter.on('launch-replay', async (event, arg) => {
 		const { storyName, flow, index } = arg;

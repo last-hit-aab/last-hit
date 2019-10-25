@@ -16,9 +16,16 @@ class ReplaySummary {
 			slowAjaxRequest: []
 		};
 	}
+
 	getSummary() {
 		return this.summary;
 	}
+
+	async compareScreenshot() {
+
+
+	}
+
 	async handleError(step, error) {
 		if (step.type == 'ajax') {
 			this.summary.numberOfAjax += 1;
@@ -27,6 +34,7 @@ class ReplaySummary {
 		}
 		return Promise.resolve(true);
 	}
+
 	async handle(step) {
 		if (step.type == 'ajax') {
 			this.summary.numberOfAjax += 1;

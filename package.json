@@ -42,11 +42,11 @@
 		"cross-spawn": "^6.0.5",
 		"express": "^4.17.1",
 		"node-gyp": "^6.0.0",
+		"node-resemble-js": "^0.2.0",
 		"pino": "^5.13.4",
 		"pino-pretty": "^3.2.1",
 		"puppeteer": "^1.20.0",
 		"puppeteer-to-istanbul": "^1.2.2",
-		"resemblejs": "^3.2.3",
 		"uuid": "^3.3.3",
 		"watchr": "^4.1.0",
 		"yargs": "^13.3.0"
