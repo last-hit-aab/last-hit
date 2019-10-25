@@ -87,8 +87,9 @@ const controlPage = async (replayer, page, device, uuid) => {
 	const client = await page.target().createCDPSession();
 	if (device.viewport.isMobile) {
 		await client.send('Emulation.setFocusEmulationEnabled', { enabled: true });
-		await client.send('Emulation.setEmitTouchEventsForMouse', { enabled: true, configuration: 'mobile' });
-		await client.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+		// refer to puppeteer.js
+		// await client.send('Emulation.setEmitTouchEventsForMouse', { enabled: true, configuration: 'mobile' });
+		// await client.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
 	}
 	await client.detach();
 

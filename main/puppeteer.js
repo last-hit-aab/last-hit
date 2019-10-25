@@ -794,8 +794,11 @@ const controlPage = async (page, options, allPages) => {
 	const client = await page.target().createCDPSession();
 	if (device.viewport.isMobile) {
 		await client.send('Emulation.setFocusEmulationEnabled', { enabled: true });
-		await client.send('Emulation.setEmitTouchEventsForMouse', { enabled: true, configuration: 'mobile' });
-		await client.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+		// IMPORTANT emit as touch events will introduce many problems
+		// such as touch on a button and scroll
+		// replayer cannot know it is a click/tap or a scroll when touch end
+		// await client.send('Emulation.setEmitTouchEventsForMouse', { enabled: true, configuration: 'mobile' });
+		// await client.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
 	}
 	// await client.send('Animation.enable');
 	// client.on('Animation.animationStarted', ({ animation }) => {
