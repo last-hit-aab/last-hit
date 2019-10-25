@@ -1,9 +1,8 @@
 class Environment {
 	/**
-	 * @param {{
-	 * 	urlReplaceRegexp?: string,
-	 * 	urlReplaceTo?: string
-	 * }} options
+	 * @param {Object} options
+	 * @param {string=} options.urlReplaceRegexp
+	 * @param {string=} options.urlReplaceTo
 	 */
 	constructor(options) {
 		this.constructed = false;

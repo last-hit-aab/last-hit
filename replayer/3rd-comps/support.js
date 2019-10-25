@@ -1,3 +1,10 @@
+/**
+ * This callback is displayed as a global member.
+ * @callback ElementRetriever
+ * @param {ElementHandle} element
+ * @returns {string}
+ */
+
 const Select2 = require('./select2');
 
 const thirdParties = [new Select2()];
@@ -5,18 +12,19 @@ const thirdParties = [new Select2()];
 class ThirdStepSupport {
 	/**
 	 *
-	 * @param {{
-	 * 	element: HTMLElement,
-	 * 	tagNameRetrieve: (element: HTMLElement) => string,
-	 * 	elementTypeRetrieve: (element: HTMLElement) => string,
-	 * 	classNamesRetrieve: (element: HTMLElement) => string,
-	 * 	attrValueRetrieve: (element: HTMLElement) => string,
-	 * 	steps: Step[],
-	 * 	currentStepIndex: number,
-	 * 	logger: console
-	 * }} options
+	 * @param {Object} options
+	 * @param {Page} options.page
+	 * @param {ElementHandle} options.element
+	 * @param {ElementRetriever} options.tagNameRetrieve
+	 * @param {ElementRetriever} options.elementTypeRetrieve
+	 * @param {ElementRetriever} options.classNamesRetrieve
+	 * @param {ElementRetriever} options.attrValueRetrieve
+	 * @param {Step[]} options.steps
+	 * @param {number} options.currentStepIndex
+	 * @param {Console} options.logger
 	 */
 	constructor(options) {
+		this.page = options.page;
 		this.element = options.element;
 		this.tagNameRetrieve = options.tagNameRetrieve;
 		this.elementTypeRetrieve = options.elementTypeRetrieve;
@@ -27,8 +35,15 @@ class ThirdStepSupport {
 		this.logger = options.logger;
 	}
 	/**
+	 * get page
+	 * @returns {Page} puppeteer page
+	 */
+	getPage() {
+		return this.page;
+	}
+	/**
 	 * get element
-	 * @returns {HTMLElement}
+	 * @returns {ElementHandle} puppeteer element handle
 	 */
 	getElement() {
 		return this.element;
@@ -64,6 +79,9 @@ class ThirdStepSupport {
 	}
 	getSteps() {
 		return this.steps;
+	}
+	getCurrentStep() {
+		return this.steps[this.getCurrentStepIndex()];
 	}
 	getCurrentStepIndex() {
 		return this.currentStepIndex;

@@ -3,10 +3,11 @@ const path = require('path');
 
 /**
  * build flows array of given workspace
- * @param {{
- * 	workspaceFolder: string,
- * 	data: {story:string, flow:string}[]
- * }} options
+ * @param {Object} options
+ * @param {string} options.workspaceFolder
+ * @param {Object} options.data
+ * @param {string} options.data.story
+ * @param {string} options.data.flow
  * @returns {{story: string, flow: string}[]}
  */
 const compose = options => {
