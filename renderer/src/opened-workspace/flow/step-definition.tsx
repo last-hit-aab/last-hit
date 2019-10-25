@@ -7,8 +7,7 @@ import {
 	faRoute,
 	faSnowboarding,
 	faSnowman,
-	faTimesCircle,
-	faHandPointUp
+	faTimesCircle
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import DialogOpenIcon from '@material-ui/icons/AssignmentLate';
@@ -176,14 +175,6 @@ const STEP_FORKS = {
 	[StepType.MOUSE_DOWN]: {
 		icon: <MouseIcon style={{ transform: 'translateY(4px)' }} />,
 		label: (step: MouseDownStep): string => `Mouse down on ${shorternTarget(step.target)}.`
-	},
-	[StepType.TOUCH_START]: {
-		icon: <FontAwesomeIcon icon={faHandPointUp} />,
-		label: (step: MouseDownStep): string => `Touch start on ${shorternTarget(step.target)}.`
-	},
-	[StepType.TOUCH_END]: {
-		icon: <FontAwesomeIcon icon={faHandPointUp} />,
-		label: (step: MouseDownStep): string => `Touch end on ${shorternTarget(step.target)}.`
 	},
 	[StepType.KEY_DOWN]: {
 		icon: <KeyIcon style={{ transform: 'translateY(4px)' }} />,

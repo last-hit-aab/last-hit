@@ -34,8 +34,6 @@ export enum StepType {
 	RESOURCE_LOAD = 'resource-load', // ignore on capture 20190925
 	LOAD = 'load', // ignore on capture 20190925
 	MOUSE_DOWN = 'mousedown', // done in replay
-	TOUCH_START = 'touchstart', // done in replay
-	TOUCH_END = 'touchend', // done in replay
 	KEY_DOWN = 'keydown', // done in replay
 	FOCUS = 'focus', // done in replay
 	SCROLL = 'scroll', // done in replay
@@ -139,8 +137,6 @@ export type EndStep = Step & { type: StepType.END };
 export type DomEventStep = Step & { target: string };
 export type ClickStep = DomEventStep & { type: StepType.CLICK };
 export type MouseDownStep = DomEventStep & { type: StepType.MOUSE_DOWN };
-export type TouchStartStep = DomEventStep & { type: StepType.TOUCH_START };
-export type TouchEndStep = DomEventStep & { type: StepType.TOUCH_END };
 export type ScrollStep = DomEventStep & { type: StepType.SCROLL; scrollTop: number; scrollLeft: number };
 export type TextChangeEvent = DomEventStep & { type: StepType.CHANGE };
 export type FocusStep = DomEventStep & { type: StepType.FOCUS };
