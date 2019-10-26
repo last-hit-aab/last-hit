@@ -630,9 +630,12 @@ class Replayer {
 					fs.mkdirSync(flow_name_path);
 				}
 
-				const replay_path = path.join(flow_name_path, step.uuid + "_replay.png");
+
 				const replay = await page.screenshot({ encoding: 'base64' });
+				const replay_path = path.join(flow_name_path, step.uuid + "_replay.png");
 				fs.writeFileSync(replay_path, Buffer.from(replay, "base64"));
+
+
 
 				const current_path = path.join(flow_name_path, step.uuid + "_baseline.png");
 				fs.writeFileSync(current_path, Buffer.from(step.image, "base64"));
@@ -640,7 +643,7 @@ class Replayer {
 				const diff = await campareScreen(step.image, replay)
 				const diff_path = path.join(flow_name_path, step.uuid + "_diff.png");
 				diff.onComplete(function (data) {
-					// console.log(data)
+					console.log(data)
 					data.getDiffImage().pack().pipe(fs.createWriteStream(diff_path));
 				});
 
@@ -661,6 +664,10 @@ class Replayer {
 			throw e;
 		}
 	}
+
+
+
+
 	async executeChangeStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
 		const xpath = this.transformStepPathToXPath(step.path);
