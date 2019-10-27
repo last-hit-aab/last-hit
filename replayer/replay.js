@@ -643,9 +643,15 @@ class Replayer {
 				const diff = await campareScreen(step.image, replay)
 				const diff_path = path.join(flow_name_path, step.uuid + "_diff.png");
 				diff.onComplete(function (data) {
-					console.log(data)
-					data.getDiffImage().pack().pipe(fs.createWriteStream(diff_path));
+					if (Number(data.misMatchPercentage) > 0.01) {
+
+						data.getDiffImage().pack().pipe(fs.createWriteStream(diff_path));
+					}
 				});
+
+				this.getSummary().compareScreenshot(step.uuid)
+
+
 
 			}
 

@@ -3,11 +3,88 @@ const path = require('path');
 
 const generate_report = options => {
 	const { file_name, results } = options;
-	const html = buildHtml(buildResultRow(results));
+	const ci_results = buildResultRow(results)
+	const screen_reports = buildCompareScreen(results)
+	console.log(JSON.stringify(screen_reports))
+
+	const html = buildHtml(ci_results, screen_reports);
 	html.renderHTMLToFile(path.join(process.cwd(), file_name));
 };
 
 module.exports = { generate_report };
+
+
+const buildCompareScreen = ci_results => {
+
+	const compare_screens = []
+	ci_results.map(ci_result => {
+		ci_result.screen_compare_result.map(step_of_screem => {
+			compare_screens.push({
+				type: 'tr',
+				attributes: { class: 'test-result-step-row test-result-step-row-altone' },
+				content: [
+					{
+						type: 'td',
+						attributes: { class: 'test-result-step-command-cell' },
+						content: ci_result.storyName
+					},
+					{
+						type: 'td',
+						attributes: { class: 'test-result-step-command-cell' },
+						content: ci_result.flowName
+					},
+					{
+						type: 'td',
+						attributes: { class: 'test-result-step-command-cell' },
+						content: step_of_screem
+					},
+					{
+						type: 'td',
+						attributes: { class: 'test-result-step-command-cell' },
+						content: [{
+							type: 'img',
+							attributes: {
+								src: `screen_record\\${ci_result.flowName}\\${step_of_screem}_baseline.png`,
+								style: "width:500px;height:300px;"
+							}
+						}]
+
+
+
+					},
+					{
+						type: 'td',
+						attributes: { class: 'test-result-step-command-cell' },
+						content: [{
+							type: 'img',
+							attributes: {
+								src: `screen_record\\${ci_result.flowName}\\${step_of_screem}_replay.png`,
+								style: "width:500px;height:300px;"
+							}
+						}]
+					},
+					{
+						type: 'td',
+						attributes: { class: 'test-result-step-command-cell' },
+						content: [{
+							type: 'img',
+							attributes: {
+								src: `screen_record\\${ci_result.flowName}\\${step_of_screem}_diff.png`,
+								style: "width:500px;height:300px;"
+							}
+						}]
+					},
+				]
+			})
+			// console.log("step_of_screem,", step_of_screem)
+		})
+	})
+
+
+	// console.log()
+
+	return compare_screens;
+}
 
 const buildResultRow = ci_results => {
 	const rows = ci_results.map(ci_result => {
@@ -84,7 +161,7 @@ const buildResultRow = ci_results => {
 };
 
 // generate_report()
-function buildHtml(ci_results_content) {
+function buildHtml(ci_results_content, screen_reports) {
 	const html = new htmlCreator([
 		{
 			type: 'head',
@@ -215,6 +292,58 @@ function buildHtml(ci_results_content) {
 						{
 							type: 'tbody',
 							content: ci_results_content
+						}
+					]
+				},
+
+				{
+					type: 'table',
+					attributes: { class: 'test-result-table', cellspacing: 0 },
+					content: [
+						{
+							type: 'thead',
+							content: [
+								{
+									type: 'tr',
+									content: [
+										{
+											type: 'td',
+											attributes: { class: 'test-result-table-header-cell' },
+											content: 'Story Name'
+										},
+										{
+											type: 'td',
+											attributes: { class: 'test-result-table-header-cell' },
+											content: 'Flow Name'
+										},
+										{
+											type: 'td',
+											attributes: { class: 'test-result-table-header-cell' },
+											content: 'Step Id'
+										},
+										{
+											type: 'td',
+											attributes: { class: 'test-result-table-header-cell' },
+											content: 'Baseline'
+										},
+										{
+											type: 'td',
+											attributes: { class: 'test-result-table-header-cell' },
+											content: 'Replay'
+										},
+										{
+											type: 'td',
+											attributes: { class: 'test-result-table-header-cell' },
+											content: 'Different'
+										}
+
+									]
+								}
+							]
+						},
+						{
+							type: 'tbody',
+							content: screen_reports
 						}
 					]
 				},

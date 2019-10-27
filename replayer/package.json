@@ -32,6 +32,7 @@
 		"html-creator": "^0.4.3",
 		"jsonfile": "^5.0.0",
 		"nyc": "^14.1.1",
+		"node-resemble-js": "^0.2.0",
 		"puppeteer": "^1.20.0",
 		"puppeteer-to-istanbul": "^1.2.2",
 		"uuid": "^3.3.3",
