@@ -655,6 +655,11 @@ istanbul-reports@^2.2.4:
   dependencies:
     handlebars "^4.1.2"
 
+jpeg-js@0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/jpeg-js/-/jpeg-js-0.2.0.tgz#53e448ec9d263e683266467e9442d2c5a2ef5482"
+  integrity sha1-U+RI7J0mPmgyZkZ+lELSxaLvVII=
+
 js-tokens@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"
@@ -827,6 +832,14 @@ nice-try@^1.0.4:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
   integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
+
+node-resemble-js@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/node-resemble-js/-/node-resemble-js-0.2.0.tgz#8a36c6678a61e5d8455fec58009b1b0271b1909a"
+  integrity sha1-ijbGZ4ph5dhFX+xYAJsbAnGxkJo=
+  dependencies:
+    jpeg-js "0.2.0"
+    pngjs "~2.2.0"
 
 normalize-package-data@^2.3.2:
   version "2.5.0"
@@ -1034,6 +1047,11 @@ pkg-dir@^3.0.0:
   integrity sha512-/E57AYkoeQ25qkxMj5PBOVgF8Kiu/h7cYS30Z5+R7WaiCCBfLq58ZI/dSeaEKb9WVJV5n/03QwrN3IeWIFllvw==
   dependencies:
     find-up "^3.0.0"
+
+pngjs@~2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/pngjs/-/pngjs-2.2.0.tgz#649663609a0ebab87c8f08b3fe724048b51d9d7f"
+  integrity sha1-ZJZjYJoOurh8jwiz/nJASLUdnX8=
 
 process-nextick-args@~2.0.0:
   version "2.0.1"
