@@ -13,17 +13,20 @@ class ReplaySummary {
 			numberOfAssert: 0,
 			ignoreErrorList: [],
 			numberOfAjax: 0,
-			slowAjaxRequest: []
+			slowAjaxRequest: [],
+			screen_compare_result: []
 		};
 	}
+
+
+
 
 	getSummary() {
 		return this.summary;
 	}
 
-	async compareScreenshot() {
-
-
+	async compareScreenshot(uuid) {
+		this.summary.screen_compare_result.push(uuid)
 	}
 
 	async handleError(step, error) {
