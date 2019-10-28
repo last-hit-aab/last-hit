@@ -630,19 +630,24 @@ class Replayer {
 					fs.mkdirSync(flow_name_path);
 				}
 
+				// console.log("uuid", step.uuid)
 
 				const replay = await page.screenshot({ encoding: 'base64' });
-				const replay_path = path.join(flow_name_path, step.uuid + "_replay.png");
+				const replay_path = path.join(flow_name_path, step.stepUuid + "_replay.png");
 				fs.writeFileSync(replay_path, Buffer.from(replay, "base64"));
 
 
 
-				const current_path = path.join(flow_name_path, step.uuid + "_baseline.png");
+				const current_path = path.join(flow_name_path, step.stepUuid + "_baseline.png");
 				fs.writeFileSync(current_path, Buffer.from(step.image, "base64"));
 
 				const diff = await campareScreen(step.image, replay)
-				const diff_path = path.join(flow_name_path, step.uuid + "_diff.png");
+				const diff_path = path.join(flow_name_path, step.stepUuid + "_diff.png");
+				// fs.writeFileSync(diff_path, PNG.sync.write(diff));
+
 				diff.onComplete(function (data) {
+
+					console.log(data)
 					if (Number(data.misMatchPercentage) > 0.01) {
 
 						data.getDiffImage().pack().pipe(fs.createWriteStream(diff_path));
