@@ -1,8 +1,14 @@
 const resemble = require('node-resemble-js');
+const ssim = require('image-ssim');
+
+
+// console.log(ssim)
 
 // import Jimp from 'jimp';
 
 const compareScreen = async (record, replay) => {
+
+
 
 
 	const errorSettings = {
@@ -20,6 +26,11 @@ const compareScreen = async (record, replay) => {
 
 	var record_screenshot = Buffer.from(record, 'base64');
 	var replay_screenshot = Buffer.from(replay, 'base64');
+
+
+	// var diffSsim = ssim.compare(record_screenshot, replay_screenshot)
+
+	// console.log(diffSsim)
 	var diff = resemble(record_screenshot).compareTo(replay_screenshot)
 
 	return diff

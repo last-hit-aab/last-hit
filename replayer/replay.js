@@ -8,6 +8,7 @@ const util = require('util');
 const ReplayResult = require('./replay-result');
 const ThirdStepSupport = require('./3rd-comps/support');
 const campareScreen = require('./campare-screen');
+const ssim = require('./ssim')
 
 const inElectron = !!process.versions.electron;
 
@@ -641,18 +642,22 @@ class Replayer {
 				const current_path = path.join(flow_name_path, step.stepUuid + "_baseline.png");
 				fs.writeFileSync(current_path, Buffer.from(step.image, "base64"));
 
-				const diff = await campareScreen(step.image, replay)
-				const diff_path = path.join(flow_name_path, step.stepUuid + "_diff.png");
-				// fs.writeFileSync(diff_path, PNG.sync.write(diff));
 
+				const ssim_data = await ssim(current_path, replay_path)
+				// console.log(resp)
 
-				diff.onComplete((data) => {
-					console.log(data)
-					if (Number(data.misMatchPercentage) > 2) {
+				if (ssim_data.ssim < 0.96 || ssim_data.mcs < 0.96) {
+					const diff = await campareScreen(step.image, replay)
+					const diff_path = path.join(flow_name_path, step.stepUuid + "_diff.png");
+					diff.onComplete((data) => {
 						this.getSummary().compareScreenshot(step)
 						data.getDiffImage().pack().pipe(fs.createWriteStream(diff_path));
-					}
-				});
+						// }
+					});
+
+				}
+
+
 
 			}
 
