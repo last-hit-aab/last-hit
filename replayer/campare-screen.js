@@ -20,7 +20,7 @@ const compareScreen = async (record, replay) => {
 
 	var record_screenshot = Buffer.from(record, 'base64');
 	var replay_screenshot = Buffer.from(replay, 'base64');
-	var diff = resemble(record_screenshot).compareTo(replay_screenshot).ignoreAntialiasing()
+	var diff = resemble(record_screenshot).compareTo(replay_screenshot)
 
 	return diff
 };
