@@ -25,8 +25,8 @@ class ReplaySummary {
 		return this.summary;
 	}
 
-	async compareScreenshot(uuid) {
-		this.summary.screen_compare_result.push(uuid)
+	async compareScreenshot(step) {
+		this.summary.screen_compare_result.push(step)
 	}
 
 	async handleError(step, error) {

@@ -7,7 +7,7 @@ const compareScreen = async (record, replay) => {
 		errorColor: {
 			red: 255,
 			green: 0,
-			blue: 255
+			blue: 0
 		},
 		errorType: 'movement',
 		transparency: 0.8,

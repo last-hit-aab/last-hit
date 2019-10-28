@@ -5,7 +5,7 @@ const generate_report = options => {
 	const { file_name, results } = options;
 	const ci_results = buildResultRow(results)
 	const screen_reports = buildCompareScreen(results)
-	console.log(JSON.stringify(screen_reports))
+	// console.log(JSON.stringify(screen_reports))
 
 	const html = buildHtml(ci_results, screen_reports);
 	html.renderHTMLToFile(path.join(process.cwd(), file_name));
@@ -18,7 +18,7 @@ const buildCompareScreen = ci_results => {
 
 	const compare_screens = []
 	ci_results.map(ci_result => {
-		ci_result.screen_compare_result.map(step_of_screem => {
+		ci_result.screen_compare_result.map(step => {
 			compare_screens.push({
 				type: 'tr',
 				attributes: { class: 'test-result-step-row test-result-step-row-altone' },
@@ -36,7 +36,7 @@ const buildCompareScreen = ci_results => {
 					{
 						type: 'td',
 						attributes: { class: 'test-result-step-command-cell' },
-						content: step_of_screem
+						content: step.stepIndex
 					},
 					{
 						type: 'td',
@@ -44,7 +44,7 @@ const buildCompareScreen = ci_results => {
 						content: [{
 							type: 'img',
 							attributes: {
-								src: `screen_record\\${ci_result.flowName}\\${step_of_screem}_baseline.png`,
+								src: `screen_record\\${ci_result.flowName}\\${step.uuid}_baseline.png`,
 								style: "width:500px;height:300px;"
 							}
 						}]
@@ -58,7 +58,7 @@ const buildCompareScreen = ci_results => {
 						content: [{
 							type: 'img',
 							attributes: {
-								src: `screen_record\\${ci_result.flowName}\\${step_of_screem}_replay.png`,
+								src: `screen_record\\${ci_result.flowName}\\${step.uuid}_replay.png`,
 								style: "width:500px;height:300px;"
 							}
 						}]
@@ -69,7 +69,7 @@ const buildCompareScreen = ci_results => {
 						content: [{
 							type: 'img',
 							attributes: {
-								src: `screen_record\\${ci_result.flowName}\\${step_of_screem}_diff.png`,
+								src: `screen_record\\${ci_result.flowName}\\${step.uuid}_diff.png`,
 								style: "width:500px;height:300px;"
 							}
 						}]
@@ -319,7 +319,7 @@ function buildHtml(ci_results_content, screen_reports) {
 										{
 											type: 'td',
 											attributes: { class: 'test-result-table-header-cell' },
-											content: 'Step Id'
+											content: 'Step Number'
 										},
 										{
 											type: 'td',

@@ -649,7 +649,7 @@ class Replayer {
 					}
 				});
 
-				this.getSummary().compareScreenshot(step.uuid)
+				this.getSummary().compareScreenshot(step)
 
 
 
