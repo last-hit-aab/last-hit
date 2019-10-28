@@ -645,16 +645,17 @@ class Replayer {
 				const diff_path = path.join(flow_name_path, step.stepUuid + "_diff.png");
 				// fs.writeFileSync(diff_path, PNG.sync.write(diff));
 
+				const self = this
+
 				diff.onComplete(function (data) {
-
 					console.log(data)
-					if (Number(data.misMatchPercentage) > 0.01) {
-
+					if (Number(data.misMatchPercentage) > 2) {
+						self.getSummary().compareScreenshot(step)
 						data.getDiffImage().pack().pipe(fs.createWriteStream(diff_path));
 					}
 				});
 
-				this.getSummary().compareScreenshot(step)
+
 
 
 
