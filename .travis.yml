@@ -17,6 +17,7 @@ addons:
     - jpeg
     - giflib
     - librsvg
+    update: true
 
 script:
   - cd renderer
