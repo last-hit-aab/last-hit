@@ -8,7 +8,7 @@ const util = require('util');
 const ReplayResult = require('./replay-result');
 const ThirdStepSupport = require('./3rd-comps/support');
 const campareScreen = require('./campare-screen');
-const ssim = require('./ssim')
+const ssim = require('./ssim');
 
 const inElectron = !!process.versions.electron;
 
@@ -562,7 +562,13 @@ class Replayer {
 			}
 		}
 	}
-	async next(flow, index) {
+	/**
+	 * do next step
+	 * @param {Flow} flow
+	 * @param {number} index
+	 * @param {string} storyName
+	 */
+	async next(flow, index, storyName) {
 		this.flow = flow;
 		this.currentIndex = index;
 		const step = this.getCurrentStep();
@@ -620,50 +626,43 @@ class Replayer {
 			}
 
 			if (step.image) {
-				const srceen_record_path = path.join(getTempFolder(__dirname), "screen_record")
-				if (!fs.existsSync(srceen_record_path)) {
-					fs.mkdirSync(srceen_record_path);
+				const screenshotPath = path.join(getTempFolder(__dirname), 'screen_record');
+				if (!fs.existsSync(screenshotPath)) {
+					fs.mkdirSync(screenshotPath, { recursive: true });
 				}
 
-				const flow_name_path = path.join(srceen_record_path, flow.name)
-				console.log("flow_name", flow_name_path)
-				if (!fs.existsSync(flow_name_path)) {
-					fs.mkdirSync(flow_name_path);
+				const flowPath = path.join(screenshotPath, storyName, flow.name);
+				// console.log('flow_name', flowPath);
+				if (!fs.existsSync(flowPath)) {
+					fs.mkdirSync(flowPath, { recursive: true });
 				}
 
 				// console.log("uuid", step.uuid)
 
 				const replay = await page.screenshot({ encoding: 'base64' });
-				const replay_path = path.join(flow_name_path, step.stepUuid + "_replay.png");
-				fs.writeFileSync(replay_path, Buffer.from(replay, "base64"));
+				const replayImageFilename = path.join(flowPath, step.stepUuid + '_replay.png');
+				fs.writeFileSync(replayImageFilename, Buffer.from(replay, 'base64'));
 
+				const currentImageFilename = path.join(flowPath, step.stepUuid + '_baseline.png');
+				fs.writeFileSync(currentImageFilename, Buffer.from(step.image, 'base64'));
 
-
-				const current_path = path.join(flow_name_path, step.stepUuid + "_baseline.png");
-				fs.writeFileSync(current_path, Buffer.from(step.image, "base64"));
-
-
-				const ssim_data = await ssim(current_path, replay_path)
+				const ssimData = await ssim(currentImageFilename, replayImageFilename);
 				// console.log(resp)
 
-				if (ssim_data.ssim < 0.96 || ssim_data.mcs < 0.96) {
-					const diff = await campareScreen(step.image, replay)
-					const diff_path = path.join(flow_name_path, step.stepUuid + "_diff.png");
-					diff.onComplete((data) => {
-						this.getSummary().compareScreenshot(step)
-						data.getDiffImage().pack().pipe(fs.createWriteStream(diff_path));
+				if (ssimData.ssim < 0.96 || ssimData.mcs < 0.96) {
+					const diff = await campareScreen(step.image, replay);
+					const diffImageFilename = path.join(flowPath, step.stepUuid + '_diff.png');
+					diff.onComplete(data => {
+						this.getSummary().compareScreenshot(step);
+						data.getDiffImage()
+							.pack()
+							.pipe(fs.createWriteStream(diffImageFilename));
 						// }
 					});
-
 				}
-
-
-
 			}
-
 		} catch (e) {
-
-			console.error(e)
+			console.error(e);
 			const page = this.getPage(step.uuid);
 
 			this.getSummary().handleError(step, e);
@@ -676,9 +675,6 @@ class Replayer {
 			throw e;
 		}
 	}
-
-
-
 
 	async executeChangeStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
@@ -1149,7 +1145,7 @@ const launch = () => {
 					try {
 						logger.log(`Continue step[${index}]@${generateKeyByString(storyName, flowName)}.`);
 						replayer.getSummary().handle(step);
-						await replayer.next(flow, index);
+						await replayer.next(flow, index, storyName);
 
 						waitForNextStep({ event, replayer, storyName, flowName, index });
 					} catch (e) {
@@ -1181,8 +1177,6 @@ const launch = () => {
 
 	// 	}
 	// }
-
-
 
 	const handle = {};
 	emitter.on('launch-replay', async (event, arg) => {

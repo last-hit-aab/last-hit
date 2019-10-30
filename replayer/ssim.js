@@ -1,4 +1,4 @@
-var PNG = require('pngjs').PNG;
+const PNG = require('pngjs').PNG;
 const ssim = require('image-ssim');
 const fs = require('fs');
 

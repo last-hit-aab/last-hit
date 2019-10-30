@@ -3,8 +3,8 @@ const path = require('path');
 
 const generate_report = options => {
 	const { file_name, results } = options;
-	const ci_results = buildResultRow(results)
-	const screen_reports = buildCompareScreen(results)
+	const ci_results = buildResultRow(results);
+	const screen_reports = buildCompareScreen(results);
 	// console.log(JSON.stringify(screen_reports))
 
 	const html = buildHtml(ci_results, screen_reports);
@@ -13,12 +13,10 @@ const generate_report = options => {
 
 module.exports = { generate_report };
 
-
 const buildCompareScreen = ci_results => {
-
-	const compare_screens = []
+	const compare_screens = [];
 	ci_results.map(ci_result => {
-		ci_result.screen_compare_result.map(step => {
+		ci_result.screenCompareList.map(step => {
 			compare_screens.push({
 				type: 'tr',
 				attributes: { class: 'test-result-step-row test-result-step-row-altone' },
@@ -41,50 +39,49 @@ const buildCompareScreen = ci_results => {
 					{
 						type: 'td',
 						attributes: { class: 'test-result-step-command-cell' },
-						content: [{
-							type: 'img',
-							attributes: {
-								src: `screen_record\\${ci_result.flowName}\\${step.stepUuid}_baseline.png`,
-								style: "width:500px;height:300px;"
+						content: [
+							{
+								type: 'img',
+								attributes: {
+									src: `screen_record\\${ci_result.flowName}\\${step.stepUuid}_baseline.png`,
+									style: 'width:500px;height:300px;'
+								}
 							}
-						}]
-
-
-
+						]
 					},
 					{
 						type: 'td',
 						attributes: { class: 'test-result-step-command-cell' },
-						content: [{
-							type: 'img',
-							attributes: {
-								src: `screen_record\\${ci_result.flowName}\\${step.stepUuid}_replay.png`,
-								style: "width:500px;height:300px;"
+						content: [
+							{
+								type: 'img',
+								attributes: {
+									src: `screen_record\\${ci_result.flowName}\\${step.stepUuid}_replay.png`,
+									style: 'width:500px;height:300px;'
+								}
 							}
-						}]
+						]
 					},
 					{
 						type: 'td',
 						attributes: { class: 'test-result-step-command-cell' },
-						content: [{
-							type: 'img',
-							attributes: {
-								src: `screen_record\\${ci_result.flowName}\\${step.stepUuid}_diff.png`,
-								style: "width:500px;height:300px;"
+						content: [
+							{
+								type: 'img',
+								attributes: {
+									src: `screen_record\\${ci_result.flowName}\\${step.stepUuid}_diff.png`,
+									style: 'width:500px;height:300px;'
+								}
 							}
-						}]
-					},
+						]
+					}
 				]
-			})
-			// console.log("step_of_screem,", step_of_screem)
-		})
-	})
-
-
-	// console.log()
+			});
+		});
+	});
 
 	return compare_screens;
-}
+};
 
 const buildResultRow = ci_results => {
 	const rows = ci_results.map(ci_result => {
@@ -336,7 +333,6 @@ function buildHtml(ci_results_content, screen_reports) {
 											attributes: { class: 'test-result-table-header-cell' },
 											content: 'Different'
 										}
-
 									]
 								}
 							]

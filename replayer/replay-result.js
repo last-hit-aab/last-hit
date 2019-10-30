@@ -14,21 +14,15 @@ class ReplaySummary {
 			ignoreErrorList: [],
 			numberOfAjax: 0,
 			slowAjaxRequest: [],
-			screen_compare_result: []
+			screenCompareList: []
 		};
 	}
-
-
-
-
 	getSummary() {
 		return this.summary;
 	}
-
 	async compareScreenshot(step) {
-		this.summary.screen_compare_result.push(step)
+		this.summary.screenCompareList.push(step)
 	}
-
 	async handleError(step, error) {
 		if (step.type == 'ajax') {
 			this.summary.numberOfAjax += 1;
@@ -37,7 +31,6 @@ class ReplaySummary {
 		}
 		return Promise.resolve(true);
 	}
-
 	async handle(step) {
 		if (step.type == 'ajax') {
 			this.summary.numberOfAjax += 1;
