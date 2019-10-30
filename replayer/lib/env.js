@@ -3,6 +3,8 @@ class Environment {
 	 * @param {Object} options
 	 * @param {string=} options.urlReplaceRegexp
 	 * @param {string=} options.urlReplaceTo
+	 * @param {number=} options.sleepAfterChange
+	 * @param {number=} options.slowAjaxTime
 	 */
 	constructor(options) {
 		this.constructed = false;
@@ -13,6 +15,8 @@ class Environment {
 		this.constructed = true;
 		this.urlReplaceRegexp = options.urlReplaceRegexp ? new RegExp(options.urlReplaceRegexp) : null;
 		this.urlReplaceTo = options.urlReplaceTo;
+		this.sleepAfterChange = options.sleepAfterChange;
+		this.slowAjaxTime = options.slowAjaxTime;
 
 		this.wrappers = [this.wrapUrl];
 	}
@@ -44,6 +48,12 @@ class Environment {
 	}
 	getUrlReplaceTo() {
 		return this.urlReplaceTo;
+	}
+	getSleepAfterChange() {
+		return this.sleepAfterChange;
+	}
+	getSlowAjaxTime() {
+		return this.slowAjaxTime || 500;
 	}
 }
 

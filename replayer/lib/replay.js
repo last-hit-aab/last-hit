@@ -6,9 +6,9 @@ const uuidv4 = require('uuid/v4');
 const atob = require('atob');
 const util = require('util');
 const ReplayResult = require('./replay-result');
-const ThirdStepSupport = require('./3rd-comps/support');
+const ThirdStepSupport = require('../3rd-comps/support');
 const campareScreen = require('./campare-screen');
-const ssim = require('./ssim')
+const ssim = require('./ssim');
 
 const inElectron = !!process.versions.electron;
 
@@ -210,14 +210,14 @@ const controlPage = async (replayer, page, device, uuid) => {
 			// do nothing when on record
 			return;
 		}
-		replayer.offsetRequest(replayer.findUuid(page), request);
+		replayer.offsetRequest(replayer.findUuid(page), request, true);
 	});
 	page.on('requestfailed', request => {
 		if (replayer.isOnRecord()) {
 			// do nothing when on record
 			return;
 		}
-		replayer.offsetRequest(replayer.findUuid(page), request);
+		replayer.offsetRequest(replayer.findUuid(page), request, false);
 	});
 };
 
@@ -273,11 +273,20 @@ const launchBrowser = async replayer => {
 };
 
 class LoggedRequests {
-	constructor(page) {
+	/**
+	 * @param {Page} page
+	 * @param {ReplayResult} summary
+	 */
+	constructor(page, summary) {
 		this.page = page;
 		this.timeout = 60000;
 		this.requests = [];
 		this.offsets = [];
+		// key is url, value is number array
+		this.requestsCreateAt = {};
+		this.requestsOffsetAt = {};
+
+		this.summary = summary;
 	}
 	getPage() {
 		return this.page;
@@ -285,12 +294,44 @@ class LoggedRequests {
 	create(request) {
 		// logger.log(`Request ${request.url()} created.`);
 		this.requests.push(request);
+		if (['xhr', 'fetch', 'websocket'].includes(request.resourceType())) {
+			const url = request.url();
+			const createAt = this.requestsCreateAt[url];
+			if (createAt) {
+				createAt.push(new Date().getTime());
+			} else {
+				this.requestsCreateAt[url] = [new Date().getTime()];
+			}
+		}
 		// reset used time to 0, ensure timeout is begin from the last created request
 		this.used = 0;
 	}
-	offset(request) {
+	/**
+	 * @param {Request} request puppeteer request
+	 * @param {boolean} success
+	 */
+	offset(request, success) {
 		// logger.log(`Request ${request.url()} offsetted.`);
 		this.offsets.push(request);
+
+		if (['xhr', 'fetch', 'websocket'].includes(request.resourceType())) {
+			const url = request.url();
+			const offsetAt = this.requestsOffsetAt[url];
+			if (offsetAt) {
+				offsetAt.push(new Date().getTime());
+			} else {
+				this.requestsOffsetAt[url] = [new Date().getTime()];
+			}
+			const usedTime =
+				this.requestsOffsetAt[url][this.requestsOffsetAt[url].length - 1] -
+				this.requestsCreateAt[url][this.requestsCreateAt[url].length - 1];
+			// console.log(`Used ${usedTime}ms for url[${url}]`);
+			if (success) {
+				this.summary.handleAjaxSuccess(url, usedTime);
+			} else {
+				this.summary.handleAjaxFail(url, usedTime);
+			}
+		}
 	}
 	clear() {
 		this.requests = [];
@@ -354,7 +395,7 @@ class Replayer {
 		this.pages = {};
 		// key is uuid, value is LoggedRequests
 		this.requests = {};
-		this.summary = new ReplayResult({ storyName, flow });
+		this.summary = new ReplayResult({ storyName, flow, env });
 		this.coverages = [];
 
 		this.onRecord = false;
@@ -463,7 +504,7 @@ class Replayer {
 				delete this.requests[uuid];
 				exists.close();
 				this.pages[uuid] = page;
-				this.requests[uuid] = new LoggedRequests(page);
+				this.requests[uuid] = new LoggedRequests(page, this.getSummary());
 				return true;
 			} else {
 				// force is true means given is from page-created or page-switched, then force close given itself
@@ -474,7 +515,7 @@ class Replayer {
 		} else {
 			// not found, put into cache
 			this.pages[uuid] = page;
-			this.requests[uuid] = new LoggedRequests(page);
+			this.requests[uuid] = new LoggedRequests(page, this.getSummary());
 			return true;
 		}
 	}
@@ -495,16 +536,25 @@ class Replayer {
 			return uuidOrPage;
 		}
 	}
+	/**
+	 * @param {string} uuid
+	 * @param {Request} request puppetter request
+	 */
 	putRequest(uuid, request) {
 		const requests = this.requests[uuid];
 		if (requests) {
 			this.requests[uuid].create(request);
 		}
 	}
-	offsetRequest(uuid, request) {
+	/**
+	 * @param {string} uuid
+	 * @param {Request} request puppetter request
+	 * @param {boolean} success
+	 */
+	offsetRequest(uuid, request, success) {
 		const requests = this.requests[uuid];
 		if (requests) {
-			requests.offset(request);
+			requests.offset(request, success);
 		}
 	}
 	async isRemoteFinsihed(page) {
@@ -562,7 +612,13 @@ class Replayer {
 			}
 		}
 	}
-	async next(flow, index) {
+	/**
+	 * do next step
+	 * @param {Flow} flow
+	 * @param {number} index
+	 * @param {string} storyName
+	 */
+	async next(flow, index, storyName) {
 		this.flow = flow;
 		this.currentIndex = index;
 		const step = this.getCurrentStep();
@@ -621,28 +677,28 @@ class Replayer {
 			}
 
 			if (step.image) {
-				const page = await this.getPageOrThrow(step.uuid);
-				const srceen_record_path = path.join(getTempFolder(__dirname), "screen_record")
-				if (!fs.existsSync(srceen_record_path)) {
-					fs.mkdirSync(srceen_record_path);
+				const screenshotPath = path.join(getTempFolder(__dirname), 'screen-record');
+				if (!fs.existsSync(screenshotPath)) {
+					fs.mkdirSync(screenshotPath, { recursive: true });
 				}
 
-				const flow_name_path = path.join(srceen_record_path, flow.name)
-				console.log("flow_name", flow_name_path)
-				if (!fs.existsSync(flow_name_path)) {
-					fs.mkdirSync(flow_name_path);
+				const flowPath = path.join(screenshotPath, storyName, flow.name);
+				// console.log('flow_name', flowPath);
+				if (!fs.existsSync(flowPath)) {
+					fs.mkdirSync(flowPath, { recursive: true });
+				} else {
+					const files = fs.readdirSync(flowPath);
+					if (files && files.length > 0) {
+						files.forEach(file => fs.unlinkSync(path.join(flowPath, file)));
+					}
 				}
 
-				// console.log("uuid", step.uuid)
+				const replayImage = await page.screenshot({ encoding: 'base64' });
+				const replayImageFilename = path.join(flowPath, step.stepUuid + '_replay.png');
+				fs.writeFileSync(replayImageFilename, Buffer.from(replayImage, 'base64'));
 
-				const replay = await page.screenshot({ encoding: 'base64' });
-				const replay_path = path.join(flow_name_path, step.stepUuid + "_replay.png");
-				fs.writeFileSync(replay_path, Buffer.from(replay, "base64"));
-
-
-
-				const current_path = path.join(flow_name_path, step.stepUuid + "_baseline.png");
-				fs.writeFileSync(current_path, Buffer.from(step.image, "base64"));
+				const currentImageFilename = path.join(flowPath, step.stepUuid + '_baseline.png');
+				fs.writeFileSync(currentImageFilename, Buffer.from(step.image, 'base64'));
 
 
 				const ssim_data = await ssim(current_path, replay_path)
@@ -655,14 +711,20 @@ class Replayer {
 						this.getSummary().compareScreenshot(step)
 						data.getDiffImage().pack().pipe(fs.createWriteStream(diff_path));
 						// }
-					});
 
+				if (ssimData.ssim < 0.96 || ssimData.mcs < 0.96) {
+					const diffImage = await campareScreen(step.image, replayImage);
+					const diffImageFilename = path.join(flowPath, step.stepUuid + '_diff.png');
+					diffImage.onComplete(data => {
+						this.getSummary().compareScreenshot(step);
+						data.getDiffImage()
+							.pack()
+							.pipe(fs.createWriteStream(diffImageFilename));
+					});
 				}
 			}
-
 		} catch (e) {
-
-			console.error(e)
+			console.error(e);
 			const page = this.getPage(step.uuid);
 
 			this.getSummary().handleError(step, e);
@@ -679,9 +741,6 @@ class Replayer {
 			throw e;
 		}
 	}
-
-
-
 
 	async executeChangeStep(step) {
 		const page = await this.getPageOrThrow(step.uuid);
@@ -730,9 +789,9 @@ class Replayer {
 			// change is change only, cannot use type
 			await this.setValueToElement(element, step.value);
 
-			if (settings.sleepAfterChange) {
+			if (env.getSleepAfterChange()) {
 				const wait = util.promisify(setTimeout);
-				await wait(settings.sleepAfterChange);
+				await wait(env.getSleepAfterChange());
 			}
 		}
 	}
@@ -1137,11 +1196,15 @@ const launch = () => {
 			switch (command) {
 				case 'disconnect':
 					await replayer.end(false);
-					event.reply(`replay-browser-disconnect-${generateKeyByString(storyName, flowName)}`, {});
+					event.reply(`replay-browser-disconnect-${generateKeyByString(storyName, flowName)}`, {
+						summary: replayer.getSummaryData()
+					});
 					break;
 				case 'abolish':
 					await replayer.end(true);
-					event.reply(`replay-browser-abolish-${generateKeyByString(storyName, flowName)}`, {});
+					event.reply(`replay-browser-abolish-${generateKeyByString(storyName, flowName)}`, {
+						summary: replayer.getSummaryData()
+					});
 					break;
 				case 'switch-to-record':
 					// keep replayer instance in replayers map
@@ -1152,7 +1215,7 @@ const launch = () => {
 					try {
 						logger.log(`Continue step[${index}]@${generateKeyByString(storyName, flowName)}.`);
 						replayer.getSummary().handle(step);
-						await replayer.next(flow, index);
+						await replayer.next(flow, index, storyName);
 
 						waitForNextStep({ event, replayer, storyName, flowName, index });
 					} catch (e) {
@@ -1173,7 +1236,8 @@ const launch = () => {
 
 		options.event.reply(`replay-step-end-${generateKeyByString(storyName, flowName)}`, {
 			index: options.index,
-			error: options.error
+			error: options.error,
+			summary: replayer.getSummaryData()
 		});
 	};
 
@@ -1184,8 +1248,6 @@ const launch = () => {
 
 	// 	}
 	// }
-
-
 
 	const handle = {};
 	emitter.on('launch-replay', async (event, arg) => {
@@ -1249,10 +1311,6 @@ const replayers = {};
 let emitter;
 /** @type {Console} */
 let logger;
-/**
- * @property {number} sleepAfterChange
- */
-let settings;
 /** @type {Environment} */
 let env;
 
@@ -1262,9 +1320,6 @@ let env;
  * @param {{
  * 	emitter: ReplayEmitter,
  * 	logger: Console,
- * 	settings?: {
- * 		sleepAfterChange?: number
- * 	},
  * 	env?: Environment
  * }} options
  * @returns {{
@@ -1275,11 +1330,10 @@ let env;
 const create = options => {
 	emitter = options.emitter;
 	logger = options.logger;
-	settings = options.settings || {};
 	env =
 		options.env ||
 		(() => {
-			const Environment = require('./lib/env');
+			const Environment = require('./env');
 			return new Environment();
 		})();
 

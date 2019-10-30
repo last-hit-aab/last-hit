@@ -20,6 +20,7 @@ import StartRecordDialog from './start-record';
 import StartReplayDialog from './start-replay';
 import { getStepFork, IRRELEVANT_STEPS, ReplayType } from './step-definition';
 import StepFreeMoveDialog from './step-free-move';
+import FlowReplaySummaryDialog from './flow-replay-summary-dialog';
 
 //log message to file in render process
 const logger = remote.getGlobal('logger');
@@ -153,6 +154,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	const [currentReplayStepIndex, setCurrentReplayStepIndex] = React.useState(-1);
 	// step replaying or not
 	const [stepReplaying, setStepReplaying] = React.useState(false);
+	const [replaySummary, setReplaySummary] = React.useState({ summary: null, error: null });
 	React.useEffect(() => {
 		ipcRenderer.on(`message-captured-${generateKeyByObject(story, flow)}`, (evt, arg) => {
 			if (onPause) {
@@ -382,6 +384,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 		});
 	};
 	const handleReplayStepEnd = (story: Story, flow: Flow, type: ReplayType): void => {
+		const flowKey = generateKeyByObject(story, flow);
 		ipcRenderer.once(`replay-step-end-${generateKeyByObject(story, flow)}`, (event, arg) => {
 			const { error, index } = arg;
 			if (error) {
@@ -391,8 +394,11 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 						title: 'Replay fail',
 						message: error
 					});
+					ipcRenderer.once(`replay-browser-disconnect-${flowKey}`, (event, arg) =>
+						setReplaySummary({ summary: arg, error })
+					);
 					// disconnect
-					ipcRenderer.send(`continue-replay-step-${generateKeyByObject(story, flow)}`, {
+					ipcRenderer.send(`continue-replay-step-${flowKey}`, {
 						command: 'disconnect'
 					});
 					// recover state
@@ -418,12 +424,18 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 					);
 					switch (ret.response) {
 						case 0:
-							ipcRenderer.send(`continue-replay-step-${generateKeyByObject(story, flow)}`, {
+							ipcRenderer.once(`replay-browser-disconnect-${flowKey}`, (event, arg) =>
+								setReplaySummary({ summary: arg, error: null })
+							);
+							ipcRenderer.send(`continue-replay-step-${flowKey}`, {
 								command: 'disconnect'
 							});
 							break;
 						case 1:
-							ipcRenderer.send(`continue-replay-step-${generateKeyByObject(story, flow)}`, {
+							ipcRenderer.once(`replay-browser-abolish-${flowKey}`, (event, arg) =>
+								setReplaySummary({ summary: arg, error: null })
+							);
+							ipcRenderer.send(`continue-replay-step-${flowKey}`, {
 								command: 'abolish'
 							});
 							break;
@@ -541,6 +553,8 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 				}
 			});
 	};
+
+	const onReplaySummaryDialogClose = () => setReplaySummary({ summary: null, error: null });
 
 	const canMoveUp = (flow: Flow, step: Step): boolean => {
 		const steps = flow.steps || [];
@@ -739,6 +753,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			{state.openStartReplay !== ReplayType.NONE ? (
 				<StartReplayDialog open={true} story={story} flow={flow} close={onStartReplayDialogClose} />
 			) : null}
+			<FlowReplaySummaryDialog data={replaySummary} close={onReplaySummaryDialogClose} />
 		</Fragment>
 	);
 };
