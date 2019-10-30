@@ -117,7 +117,15 @@ const installListenersOnPage = async page => {
 
 		window.$lhGod = true;
 		console.log('%c last-hit: %c evaluate on new document start...', 'color:red', 'color:brown');
-		const ignoredIdRegexps = [/^md-.+-.{6,16}$/, /^select2-.+$/, /^.+\d{10,}$/, /^\s*$/];
+		const ignoredIdRegexps = [
+			/^md-.+-.{6,16}$/,
+			/^select2-.+$/,
+			/^.+\d{10,}$/,
+			/^\s*$/,
+			/^.+-\d{2,10}--value$/,
+			/^.+-\d{2,}$/,
+			/^react-select.+-.+$/
+		];
 		const shouldIgnore = id => ignoredIdRegexps.some(regexp => regexp.test(id));
 		// here we are in the browser context
 
@@ -1052,7 +1060,15 @@ const launch = () => {
 
 	class NodesMap {
 		constructor() {
-			this.ignoredIdRegexps = [/^md-.+-.{6,16}$/, /^select2-.+$/, /^.+\d{10,}$/, /^\s*$/];
+			this.ignoredIdRegexps = [
+				/^md-.+-.{6,16}$/,
+				/^select2-.+$/,
+				/^.+\d{10,}$/,
+				/^\s*$/,
+				/^.+-\d{2,10}--value$/,
+				/^.+-\d{2,}$/,
+				/^react-select.+-.+$/
+			];
 			this.attrIdMap = new Map();
 			this.nodeIdMap = new Map();
 		}
