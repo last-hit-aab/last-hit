@@ -6,6 +6,7 @@ node_modules
 coverage
 upload-temp
 
+screen-record
 report.html
 error-*.png
 
