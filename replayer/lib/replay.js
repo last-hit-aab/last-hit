@@ -6,7 +6,7 @@ const uuidv4 = require('uuid/v4');
 const atob = require('atob');
 const util = require('util');
 const ReplayResult = require('./replay-result');
-const ThirdStepSupport = require('./3rd-comps/support');
+const ThirdStepSupport = require('../3rd-comps/support');
 const campareScreen = require('./campare-screen');
 const ssim = require('./ssim');
 
@@ -1313,7 +1313,7 @@ const create = options => {
 	env =
 		options.env ||
 		(() => {
-			const Environment = require('./lib/env');
+			const Environment = require('./env');
 			return new Environment();
 		})();
 

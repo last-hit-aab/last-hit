@@ -3,13 +3,13 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors');
 const jsonfile = require('jsonfile');
-const ReplayEmitter = require('./replay-emitter');
-const replay = require('./replay');
+const ReplayEmitter = require('./lib/replay-emitter');
+const replay = require('./lib/replay');
 const console = require('console');
-const pti = require('./pti-rewrite');
+const pti = require('./lib/pti-rewrite');
 const { spawn } = require('child_process');
 const spawnSync = require('child_process').spawnSync;
-const { generate_report } = require('./result-report');
+const { generate_report } = require('./lib/result-report');
 const compose = require('./lib/compose');
 const uuidv4 = require('uuid/v4');
 
