@@ -210,14 +210,14 @@ const controlPage = async (replayer, page, device, uuid) => {
 			// do nothing when on record
 			return;
 		}
-		replayer.offsetRequest(replayer.findUuid(page), request);
+		replayer.offsetRequest(replayer.findUuid(page), request, true);
 	});
 	page.on('requestfailed', request => {
 		if (replayer.isOnRecord()) {
 			// do nothing when on record
 			return;
 		}
-		replayer.offsetRequest(replayer.findUuid(page), request);
+		replayer.offsetRequest(replayer.findUuid(page), request, false);
 	});
 };
 
@@ -273,11 +273,20 @@ const launchBrowser = async replayer => {
 };
 
 class LoggedRequests {
-	constructor(page) {
+	/**
+	 * @param {Page} page
+	 * @param {ReplayResult} summary
+	 */
+	constructor(page, summary) {
 		this.page = page;
 		this.timeout = 60000;
 		this.requests = [];
 		this.offsets = [];
+		// key is url, value is number array
+		this.requestsCreateAt = {};
+		this.requestsOffsetAt = {};
+
+		this.summary = summary;
 	}
 	getPage() {
 		return this.page;
@@ -285,12 +294,43 @@ class LoggedRequests {
 	create(request) {
 		// logger.log(`Request ${request.url()} created.`);
 		this.requests.push(request);
+		if (['xhr', 'fetch', 'websocket'].includes(request.resourceType())) {
+			const url = request.url();
+			const createAt = this.requestsCreateAt[url];
+			if (createAt) {
+				createAt.push(new Date().getTime());
+			} else {
+				this.requestsCreateAt[url] = [new Date().getTime()];
+			}
+		}
 		// reset used time to 0, ensure timeout is begin from the last created request
 		this.used = 0;
 	}
-	offset(request) {
+	/**
+	 * @param {Request} request puppeteer request
+	 * @param {boolean} success
+	 */
+	offset(request, success) {
 		// logger.log(`Request ${request.url()} offsetted.`);
 		this.offsets.push(request);
+
+		if (['xhr', 'fetch', 'websocket'].includes(request.resourceType())) {
+			const url = request.url();
+			const offsetAt = this.requestsOffsetAt[url];
+			if (offsetAt) {
+				offsetAt.push(new Date().getTime());
+			} else {
+				this.requestsOffsetAt[url] = [new Date().getTime()];
+			}
+			const usedTime =
+				this.requestsOffsetAt[url][this.requestsOffsetAt[url].length - 1] -
+				this.requestsCreateAt[url][this.requestsCreateAt[url].length - 1];
+			if (success) {
+				this.summary.handleAjaxSuccess(url, usedTime);
+			} else {
+				this.summary.handleAjaxFail(url, usedTime);
+			}
+		}
 	}
 	clear() {
 		this.requests = [];
@@ -354,7 +394,7 @@ class Replayer {
 		this.pages = {};
 		// key is uuid, value is LoggedRequests
 		this.requests = {};
-		this.summary = new ReplayResult({ storyName, flow });
+		this.summary = new ReplayResult({ storyName, flow, env });
 		this.coverages = [];
 
 		this.onRecord = false;
@@ -463,7 +503,7 @@ class Replayer {
 				delete this.requests[uuid];
 				exists.close();
 				this.pages[uuid] = page;
-				this.requests[uuid] = new LoggedRequests(page);
+				this.requests[uuid] = new LoggedRequests(page, this.getSummary());
 				return true;
 			} else {
 				// force is true means given is from page-created or page-switched, then force close given itself
@@ -474,7 +514,7 @@ class Replayer {
 		} else {
 			// not found, put into cache
 			this.pages[uuid] = page;
-			this.requests[uuid] = new LoggedRequests(page);
+			this.requests[uuid] = new LoggedRequests(page, this.getSummary());
 			return true;
 		}
 	}
@@ -495,16 +535,25 @@ class Replayer {
 			return uuidOrPage;
 		}
 	}
+	/**
+	 * @param {string} uuid
+	 * @param {Request} request puppetter request
+	 */
 	putRequest(uuid, request) {
 		const requests = this.requests[uuid];
 		if (requests) {
 			this.requests[uuid].create(request);
 		}
 	}
-	offsetRequest(uuid, request) {
+	/**
+	 * @param {string} uuid
+	 * @param {Request} request puppetter request
+	 * @param {boolean} success
+	 */
+	offsetRequest(uuid, request, success) {
 		const requests = this.requests[uuid];
 		if (requests) {
-			requests.offset(request);
+			requests.offset(request, success);
 		}
 	}
 	async isRemoteFinsihed(page) {
@@ -626,7 +675,7 @@ class Replayer {
 			}
 
 			if (step.image) {
-				const screenshotPath = path.join(getTempFolder(__dirname), 'screen_record');
+				const screenshotPath = path.join(getTempFolder(__dirname), 'screen-record');
 				if (!fs.existsSync(screenshotPath)) {
 					fs.mkdirSync(screenshotPath, { recursive: true });
 				}
@@ -635,13 +684,16 @@ class Replayer {
 				// console.log('flow_name', flowPath);
 				if (!fs.existsSync(flowPath)) {
 					fs.mkdirSync(flowPath, { recursive: true });
+				} else {
+					const files = fs.readdirSync(flowPath);
+					if (files && files.length > 0) {
+						files.forEach(file => fs.unlinkSync(path.join(flowPath, file)));
+					}
 				}
 
-				// console.log("uuid", step.uuid)
-
-				const replay = await page.screenshot({ encoding: 'base64' });
+				const replayImage = await page.screenshot({ encoding: 'base64' });
 				const replayImageFilename = path.join(flowPath, step.stepUuid + '_replay.png');
-				fs.writeFileSync(replayImageFilename, Buffer.from(replay, 'base64'));
+				fs.writeFileSync(replayImageFilename, Buffer.from(replayImage, 'base64'));
 
 				const currentImageFilename = path.join(flowPath, step.stepUuid + '_baseline.png');
 				fs.writeFileSync(currentImageFilename, Buffer.from(step.image, 'base64'));
@@ -650,14 +702,13 @@ class Replayer {
 				// console.log(resp)
 
 				if (ssimData.ssim < 0.96 || ssimData.mcs < 0.96) {
-					const diff = await campareScreen(step.image, replay);
+					const diffImage = await campareScreen(step.image, replayImage);
 					const diffImageFilename = path.join(flowPath, step.stepUuid + '_diff.png');
-					diff.onComplete(data => {
+					diffImage.onComplete(data => {
 						this.getSummary().compareScreenshot(step);
 						data.getDiffImage()
 							.pack()
 							.pipe(fs.createWriteStream(diffImageFilename));
-						// }
 					});
 				}
 			}
@@ -723,9 +774,9 @@ class Replayer {
 			// change is change only, cannot use type
 			await this.setValueToElement(element, step.value);
 
-			if (settings.sleepAfterChange) {
+			if (env.getSleepAfterChange()) {
 				const wait = util.promisify(setTimeout);
-				await wait(settings.sleepAfterChange);
+				await wait(env.getSleepAfterChange());
 			}
 		}
 	}
@@ -1240,10 +1291,6 @@ const replayers = {};
 let emitter;
 /** @type {Console} */
 let logger;
-/**
- * @property {number} sleepAfterChange
- */
-let settings;
 /** @type {Environment} */
 let env;
 
@@ -1253,9 +1300,6 @@ let env;
  * @param {{
  * 	emitter: ReplayEmitter,
  * 	logger: Console,
- * 	settings?: {
- * 		sleepAfterChange?: number
- * 	},
  * 	env?: Environment
  * }} options
  * @returns {{
@@ -1266,7 +1310,6 @@ let env;
 const create = options => {
 	emitter = options.emitter;
 	logger = options.logger;
-	settings = options.settings || {};
 	env =
 		options.env ||
 		(() => {

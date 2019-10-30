@@ -1,8 +1,15 @@
 class ReplaySummary {
+	/**
+	 * @param {Object} options
+	 * @param {string} options.storyName
+	 * @param {Flow} options.flow
+	 * @param {Environment} options.env
+	 */
 	constructor(options) {
-		const { storyName, flow } = options;
+		const { storyName, flow, env } = options;
 		this.storyName = storyName;
 		this.flowName = flow.name;
+		this.env = env;
 		this.summary = {
 			storyName,
 			flowName: flow.name,
@@ -17,15 +24,18 @@ class ReplaySummary {
 			screenCompareList: []
 		};
 	}
+	getEnvironment() {
+		return this.env;
+	}
 	getSummary() {
 		return this.summary;
 	}
 	async compareScreenshot(step) {
-		this.summary.screenCompareList.push(step)
+		this.summary.screenCompareList.push(step);
 	}
 	async handleError(step, error) {
 		if (step.type == 'ajax') {
-			this.summary.numberOfAjax += 1;
+			// ignore
 		} else {
 			this.summary.numberOfFailed += 1;
 		}
@@ -33,13 +43,22 @@ class ReplaySummary {
 	}
 	async handle(step) {
 		if (step.type == 'ajax') {
-			this.summary.numberOfAjax += 1;
+			// ignore
 			this.summary.numberOfSuccess += 1;
 		} else {
 			this.summary.numberOfUIBehavior += 1;
 			this.summary.numberOfSuccess += 1;
 		}
 		return Promise.resolve(true);
+	}
+	async handleAjaxSuccess(url, usedTime) {
+		this.summary.numberOfAjax++;
+	}
+	async handleAjaxFail(url, usedTime) {
+		this.summary.numberOfAjax++;
+		if (usedTime >= this.getEnvironment().getSlowAjaxTime()) {
+			this.summary.slowAjaxRequest.push({ url, time: usedTime });
+		}
 	}
 	async print() {
 		console.table(

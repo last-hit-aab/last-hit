@@ -52,8 +52,6 @@ if (envName) {
 } else {
 	env = {};
 }
-const Environment = require('./lib/env');
-env = new Environment(env);
 
 const settings = Object.keys(config)
 	.filter(key => key.startsWith('settings-'))
@@ -61,6 +59,10 @@ const settings = Object.keys(config)
 		all[key.replace('settings-', '')] = config[key];
 		return all;
 	}, {});
+// mix settings to environment
+env = Object.assign(env, settings);
+const Environment = require('./lib/env');
+env = new Environment(env);
 
 // story and flow name can be specified
 // if story is not given, flow name should be ingored
@@ -124,7 +126,7 @@ const hanldeFlowObject = flowObject => {
 
 	const timeLoggerStream = new require('stream').Transform();
 	let timeSpent;
-	timeLoggerStream._transform = function (chunk, encoding, done) {
+	timeLoggerStream._transform = function(chunk, encoding, done) {
 		this.push(chunk);
 		timeSpent = typeof chunk === 'string' ? chunk : chunk.toString();
 		done();
@@ -164,7 +166,6 @@ const hanldeFlowObject = flowObject => {
 		replayer = replay({
 			emitter,
 			logger,
-			settings,
 			env
 		}).initialize();
 	} catch (e) {
@@ -176,7 +177,7 @@ const hanldeFlowObject = flowObject => {
 		handleReplayStepEnd(emitter, { name: storyName }, flow, () => {
 			const summary = replayer.current.getSummaryData();
 
-			//TODO merge 
+			//TODO merge
 			coverages.push(...replayer.current.getCoverageData());
 			timeLogger.timeEnd(flowKey);
 			report.push({ ...summary, spent: timeSpent });
