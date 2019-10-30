@@ -53,6 +53,9 @@ class ReplaySummary {
 	}
 	async handleAjaxSuccess(url, usedTime) {
 		this.summary.numberOfAjax++;
+		if (usedTime >= this.getEnvironment().getSlowAjaxTime()) {
+			this.summary.slowAjaxRequest.push({ url, time: usedTime });
+		}
 	}
 	async handleAjaxFail(url, usedTime) {
 		this.summary.numberOfAjax++;

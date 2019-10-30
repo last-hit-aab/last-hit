@@ -325,6 +325,7 @@ class LoggedRequests {
 			const usedTime =
 				this.requestsOffsetAt[url][this.requestsOffsetAt[url].length - 1] -
 				this.requestsCreateAt[url][this.requestsCreateAt[url].length - 1];
+			// console.log(`Used ${usedTime}ms for url[${url}]`);
 			if (success) {
 				this.summary.handleAjaxSuccess(url, usedTime);
 			} else {
@@ -1181,11 +1182,15 @@ const launch = () => {
 			switch (command) {
 				case 'disconnect':
 					await replayer.end(false);
-					event.reply(`replay-browser-disconnect-${generateKeyByString(storyName, flowName)}`, {});
+					event.reply(`replay-browser-disconnect-${generateKeyByString(storyName, flowName)}`, {
+						summary: replayer.getSummaryData()
+					});
 					break;
 				case 'abolish':
 					await replayer.end(true);
-					event.reply(`replay-browser-abolish-${generateKeyByString(storyName, flowName)}`, {});
+					event.reply(`replay-browser-abolish-${generateKeyByString(storyName, flowName)}`, {
+						summary: replayer.getSummaryData()
+					});
 					break;
 				case 'switch-to-record':
 					// keep replayer instance in replayers map
@@ -1217,7 +1222,8 @@ const launch = () => {
 
 		options.event.reply(`replay-step-end-${generateKeyByString(storyName, flowName)}`, {
 			index: options.index,
-			error: options.error
+			error: options.error,
+			summary: replayer.getSummaryData()
 		});
 	};
 
