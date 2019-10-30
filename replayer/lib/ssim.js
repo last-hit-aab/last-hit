@@ -40,20 +40,6 @@ const similer = (baseline_path, replay_path) => {
 	});
 };
 
-// fs.createReadStream("/Users/yifeng/Documents/github_last-hit/last-hit/replayer/lib/error-1a9b03ac-f270-4b94-8d0d-10df939ff667-173.png")
-// 	.pipe(new PNG())
-// 	.on('parsed', function () {
-// 		console.log(this.data)
-// 		// done({
-// 		// 	data: this.data,
-// 		// 	width: this.width,
-// 		// 	height: this.height,
-// 		// 	channels: 4
-// 		// });
-// 	});
-
-
-//similer("/Users/yifeng/Documents/github_last-hit/last-hit/replayer/lib/screen-record/insureMO/pa/33a31d5f-7ce6-45b0-a891-e3a611d3b6e7_baseline.png", "/Users/yifeng/Documents/github_last-hit/last-hit/replayer/lib/screen-record/insureMO/pa/33a31d5f-7ce6-45b0-a891-e3a611d3b6e7_baseline.png")
 
 
 module.exports = similer;
