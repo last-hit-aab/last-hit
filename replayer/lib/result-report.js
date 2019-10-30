@@ -43,7 +43,7 @@ const buildCompareScreen = ci_results => {
 							{
 								type: 'img',
 								attributes: {
-									src: `lib\\screen-record\\${ci_result.storyName}\\${ci_result.flowName}\\${step.stepUuid}_baseline.png`,
+									src: `screen-record\\${ci_result.storyName}\\${ci_result.flowName}\\${step.stepUuid}_baseline.png`,
 									style: 'width:500px;height:300px;'
 								}
 							}
@@ -56,7 +56,7 @@ const buildCompareScreen = ci_results => {
 							{
 								type: 'img',
 								attributes: {
-									src: `lib\\screen-record\\${ci_result.storyName}\\${ci_result.flowName}\\${step.stepUuid}_replay.png`,
+									src: `screen-record\\${ci_result.storyName}\\${ci_result.flowName}\\${step.stepUuid}_replay.png`,
 									style: 'width:500px;height:300px;'
 								}
 							}
@@ -69,7 +69,7 @@ const buildCompareScreen = ci_results => {
 							{
 								type: 'img',
 								attributes: {
-									src: `lib\\screen-record\\${ci_result.storyName}\\${ci_result.flowName}\\${step.stepUuid}_diff.png`,
+									src: `screen-record\\${ci_result.storyName}\\${ci_result.flowName}\\${step.stepUuid}_diff.png`,
 									style: 'width:500px;height:300px;'
 								}
 							}

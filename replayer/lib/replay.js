@@ -676,7 +676,7 @@ class Replayer {
 			}
 
 			if (step.image && page != null) {
-				const screenshotPath = path.join(getTempFolder(__dirname), 'screen-record');
+				const screenshotPath = path.join(getTempFolder(process.cwd()), 'screen-record');
 				if (!fs.existsSync(screenshotPath)) {
 					fs.mkdirSync(screenshotPath, { recursive: true });
 				}
@@ -691,7 +691,7 @@ class Replayer {
 				fs.writeFileSync(replayImageFilename, Buffer.from(replayImage, 'base64'));
 				const currentImageFilename = path.join(flowPath, step.stepUuid + '_baseline.png');
 				fs.writeFileSync(currentImageFilename, Buffer.from(step.image, 'base64'));
-				const ssimData = await ssim(currentImageFilename, replayImageFilename)
+				const ssimData = await ssim(currentImageFilename, replayImageFilename);
 				if (ssimData.ssim < 0.96 || ssimData.mcs < 0.96) {
 					const diffImage = await campareScreen(step.image, replayImage);
 					const diffImageFilename = path.join(flowPath, step.stepUuid + '_diff.png');
@@ -703,18 +703,17 @@ class Replayer {
 					});
 				}
 			}
-
 		} catch (e) {
 			console.error(e);
 			const page = this.getPage(step.uuid);
 			this.getSummary().handleError(step, e);
 
 			// TODO count ignore error
-			const file_path = `${getTempFolder(__dirname)}/error-${step.uuid}-${this.getSteps().indexOf(step)}.png`;
+			const file_path = `${getTempFolder(process.cwd())}/error-${step.uuid}-${this.getSteps().indexOf(step)}.png`;
 			if (page) {
 				await page.screenshot({ path: file_path, type: 'png' });
 			} else {
-				logger.log("page don't exsit ")
+				logger.log("page don't exsit ");
 			}
 
 			throw e;
@@ -742,7 +741,7 @@ class Replayer {
 			let segments = value.split('\\');
 			segments = segments[segments.length - 1].split('/');
 			const filename = segments[segments.length - 1];
-			const dir = path.join(getTempFolder(__dirname), 'upload-temp', uuidv4());
+			const dir = path.join(getTempFolder(process.cwd()), 'upload-temp', uuidv4());
 			const filepath = path.join(dir, filename);
 			const byteString = atob(step.file.split(',')[1]);
 
