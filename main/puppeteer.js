@@ -120,8 +120,9 @@ const installListenersOnPage = async page => {
 		const ignoredIdRegexps = [/^md-.+-.{6,16}$/,
 			/^select2-.+$/, /^.+\d{10,}$/,
 			/^\s*$/, /^.+-\d{2,10}--value$/,
-			/^.+-\d{3,}$/, /^.+-\d{2,}$/,
-			/^react-select.+-\d{2,10}--option$+-\d{1,10}/];
+			/^.+-\d{3,}$/,
+			/^.+-\d{2,}$/,
+			/^react-select.+-.+$/];
 		const shouldIgnore = id => ignoredIdRegexps.some(regexp => regexp.test(id));
 		// here we are in the browser context
 

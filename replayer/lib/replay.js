@@ -677,6 +677,7 @@ class Replayer {
 			}
 
 			if (step.image) {
+				const page = await this.getPage(step.uuid);
 				const screenshotPath = path.join(getTempFolder(__dirname), 'screen-record');
 				if (!fs.existsSync(screenshotPath)) {
 					fs.mkdirSync(screenshotPath, { recursive: true });
@@ -687,10 +688,10 @@ class Replayer {
 				if (!fs.existsSync(flowPath)) {
 					fs.mkdirSync(flowPath, { recursive: true });
 				} else {
-					const files = fs.readdirSync(flowPath);
-					if (files && files.length > 0) {
-						files.forEach(file => fs.unlinkSync(path.join(flowPath, file)));
-					}
+					// const files = fs.readdirSync(flowPath);
+					// if (files && files.length > 0) {
+					// 	files.forEach(file => fs.unlinkSync(path.join(flowPath, file)));
+					// }
 				}
 
 				const replayImage = await page.screenshot({ encoding: 'base64' });
@@ -700,19 +701,11 @@ class Replayer {
 				const currentImageFilename = path.join(flowPath, step.stepUuid + '_baseline.png');
 				fs.writeFileSync(currentImageFilename, Buffer.from(step.image, 'base64'));
 
-
-				const ssim_data = await ssim(current_path, replay_path)
+				// console.log(currentImageFilename)
+				// console.log(replayImageFilename)
+				const ssim_data = await ssim(currentImageFilename, replayImageFilename)
 				console.log(ssim_data)
-
 				if (ssim_data.ssim < 0.96 || ssim_data.mcs < 0.96) {
-					const diff = await campareScreen(step.image, replay)
-					const diff_path = path.join(flow_name_path, step.stepUuid + "_diff.png");
-					diff.onComplete((data) => {
-						this.getSummary().compareScreenshot(step)
-						data.getDiffImage().pack().pipe(fs.createWriteStream(diff_path));
-						// }
-
-				if (ssimData.ssim < 0.96 || ssimData.mcs < 0.96) {
 					const diffImage = await campareScreen(step.image, replayImage);
 					const diffImageFilename = path.join(flowPath, step.stepUuid + '_diff.png');
 					diffImage.onComplete(data => {
