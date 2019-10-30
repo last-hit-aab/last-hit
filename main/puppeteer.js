@@ -117,7 +117,11 @@ const installListenersOnPage = async page => {
 
 		window.$lhGod = true;
 		console.log('%c last-hit: %c evaluate on new document start...', 'color:red', 'color:brown');
-		const ignoredIdRegexps = [/^md-.+-.{6,16}$/, /^select2-.+$/, /^.+\d{10,}$/, /^\s*$/];
+		const ignoredIdRegexps = [/^md-.+-.{6,16}$/,
+			/^select2-.+$/, /^.+\d{10,}$/,
+			/^\s*$/, /^.+-\d{2,10}--value$/,
+			/^.+-\d{3,}$/, /^.+-\d{2,}$/,
+			/^react-select.+-\d{2,10}--option$+-\d{1,10}/];
 		const shouldIgnore = id => ignoredIdRegexps.some(regexp => regexp.test(id));
 		// here we are in the browser context
 
@@ -487,9 +491,9 @@ const installListenersOnPage = async page => {
 					element === document
 						? 'document'
 						: `<${element.tagName.toLowerCase()} ${element
-								.getAttributeNames()
-								.map(name => `${name}="${element.getAttribute(name)}"`)
-								.join(' ')}>`
+							.getAttributeNames()
+							.map(name => `${name}="${element.getAttribute(name)}"`)
+							.join(' ')}>`
 				// bubbles: e.bubbles,
 				// cancelBubble: e.cancelBubble,
 				// cancelable: e.cancelable,
@@ -825,7 +829,7 @@ const controlPage = async (page, options, allPages) => {
 
 		try {
 			client.detach();
-		} catch {}
+		} catch { }
 	});
 	// page created by window.open or anchor
 	page.on('popup', async newPage => {

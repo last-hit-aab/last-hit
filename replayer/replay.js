@@ -613,13 +613,15 @@ class Replayer {
 				}
 			})();
 
-			const page = await this.getPageOrThrow(step.uuid);
+
 			if (!ret || ret.wait !== false) {
+				const page = await this.getPage(step.uuid);
 				// const page = await this.getPageOrThrow(step.uuid);
 				await this.isRemoteFinsihed(page);
 			}
 
 			if (step.image) {
+				const page = await this.getPageOrThrow(step.uuid);
 				const srceen_record_path = path.join(getTempFolder(__dirname), "screen_record")
 				if (!fs.existsSync(srceen_record_path)) {
 					fs.mkdirSync(srceen_record_path);
@@ -644,7 +646,7 @@ class Replayer {
 
 
 				const ssim_data = await ssim(current_path, replay_path)
-				// console.log(resp)
+				console.log(ssim_data)
 
 				if (ssim_data.ssim < 0.96 || ssim_data.mcs < 0.96) {
 					const diff = await campareScreen(step.image, replay)
@@ -656,9 +658,6 @@ class Replayer {
 					});
 
 				}
-
-
-
 			}
 
 		} catch (e) {
@@ -671,7 +670,11 @@ class Replayer {
 			// TODO count ignore error
 			const file_path = `${getTempFolder(__dirname)}/error-${step.uuid}-${this.getSteps().indexOf(step)}.png`;
 			// console.log(logFolder)
-			await page.screenshot({ path: file_path, type: 'png' });
+			if (page) {
+				await page.screenshot({ path: file_path, type: 'png' });
+			} else {
+				logger.log("page don't exsit ")
+			}
 
 			throw e;
 		}
