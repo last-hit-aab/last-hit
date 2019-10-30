@@ -684,27 +684,16 @@ class Replayer {
 				}
 
 				const flowPath = path.join(screenshotPath, storyName, flow.name);
-				// console.log('flow_name', flowPath);
 				if (!fs.existsSync(flowPath)) {
 					fs.mkdirSync(flowPath, { recursive: true });
-				} else {
-					// const files = fs.readdirSync(flowPath);
-					// if (files && files.length > 0) {
-					// 	files.forEach(file => fs.unlinkSync(path.join(flowPath, file)));
-					// }
 				}
 
 				const replayImage = await page.screenshot({ encoding: 'base64' });
 				const replayImageFilename = path.join(flowPath, step.stepUuid + '_replay.png');
 				fs.writeFileSync(replayImageFilename, Buffer.from(replayImage, 'base64'));
-
 				const currentImageFilename = path.join(flowPath, step.stepUuid + '_baseline.png');
 				fs.writeFileSync(currentImageFilename, Buffer.from(step.image, 'base64'));
-
-				// console.log(currentImageFilename)
-				// console.log(replayImageFilename)
 				const ssim_data = await ssim(currentImageFilename, replayImageFilename)
-				console.log(ssim_data)
 				if (ssim_data.ssim < 0.96 || ssim_data.mcs < 0.96) {
 					const diffImage = await campareScreen(step.image, replayImage);
 					const diffImageFilename = path.join(flowPath, step.stepUuid + '_diff.png');
@@ -716,15 +705,14 @@ class Replayer {
 					});
 				}
 			}
+
 		} catch (e) {
 			console.error(e);
 			const page = this.getPage(step.uuid);
-
 			this.getSummary().handleError(step, e);
-			// getSummary().handleScreenshot(step, file_path);
+
 			// TODO count ignore error
 			const file_path = `${getTempFolder(__dirname)}/error-${step.uuid}-${this.getSteps().indexOf(step)}.png`;
-			// console.log(logFolder)
 			if (page) {
 				await page.screenshot({ path: file_path, type: 'png' });
 			} else {

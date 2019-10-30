@@ -292,6 +292,12 @@ function buildHtml(ci_results_content, screen_reports) {
 						}
 					]
 				},
+				{
+					type: "br"
+				},
+				{
+					type: "br"
+				},
 
 				{
 					type: 'table',
