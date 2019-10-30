@@ -395,7 +395,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 						message: error
 					});
 					ipcRenderer.once(`replay-browser-disconnect-${flowKey}`, (event, arg) =>
-						setReplaySummary({ summary: arg, error })
+						setReplaySummary({ summary: arg.summary, error })
 					);
 					// disconnect
 					ipcRenderer.send(`continue-replay-step-${flowKey}`, {
@@ -425,7 +425,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 					switch (ret.response) {
 						case 0:
 							ipcRenderer.once(`replay-browser-disconnect-${flowKey}`, (event, arg) =>
-								setReplaySummary({ summary: arg, error: null })
+								setReplaySummary({ summary: arg.summary, error: null })
 							);
 							ipcRenderer.send(`continue-replay-step-${flowKey}`, {
 								command: 'disconnect'
@@ -433,7 +433,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 							break;
 						case 1:
 							ipcRenderer.once(`replay-browser-abolish-${flowKey}`, (event, arg) =>
-								setReplaySummary({ summary: arg, error: null })
+								setReplaySummary({ summary: arg.summary, error: null })
 							);
 							ipcRenderer.send(`continue-replay-step-${flowKey}`, {
 								command: 'abolish'

@@ -27,7 +27,8 @@ const useStyles = makeStyles(theme => ({
 	},
 	summary: {
 		display: 'grid',
-		gridTemplateColumns: '50% 50%'
+		gridTemplateColumns: 'auto auto auto auto auto',
+		gridColumnGap: theme.spacing(2)
 	},
 	error: {
 		gridColumn: 'span 2'
@@ -47,7 +48,6 @@ export default (props: { data: { summary: any | null; error: string | null }; cl
 	if (data.error) {
 		errorDisplay = (
 			<TextField
-				id="standard-read-only-input"
 				label="Error"
 				defaultValue={data.error}
 				className={classes.error}
@@ -59,12 +59,54 @@ export default (props: { data: { summary: any | null; error: string | null }; cl
 		);
 	}
 
+	const summary = data.summary;
+
 	return (
-		<Dialog open={true} onClose={() => close()} fullWidth={true} disableBackdropClick={true}>
+		<Dialog open={true} onClose={() => close()} fullWidth={true} disableBackdropClick={true} maxWidth="lg">
 			<DialogTitle>{title}</DialogTitle>
 			<DialogContent className={classes.root}>
 				<Grid container className={classes.summary}>
 					{errorDisplay}
+					<TextField
+						label="Step Count"
+						defaultValue={summary.numberOfStep}
+						margin="dense"
+						InputProps={{
+							readOnly: true
+						}}
+					/>
+					<TextField
+						label="Total Passed Step Count"
+						defaultValue={summary.numberOfUIBehavior}
+						margin="dense"
+						InputProps={{
+							readOnly: true
+						}}
+					/>
+					<TextField
+						label="Passed UI Step Count"
+						defaultValue={summary.numberOfUIBehavior}
+						margin="dense"
+						InputProps={{
+							readOnly: true
+						}}
+					/>
+					<TextField
+						label="Ajax Count"
+						defaultValue={summary.numberOfAjax}
+						margin="dense"
+						InputProps={{
+							readOnly: true
+						}}
+					/>
+					<TextField
+						label="Slow Ajax Count"
+						defaultValue={(summary.slowAjaxRequest || []).length}
+						margin="dense"
+						InputProps={{
+							readOnly: true
+						}}
+					/>
 				</Grid>
 			</DialogContent>
 			<DialogActions>

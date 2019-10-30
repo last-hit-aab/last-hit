@@ -669,13 +669,13 @@ class Replayer {
 				}
 			})();
 
-			const page = await this.getPageOrThrow(step.uuid);
-			if (!ret || ret.wait !== false) {
+			const page = await this.getPage(step.uuid);
+			if ((!ret || ret.wait !== false) && page != null) {
 				// const page = await this.getPageOrThrow(step.uuid);
 				await this.isRemoteFinsihed(page);
 			}
 
-			if (step.image) {
+			if (step.image && page != null) {
 				const screenshotPath = path.join(getTempFolder(__dirname), 'screen-record');
 				if (!fs.existsSync(screenshotPath)) {
 					fs.mkdirSync(screenshotPath, { recursive: true });
