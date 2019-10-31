@@ -31,7 +31,15 @@ class ReplaySummary {
 		return this.summary;
 	}
 	async compareScreenshot(step) {
-		this.summary.screenCompareList.push(step);
+		this.summary.screenCompareList.push({
+			stepUuid: step.stepUuid,
+			stepIndex: step.stepIndex,
+			target: step.target,
+			path: step.path,
+			csspath: step.csspath,
+			human: step.human,
+			type: step.type
+		});
 	}
 	async handleError(step, error) {
 		if (step.type == 'ajax') {

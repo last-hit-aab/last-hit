@@ -129,13 +129,17 @@ const STEP_FORKS = {
 	},
 	[StepType.DIALOG_OPEN]: {
 		icon: <DialogOpenIcon style={{ transform: 'translateY(6px)' }} />,
-		label: (step: DialogOpenStep): string =>
-			`${step.dialog.charAt(0).toUpperCase() + step.dialog.slice(1)} opened, ${shorternUrl(step.url)}`
+		label: (step: DialogOpenStep): string => {
+			const dialogType = step.dialog || 'Unknown Dialog';
+			return `${dialogType.charAt(0).toUpperCase() + dialogType.slice(1)} opened, ${shorternUrl(step.url)}`;
+		}
 	},
 	[StepType.DIALOG_CLOSE]: {
 		icon: <DialogCloseIcon style={{ transform: 'translateY(6px)' }} />,
-		label: (step: DialogCloseStep): string =>
-			`${step.dialog.charAt(0).toUpperCase() + step.dialog.slice(1)} closed, ${shorternUrl(step.url)}`
+		label: (step: DialogCloseStep): string => {
+			const dialogType = step.dialog || 'Unknown Dialog';
+			return `${dialogType.charAt(0).toUpperCase() + dialogType.slice(1)} closed, ${shorternUrl(step.url)}`;
+		}
 	},
 	[StepType.PAGE_ERROR]: {
 		icon: <PageErrorIcon style={{ transform: 'translateY(4px)' }} />,

@@ -86,6 +86,9 @@ const useStyles = makeStyles(theme => ({
 		},
 		'&[data-hidden=true]': {
 			display: 'none'
+		},
+		'& > ul': {
+			width: '100%'
 		}
 	},
 	ajaxTab: {
@@ -212,7 +215,21 @@ export default (props: {
 								No screenshot comparison.
 							</Typography>
 						) : (
-							<div />
+							<List dense={true}>
+								{summary.screenCompareList.map((item: { stepUuid: string; stepIndex: number }) => {
+									const { stepUuid, stepIndex } = item;
+									return (
+										<ListItem key={stepUuid} button={true}>
+											<span>Record:</span>
+											<img src="" alt="" />
+											<span>Replay:</span>
+											<img src="" alt="" />
+											<span>Compare:</span>
+											<img src="" alt="" />
+										</ListItem>
+									);
+								})}
+							</List>
 						)}
 					</Grid>
 					<Grid item container data-hidden={tabIndex !== 2} role="tabpanel" className={classes.ajaxTab}>

@@ -355,8 +355,13 @@ class LoggedRequests {
 		logger.debug(
 			`Check all requests are done, currently ${this.requests.length} created and ${this.offsets.length} offsetted.`
 		);
-		//when the page pop up, the page has been loaded before request interception, then requests length will less than offsets length
-		if (this.requests.length <= this.offsets.length) {
+		// when the page pop up, the page has been loaded before request interception, then requests length will less than offsets length
+		// RESEARCH might lost one request, don't know why
+		// add logic that gap requests count less or equals 2%, also pass
+		if (
+			this.requests.length <= this.offsets.length ||
+			(this.requests.length - this.offsets.length) / this.requests.length <= 0.02
+		) {
 			if (canResolve) {
 				this.clear();
 				resolve();
