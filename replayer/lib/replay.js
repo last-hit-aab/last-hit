@@ -1203,7 +1203,15 @@ const launch = () => {
 						// failed, prepare for next step
 						// send back
 						replayer.getSummary().handleError(step, e);
-						waitForNextStep({ event, replayer, storyName, flowName, index, error: e.message });
+						waitForNextStep({
+							event,
+							replayer,
+							storyName,
+							flowName,
+							index,
+							error: e.message,
+							errorStack: e.stack
+						});
 					}
 			}
 		});
@@ -1215,6 +1223,7 @@ const launch = () => {
 		options.event.reply(`replay-step-end-${generateKeyByString(storyName, flowName)}`, {
 			index: options.index,
 			error: options.error,
+			errorStack: options.errorStack,
 			summary: replayer.getSummaryData()
 		});
 	};
@@ -1246,7 +1255,15 @@ const launch = () => {
 			replayer.getSummary().handleError((flow.steps || [])[0] || {}, e);
 			// failed, prepare for next step
 			// send back
-			waitForNextStep({ event, replayer, storyName, flowName: flow.name, index, error: e.message });
+			waitForNextStep({
+				event,
+				replayer,
+				storyName,
+				flowName: flow.name,
+				index,
+				error: e.message,
+				errorStack: e.stack
+			});
 		}
 	});
 	return handle;
