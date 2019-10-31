@@ -753,7 +753,12 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			{state.openStartReplay !== ReplayType.NONE ? (
 				<StartReplayDialog open={true} story={story} flow={flow} close={onStartReplayDialogClose} />
 			) : null}
-			<FlowReplaySummaryDialog data={replaySummary} close={onReplaySummaryDialogClose} />
+			<FlowReplaySummaryDialog
+				story={story}
+				flow={flow}
+				data={replaySummary}
+				close={onReplaySummaryDialogClose}
+			/>
 		</Fragment>
 	);
 };
