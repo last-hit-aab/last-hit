@@ -691,11 +691,15 @@ class Replayer {
 					fs.mkdirSync(flowPath, { recursive: true });
 				}
 
+				console.log(screenshotPath)
+
+
 				const replayImage = await page.screenshot({ encoding: 'base64' });
 				const replayImageFilename = path.join(flowPath, step.stepUuid + '_replay.png');
 				fs.writeFileSync(replayImageFilename, Buffer.from(replayImage, 'base64'));
 				const currentImageFilename = path.join(flowPath, step.stepUuid + '_baseline.png');
 				fs.writeFileSync(currentImageFilename, Buffer.from(step.image, 'base64'));
+
 				const ssimData = await ssim(currentImageFilename, replayImageFilename);
 				if (ssimData.ssim < 0.96 || ssimData.mcs < 0.96) {
 					const diffImage = await campareScreen(step.image, replayImage);
@@ -707,9 +711,11 @@ class Replayer {
 							.pipe(fs.createWriteStream(diffImageFilename));
 					});
 				}
+
+
 			}
 		} catch (e) {
-			console.error(e);
+			// console.error(e);
 			const page = this.getPage(step.uuid);
 			this.getSummary().handleError(step, e);
 

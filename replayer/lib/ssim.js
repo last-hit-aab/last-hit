@@ -30,11 +30,27 @@ const loadImage = (file1, file2, done) => {
 	load(file2, loaded);
 };
 
+const isSameSize = (baseline, replay) => {
+	if (baseline.width == replay.width && baseline.height == replay.height) {
+		return true;
+
+	} else {
+		return false;
+	}
+
+}
+
 const similer = (baseline_path, replay_path) => {
 	return new Promise(resolve => {
 		loadImage(baseline_path, replay_path, images => {
-			const res = ssim.compare(images[0], images[1])
-			resolve(res);
+			const baseline = images[0]
+			const replay = images[1]
+			if (isSameSize(baseline, replay)) {
+				const res = ssim.compare(images[0], images[1])
+				resolve(res);
+			} else {
+				resolve({ ssim: 0.1, mcs: 0.1 })
+			}
 		});
 	});
 };
