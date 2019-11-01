@@ -154,7 +154,12 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	const [currentReplayStepIndex, setCurrentReplayStepIndex] = React.useState(-1);
 	// step replaying or not
 	const [stepReplaying, setStepReplaying] = React.useState(false);
-	const [replaySummary, setReplaySummary] = React.useState({ summary: null, error: null, errorStack: null });
+	const [replaySummary, setReplaySummary] = React.useState({
+		summary: null,
+		error: null,
+		errorStack: null,
+		stepIndex: null
+	});
 	React.useEffect(() => {
 		ipcRenderer.on(`message-captured-${generateKeyByObject(story, flow)}`, (evt, arg) => {
 			if (onPause) {
@@ -395,7 +400,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 						message: error
 					});
 					ipcRenderer.once(`replay-browser-disconnect-${flowKey}`, (event, arg) =>
-						setReplaySummary({ summary: arg.summary, error, errorStack })
+						setReplaySummary({ summary: arg.summary, error, errorStack, stepIndex: index })
 					);
 					// disconnect
 					ipcRenderer.send(`continue-replay-step-${flowKey}`, {
@@ -425,7 +430,12 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 					switch (ret.response) {
 						case 0:
 							ipcRenderer.once(`replay-browser-disconnect-${flowKey}`, (event, arg) =>
-								setReplaySummary({ summary: arg.summary, error: null, errorStack: null })
+								setReplaySummary({
+									summary: arg.summary,
+									error: null,
+									errorStack: null,
+									stepIndex: null
+								})
 							);
 							ipcRenderer.send(`continue-replay-step-${flowKey}`, {
 								command: 'disconnect'
@@ -433,7 +443,12 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 							break;
 						case 1:
 							ipcRenderer.once(`replay-browser-abolish-${flowKey}`, (event, arg) =>
-								setReplaySummary({ summary: arg.summary, error: null, errorStack: null })
+								setReplaySummary({
+									summary: arg.summary,
+									error: null,
+									errorStack: null,
+									stepIndex: null
+								})
 							);
 							ipcRenderer.send(`continue-replay-step-${flowKey}`, {
 								command: 'abolish'
@@ -554,7 +569,8 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			});
 	};
 
-	const onReplaySummaryDialogClose = () => setReplaySummary({ summary: null, error: null, errorStack: null });
+	const onReplaySummaryDialogClose = () =>
+		setReplaySummary({ summary: null, error: null, errorStack: null, stepIndex: null });
 
 	const canMoveUp = (flow: Flow, step: Step): boolean => {
 		const steps = flow.steps || [];

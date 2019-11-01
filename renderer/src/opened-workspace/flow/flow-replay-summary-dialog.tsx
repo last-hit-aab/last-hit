@@ -15,6 +15,7 @@ import {
 	Typography
 } from '@material-ui/core';
 import { remote } from 'electron';
+import fs from 'fs';
 import path from 'path';
 import React, { Fragment } from 'react';
 import { getTheme } from '../../global-settings';
@@ -52,6 +53,7 @@ const useStyles = makeStyles(theme => ({
 		}
 	},
 	errorTab: {
+		flexDirection: 'column',
 		gridColumn: 'span 5',
 		width: 'unset',
 		height: theme.spacing(50),
@@ -60,7 +62,7 @@ const useStyles = makeStyles(theme => ({
 		'&[data-hidden=true]': {
 			display: 'none'
 		},
-		'& > *': {
+		'& > div': {
 			flexGrow: 1,
 			'& > div': {
 				height: '100%',
@@ -152,16 +154,17 @@ const useStyles = makeStyles(theme => ({
 export default (props: {
 	story: Story;
 	flow: Flow;
-	data: { summary: any | null; error: string | null; errorStack: string | null };
+	data: { summary: any | null; error: string | null; errorStack: string | null; stepIndex: number | null };
 	close: () => void;
 }): JSX.Element => {
 	const {
 		story: { name: storyName },
-		flow: { name: flowName },
+		flow,
 		data,
 		close
 	} = props;
-	const { error = null, errorStack = null, summary = null } = data || {};
+	const { name: flowName } = flow;
+	const { error = null, errorStack = null, summary = null, stepIndex = null } = data || {};
 	const classes = useStyles({});
 
 	const [tabIndex, setTabIndex] = React.useState(0);
@@ -174,6 +177,12 @@ export default (props: {
 	}
 
 	const title = `Replay Summary, ${error ? 'Error Occurred' : 'Successfully'}`;
+	let errorThumbnail = error
+		? `${remote.app.getPath('logs')}/error-${flow.steps![stepIndex!].uuid}-${stepIndex}.png`
+		: null;
+	if (errorThumbnail && !fs.existsSync(errorThumbnail)) {
+		errorThumbnail = null;
+	}
 
 	return (
 		<Fragment>
@@ -234,6 +243,15 @@ export default (props: {
 								fullWidth
 								InputProps={{ readOnly: true, 'aria-label': 'naked' }}
 							/>
+							{errorThumbnail ? (
+								<Button
+									onClick={() => setThumbnail(errorThumbnail)}
+									variant="contained"
+									color="primary"
+								>
+									Error Screenshot
+								</Button>
+							) : null}
 						</Grid>
 						<Grid
 							item

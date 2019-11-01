@@ -124,7 +124,7 @@ const controlPage = async (replayer, page, device, uuid) => {
 		const currentIndex = replayer.getCurrentIndex();
 		// IMPORTANT do not compare url here, since might have random token. only path compare is necessary
 		const pageCreateStep = steps
-			.filter((step, index) => index > currentIndex)
+			.filter((step, index) => index >= currentIndex)
 			.find(step => step.type === 'page-created' && newUrl === getUrlPath(step.url));
 		if (pageCreateStep == null) {
 			throw new Error('Cannot find page created step for current popup, flow is broken for replay.');
@@ -680,7 +680,7 @@ class Replayer {
 				await this.isRemoteFinsihed(page);
 			}
 
-			if (step.image && page != null) {
+			if (step.image && page != null && !page.isClosed()) {
 				const screenshotPath = path.join(getTempFolder(process.cwd()), 'screen-record');
 				if (!fs.existsSync(screenshotPath)) {
 					fs.mkdirSync(screenshotPath, { recursive: true });
