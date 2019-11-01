@@ -17,7 +17,6 @@ const loadImage = (file1, file2, done) => {
 		fs.createReadStream(filePath)
 			.pipe(new PNG())
 			.on('parsed', function () {
-				// console.log(this.width)
 				done({
 					data: this.data,
 					width: this.width,
