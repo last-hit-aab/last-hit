@@ -154,7 +154,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	const [currentReplayStepIndex, setCurrentReplayStepIndex] = React.useState(-1);
 	// step replaying or not
 	const [stepReplaying, setStepReplaying] = React.useState(false);
-	const [replaySummary, setReplaySummary] = React.useState({ summary: null, error: null });
+	const [replaySummary, setReplaySummary] = React.useState({ summary: null, error: null, errorStack: null });
 	React.useEffect(() => {
 		ipcRenderer.on(`message-captured-${generateKeyByObject(story, flow)}`, (evt, arg) => {
 			if (onPause) {
@@ -386,7 +386,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	const handleReplayStepEnd = (story: Story, flow: Flow, type: ReplayType): void => {
 		const flowKey = generateKeyByObject(story, flow);
 		ipcRenderer.once(`replay-step-end-${generateKeyByObject(story, flow)}`, (event, arg) => {
-			const { error, index } = arg;
+			const { error, errorStack, index } = arg;
 			if (error) {
 				(async () => {
 					await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
@@ -395,7 +395,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 						message: error
 					});
 					ipcRenderer.once(`replay-browser-disconnect-${flowKey}`, (event, arg) =>
-						setReplaySummary({ summary: arg.summary, error })
+						setReplaySummary({ summary: arg.summary, error, errorStack })
 					);
 					// disconnect
 					ipcRenderer.send(`continue-replay-step-${flowKey}`, {
@@ -425,7 +425,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 					switch (ret.response) {
 						case 0:
 							ipcRenderer.once(`replay-browser-disconnect-${flowKey}`, (event, arg) =>
-								setReplaySummary({ summary: arg.summary, error: null })
+								setReplaySummary({ summary: arg.summary, error: null, errorStack: null })
 							);
 							ipcRenderer.send(`continue-replay-step-${flowKey}`, {
 								command: 'disconnect'
@@ -433,7 +433,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 							break;
 						case 1:
 							ipcRenderer.once(`replay-browser-abolish-${flowKey}`, (event, arg) =>
-								setReplaySummary({ summary: arg.summary, error: null })
+								setReplaySummary({ summary: arg.summary, error: null, errorStack: null })
 							);
 							ipcRenderer.send(`continue-replay-step-${flowKey}`, {
 								command: 'abolish'
@@ -554,7 +554,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			});
 	};
 
-	const onReplaySummaryDialogClose = () => setReplaySummary({ summary: null, error: null });
+	const onReplaySummaryDialogClose = () => setReplaySummary({ summary: null, error: null, errorStack: null });
 
 	const canMoveUp = (flow: Flow, step: Step): boolean => {
 		const steps = flow.steps || [];
@@ -753,7 +753,12 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			{state.openStartReplay !== ReplayType.NONE ? (
 				<StartReplayDialog open={true} story={story} flow={flow} close={onStartReplayDialogClose} />
 			) : null}
-			<FlowReplaySummaryDialog data={replaySummary} close={onReplaySummaryDialogClose} />
+			<FlowReplaySummaryDialog
+				story={story}
+				flow={flow}
+				data={replaySummary}
+				close={onReplaySummaryDialogClose}
+			/>
 		</Fragment>
 	);
 };
