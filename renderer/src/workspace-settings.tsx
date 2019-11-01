@@ -164,6 +164,16 @@ export type Flow = {
 	name: string;
 	description: string;
 	steps?: Step[];
+	settings?: {
+		forceDepends?: {
+			story: string;
+			flow: string;
+		};
+		softDepends?: {
+			story: string;
+			flow: string;
+		};
+	};
 };
 export type Story = {
 	name: string;
