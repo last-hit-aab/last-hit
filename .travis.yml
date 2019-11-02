@@ -7,19 +7,16 @@ node_js:
 cache:
   yarn: true
 
-stages:
-  - build
+jobs:
+  include:
+    - stage: script
 
-build:
-  provider: script
-  script:
-    - cd renderer
-    - yarn install
-    - cd ..
-    - yarn install
-    - yarn run pack:$TRAVIS_OS_NAME
-  on:
-    branch: master
+script:
+  - cd renderer
+  - yarn install
+  - cd ..
+  - yarn install
+  - yarn run pack:$TRAVIS_OS_NAME
 
 # deploy:
 #   provider: releases
