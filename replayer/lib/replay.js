@@ -384,6 +384,11 @@ class LoggedRequests {
 }
 
 class Replayer {
+	/**
+	 * @param {Object} options
+	 * @param {string} options.storyName
+	 * @param {Flow} options.flow
+	 */
 	constructor(options) {
 		const { storyName, flow } = options;
 		this.storyName = storyName;
@@ -691,9 +696,6 @@ class Replayer {
 					fs.mkdirSync(flowPath, { recursive: true });
 				}
 
-				console.log(screenshotPath)
-
-
 				const replayImage = await page.screenshot({ encoding: 'base64' });
 				const replayImageFilename = path.join(flowPath, step.stepUuid + '_replay.png');
 				fs.writeFileSync(replayImageFilename, Buffer.from(replayImage, 'base64'));
@@ -711,8 +713,6 @@ class Replayer {
 							.pipe(fs.createWriteStream(diffImageFilename));
 					});
 				}
-
-
 			}
 		} catch (e) {
 			// console.error(e);
