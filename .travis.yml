@@ -1,6 +1,6 @@
 os: 
   - osx
-  # - windows
+  - windows
 language: node_js
 node_js:
   - 12
@@ -10,6 +10,7 @@ cache:
 jobs:
   include:
     - stage: script
+    - stage: deploy
 
 script:
   - cd renderer
