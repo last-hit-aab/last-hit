@@ -1,27 +1,26 @@
-os: 
-  - osx
-  - windows
+os:
+    - osx
+    # - windows
 language: node_js
 node_js:
-  - 12
+    - 12
 cache:
-  yarn: true
+    yarn: true
 
 jobs:
-  include:
-    - stage: script
-    - stage: deploy
+    include:
+        - stage: script
+# - stage: deploy
 
 script:
-  - cd renderer
-  - yarn install
-  - cd ..
-  - yarn install
-  - yarn run pack:$TRAVIS_OS_NAME
-
+    - cd renderer
+    - yarn install
+    - cd ..
+    - yarn install
+    - yarn run pack:$TRAVIS_OS_NAME
 # deploy:
 #   provider: releases
-#   api_key: 
+#   api_key:
 #     secure: YOUR_API_KEY_ENCRYPTED
 #   file:
 #     - dist/*.zip
