@@ -18,4 +18,3 @@ script:
     - cd ..
     - yarn install
     - yarn run pack:$TRAVIS_OS_NAME
-    # - if [ "$TRAVIS_OS_NAME" = "windows" ]; then taskkill //F //PID $(ps -Wla | tr -s ' ' | grep gpg | cut -f2 -d' '); fi
