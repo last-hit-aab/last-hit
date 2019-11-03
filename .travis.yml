@@ -8,11 +8,9 @@ cache:
     yarn: true
 env:
     - YARN_GPG=no
-
-# jobs:
-#     include:
-#         - stage: script
-# - stage: deploy
+branches:
+    only:
+        - master
 
 script:
     - cd renderer
@@ -20,4 +18,4 @@ script:
     - cd ..
     - yarn install
     - yarn run pack:$TRAVIS_OS_NAME
-    # - if [ "$TRAVIS_OS_NAME" = "windows" ]; then taskkill //F //PID $(ps -Wla | tr -s ' ' | grep gpg | cut-f2 -d' '); fi
+    # - if [ "$TRAVIS_OS_NAME" = "windows" ]; then taskkill //F //PID $(ps -Wla | tr -s ' ' | grep gpg | cut -f2 -d' '); fi
