@@ -295,7 +295,7 @@ export default (props: {
 			<StepIcon step={step} />
 			<InputBase
 				className={classes.human}
-				placeholder={getStepFork(step).label(step as any)}
+				placeholder={getStepFork(step).label(step as any, flow as any)}
 				inputProps={{ 'aria-label': 'naked' }}
 				value={step.human}
 				onChange={handleHumanTextChanged}

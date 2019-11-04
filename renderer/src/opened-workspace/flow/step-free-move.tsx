@@ -132,7 +132,7 @@ export default (props: {
 							}
 							return (
 								<MenuItem key={index} value={index} dense>
-									{s.human || getStepFork(s).label(s as any)}
+									{s.human || getStepFork(s).label(s as any, flow)}
 								</MenuItem>
 							);
 						})

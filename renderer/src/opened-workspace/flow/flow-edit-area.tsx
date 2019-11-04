@@ -656,7 +656,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			.showMessageBox(remote.getCurrentWindow(), {
 				type: 'question',
 				title: 'Step delete',
-				message: `Are you sure to delete step "${getStepFork(step).label(step)}"?`,
+				message: `Are you sure to delete step "${getStepFork(step).label(step, flow)}"?`,
 				detail: 'All contents will be deleted.',
 				buttons: ['OK', 'Cancel']
 			})
