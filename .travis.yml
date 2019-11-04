@@ -1,27 +1,20 @@
-os: 
-  - osx
-  # - windows
+os:
+    - osx
+    - windows
 language: node_js
 node_js:
-  - 12
+    - 12
 cache:
-  yarn: true
-
-addons:
-  homebrew:
-    packages:
-    - pkg-config  
-    - cairo
-    - pango
-    - libpng
-    - jpeg
-    - giflib
-    - librsvg
-    update: true
+    yarn: true
+env:
+    - YARN_GPG=no
+branches:
+    only:
+        - master
 
 script:
-  - cd renderer
-  - yarn install
-  - cd ..
-  - yarn install
-  - yarn run pack:$TRAVIS_OS_NAME
+    - cd renderer
+    - yarn install
+    - cd ..
+    - yarn install
+    - yarn run pack:$TRAVIS_OS_NAME

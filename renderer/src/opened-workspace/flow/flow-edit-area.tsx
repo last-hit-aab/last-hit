@@ -6,6 +6,7 @@ import SmartPlayIcon from '@material-ui/icons/FastForward';
 import RecordIcon from '@material-ui/icons/FiberManualRecord';
 import PauseIcon from '@material-ui/icons/Pause';
 import PlayIcon from '@material-ui/icons/PlayArrow';
+import SettingsIcon from '@material-ui/icons/Settings';
 import StopIcon from '@material-ui/icons/Stop';
 import FlowIcon from '@material-ui/icons/Subscriptions';
 import PlayStepIcon from '@material-ui/icons/WrapText';
@@ -15,12 +16,13 @@ import uuidv4 from 'uuid/v4';
 import { generateKeyByObject } from '../../common/flow-utils';
 import { getTheme } from '../../global-settings';
 import { Flow, saveFlow, StartStep, Step, StepType, Story } from '../../workspace-settings';
+import FlowReplaySummaryDialog from './flow-replay-summary-dialog';
+import FlowSettingsDialog from './flow-settings-dialog';
 import FlowStep from './flow-step';
 import StartRecordDialog from './start-record';
 import StartReplayDialog from './start-replay';
 import { getStepFork, IRRELEVANT_STEPS, ReplayType } from './step-definition';
 import StepFreeMoveDialog from './step-free-move';
-import FlowReplaySummaryDialog from './flow-replay-summary-dialog';
 
 //log message to file in render process
 const logger = remote.getGlobal('logger');
@@ -86,7 +88,7 @@ const useStyles = makeStyles(theme => ({
 		gridColumn: '1 / span 2',
 		justifySelf: 'stretch',
 		display: 'grid',
-		gridTemplateColumns: 'auto auto auto auto 1fr auto',
+		gridTemplateColumns: 'auto auto auto auto auto 1fr auto',
 		gridColumnGap: theme.spacing(1)
 	},
 	statusButton: {
@@ -160,6 +162,8 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 		errorStack: null,
 		stepIndex: null
 	});
+	const [settingsOpen, setSettingsOpen] = React.useState(false);
+
 	React.useEffect(() => {
 		ipcRenderer.on(`message-captured-${generateKeyByObject(story, flow)}`, (evt, arg) => {
 			if (onPause) {
@@ -627,6 +631,9 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			});
 	};
 
+	const onSettingsOpenDialogClose = () => setSettingsOpen(false);
+	const onSettingsClicked = () => setSettingsOpen(true);
+
 	return (
 		<Fragment>
 			<Grid item container direction="column" className={classes.root}>
@@ -645,6 +652,15 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 						placeholder="No description yet."
 					/>
 					<Grid item className={classes.buttonBars}>
+						<ButtonGroup variant="contained" color="primary" size="small">
+							<Button
+								title="Settings"
+								onClick={onSettingsClicked}
+								disabled={onRecord || onReplay !== ReplayType.NONE}
+							>
+								<SettingsIcon />
+							</Button>
+						</ButtonGroup>
 						<ButtonGroup variant="contained" color="primary" size="small">
 							<Button
 								title="Smart play"
@@ -775,6 +791,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 				data={replaySummary}
 				close={onReplaySummaryDialogClose}
 			/>
+			<FlowSettingsDialog open={settingsOpen} story={story} flow={flow} close={onSettingsOpenDialogClose} />
 		</Fragment>
 	);
 };
