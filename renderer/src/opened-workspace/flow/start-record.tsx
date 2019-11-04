@@ -11,11 +11,19 @@ import {
 import { makeStyles } from '@material-ui/core/styles';
 import { ipcRenderer, remote } from 'electron';
 import React from 'react';
+import uuidv4 from 'uuid/v4';
 import devices from '../../common/device-descriptors';
 import { generateKeyByObject } from '../../common/flow-utils';
 import { getTheme } from '../../global-settings';
-import { Flow, saveFlow, StartStep, StepType, Story } from '../../workspace-settings';
-import uuidv4 from 'uuid/v4';
+import {
+	Flow,
+	getCurrentWorkspaceStructure,
+	loopCheck,
+	saveFlow,
+	StartStep,
+	StepType,
+	Story
+} from '../../workspace-settings';
 
 const myTheme = getTheme();
 const useStyles = makeStyles(theme => ({
@@ -99,45 +107,61 @@ export default (props: {
 		close(true);
 	};
 
+	let hasForceDependency = false;
+	if ((flow.settings || {}).forceDepends) {
+		// const { story: storyName, flow: flowName } = flow.settings!.forceDepends!;
+		hasForceDependency = true;
+	}
+
+	const createDependency = (): JSX.Element => {
+		return (
+			<DialogContentText>
+				Force dependency defind, run replayer first and switch to record when force dependency finished.
+			</DialogContentText>
+		);
+	};
+	const createNoDependency = (): JSX.Element => (
+		<React.Fragment>
+			<DialogContentText>
+				Please, specify parameters for start record {flow && flow.name}@{story && story.name}.
+			</DialogContentText>
+			<TextField
+				autoFocus
+				margin="dense"
+				label="Start Url"
+				fullWidth
+				required
+				placeholder="https://"
+				value={values.url}
+				onChange={handleChange('url')}
+			/>
+			<TextField
+				select
+				margin="dense"
+				label="Device"
+				fullWidth
+				required
+				value={values.device}
+				onChange={handleChange('device')}
+				className={classes.select}
+				SelectProps={{ MenuProps: { PaperProps: { className: classes.selectPopupMenu } } }}
+			>
+				{devices
+					.sort((a, b) => a.name.localeCompare(b.name))
+					.map(device => {
+						return (
+							<MenuItem key={device.name} value={device.name} dense>
+								{device.name}
+							</MenuItem>
+						);
+					})}
+			</TextField>
+		</React.Fragment>
+	);
 	return (
 		<Dialog open={open} onClose={() => close(false)} fullWidth={true} disableBackdropClick={true}>
 			<DialogTitle>Start record</DialogTitle>
-			<DialogContent>
-				<DialogContentText>
-					Please, specify parameters for start record {flow && flow.name}@{story && story.name}.
-				</DialogContentText>
-				<TextField
-					autoFocus
-					margin="dense"
-					label="Start Url"
-					fullWidth
-					required
-					placeholder="https://"
-					value={values.url}
-					onChange={handleChange('url')}
-				/>
-				<TextField
-					select
-					margin="dense"
-					label="Device"
-					fullWidth
-					required
-					value={values.device}
-					onChange={handleChange('device')}
-					className={classes.select}
-					SelectProps={{ MenuProps: { PaperProps: { className: classes.selectPopupMenu } } }}
-				>
-					{devices
-						.sort((a, b) => a.name.localeCompare(b.name))
-						.map(device => {
-							return (
-								<MenuItem key={device.name} value={device.name} dense>
-									{device.name}
-								</MenuItem>
-							);
-						})}
-				</TextField>
-			</DialogContent>
+			<DialogContent>{hasForceDependency ? createDependency() : createNoDependency()}</DialogContent>
 			<DialogActions>
 				<Button onClick={() => close(false)} variant="contained">
 					Cancel

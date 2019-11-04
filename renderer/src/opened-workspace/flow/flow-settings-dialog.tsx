@@ -1,7 +1,7 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, makeStyles, TextField } from '@material-ui/core';
 import React, { Fragment } from 'react';
 import { getTheme } from '../../global-settings';
-import { Flow, Story, getCurrentWorkspaceStructure, saveFlow } from '../../workspace-settings';
+import { Flow, Story, getCurrentWorkspaceStructure, saveFlow, loopCheck } from '../../workspace-settings';
 import { remote } from 'electron';
 
 const myTheme = getTheme();
@@ -75,37 +75,9 @@ export default (props: { open: boolean; story: Story; flow: Flow; close: () => v
 		const found = workspace.stories.some(
 			story => story.name === storyName && story.flows!.some(flow => flow.name === flowName)
 		);
-		const loopCheck = (dependsStoryName: string, dependsFlowName: string): boolean => {
-			// find story
-			const dependsStory = workspace.stories.find(story => story.name === dependsStoryName);
-			if (!dependsStory) {
-				return true;
-			}
-			// find flow
-			const dependsFlow = (dependsStory.flows || []).find(flow => flow.name === dependsFlowName);
-			if (!dependsFlow) {
-				return true;
-			}
-			const { forceDepends = null, softDepends = null } = dependsFlow.settings || {};
-			if (forceDepends) {
-				if (forceDepends.story === story.name && forceDepends.flow === flow.name) {
-					return false;
-				} else {
-					return loopCheck(forceDepends.story, forceDepends.flow);
-				}
-			}
-			if (softDepends) {
-				if (softDepends.story === story.name && softDepends.flow === flow.name) {
-					return false;
-				} else {
-					return loopCheck(softDepends.story, softDepends.flow);
-				}
-			}
-			return true;
-		};
 		if (found) {
 			// loop check
-			if (!loopCheck(storyName, flowName)) {
+			if (!loopCheck(workspace, storyName, flowName, story.name, flow.name)) {
 				remote.dialog.showMessageBox(remote.getCurrentWindow(), {
 					type: 'error',
 					title: 'Invalid Input',
