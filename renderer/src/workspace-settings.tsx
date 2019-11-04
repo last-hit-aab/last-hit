@@ -563,8 +563,9 @@ export const loopCheck = (
 export const findAndMergeForceDependencyFlows = (workspace: WorkspaceStructure, story: Story, flow: Flow): Flow => {
 	const forceDependencyFlow: Flow = { name: flow.name, description: `Merged force dependency flows`, steps: [] };
 
-	while (flow.settings && flow.settings.forceDepends) {
-		const { story: storyName, flow: flowName } = flow.settings.forceDepends;
+	let currentFlow = flow;
+	while (currentFlow.settings && currentFlow.settings.forceDepends) {
+		const { story: storyName, flow: flowName } = currentFlow.settings.forceDepends;
 		const dependsStory = (workspace.stories || [])!.find(story => story.name === storyName);
 		if (dependsStory == null) {
 			throw new Error(`Dependency story[${storyName}] not found.`);
@@ -574,12 +575,14 @@ export const findAndMergeForceDependencyFlows = (workspace: WorkspaceStructure, 
 			throw new Error(`Dependency flow[${flowName}@${storyName}] not found.`);
 		}
 
-		const steps = flow.steps || [];
+		const steps = dependsFlow.steps || [];
+
 		forceDependencyFlow.steps!.splice(0, 0, ...steps);
+		currentFlow = dependsFlow;
 	}
 
 	forceDependencyFlow.steps = forceDependencyFlow.steps!.filter((step, index) => {
-		return index != 0 && (step.type === StepType.START || step.type === StepType.END);
+		return index === 0 || (step.type !== StepType.START && step.type !== StepType.END);
 	});
 	forceDependencyFlow.steps.push({ type: StepType.END } as Step);
 

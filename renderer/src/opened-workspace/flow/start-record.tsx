@@ -9,21 +9,12 @@ import {
 	TextField
 } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
-import { ipcRenderer, remote } from 'electron';
+import { remote } from 'electron';
 import React from 'react';
 import uuidv4 from 'uuid/v4';
 import devices from '../../common/device-descriptors';
-import { generateKeyByObject } from '../../common/flow-utils';
 import { getTheme } from '../../global-settings';
-import {
-	Flow,
-	getCurrentWorkspaceStructure,
-	loopCheck,
-	saveFlow,
-	StartStep,
-	StepType,
-	Story
-} from '../../workspace-settings';
+import { Device, Flow, saveFlow, StartStep, StepType, Story } from '../../workspace-settings';
 
 const myTheme = getTheme();
 const useStyles = makeStyles(theme => ({
@@ -56,7 +47,7 @@ export default (props: {
 	open: boolean;
 	story: Story;
 	flow: Flow;
-	close: (onRecord: boolean) => void;
+	close: (onRecord: boolean, options?: { url: string; device: Device; uuid: string }) => void;
 }): JSX.Element => {
 	const { open, story, flow, close } = props;
 	const { steps } = flow;
@@ -77,41 +68,39 @@ export default (props: {
 	const handleChange = (name: string) => (evt: any): void => {
 		setValues({ ...values, [name]: evt.target.value });
 	};
+	const hasForceDependency = (): boolean => {
+		return (flow.settings || {}).forceDepends != null;
+	};
 	const onConfirmClicked = (): void => {
-		const { url, device } = values;
-		if (!url || url.trim().length === 0) {
-			remote.dialog.showMessageBox(remote.getCurrentWindow(), {
-				type: 'error',
-				title: 'Invalid Input',
-				message: 'Please, specify start url.'
-			});
-			return;
-		}
-		if (device == null) {
-			remote.dialog.showMessageBox(remote.getCurrentWindow(), {
-				type: 'error',
-				title: 'Invalid Input',
-				message: 'Please, specify device.'
-			});
-			return;
+		if (!hasForceDependency()) {
+			const { url, device } = values;
+			if (!url || url.trim().length === 0) {
+				remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+					type: 'error',
+					title: 'Invalid Input',
+					message: 'Please, specify start url.'
+				});
+				return;
+			}
+			if (device == null) {
+				remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+					type: 'error',
+					title: 'Invalid Input',
+					message: 'Please, specify device.'
+				});
+				return;
+			}
 		}
 
 		const options = {
 			url,
-			device: devices.find(d => d.name === values.device),
+			device: devices.find(d => d.name === values.device)!,
 			uuid: uuidv4()
 		};
-		ipcRenderer.send('launch-puppeteer', { ...options, flowKey: generateKeyByObject(story, flow) });
 		flow.steps = [{ type: StepType.START, stepIndex: 0, stepUuid: uuidv4(), ...options }];
 		saveFlow(story, flow);
-		close(true);
+		close(true, options);
 	};
-
-	let hasForceDependency = false;
-	if ((flow.settings || {}).forceDepends) {
-		// const { story: storyName, flow: flowName } = flow.settings!.forceDepends!;
-		hasForceDependency = true;
-	}
 
 	const createDependency = (): JSX.Element => {
 		return (
@@ -161,7 +150,7 @@ export default (props: {
 	return (
 		<Dialog open={open} onClose={() => close(false)} fullWidth={true} disableBackdropClick={true}>
 			<DialogTitle>Start record</DialogTitle>
-			<DialogContent>{hasForceDependency ? createDependency() : createNoDependency()}</DialogContent>
+			<DialogContent>{hasForceDependency() ? createDependency() : createNoDependency()}</DialogContent>
 			<DialogActions>
 				<Button onClick={() => close(false)} variant="contained">
 					Cancel

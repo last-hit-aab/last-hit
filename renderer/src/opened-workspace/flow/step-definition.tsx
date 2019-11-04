@@ -236,5 +236,6 @@ export enum ReplayType {
 	SMART = 1,
 	REGULAR = 2,
 	STEP = 3,
-	NONE = 0
+	NONE = 0,
+	FORCE_DEPENDENCY = 4
 }

@@ -15,7 +15,18 @@ import React, { Fragment } from 'react';
 import uuidv4 from 'uuid/v4';
 import { generateKeyByObject } from '../../common/flow-utils';
 import { getTheme } from '../../global-settings';
-import { Flow, saveFlow, StartStep, Step, StepType, Story } from '../../workspace-settings';
+import {
+	Device,
+	findAndMergeForceDependencyFlows,
+	Flow,
+	getCurrentWorkspaceStructure,
+	loopCheck,
+	saveFlow,
+	StartStep,
+	Step,
+	StepType,
+	Story
+} from '../../workspace-settings';
 import FlowReplaySummaryDialog from './flow-replay-summary-dialog';
 import FlowSettingsDialog from './flow-settings-dialog';
 import FlowStep from './flow-step';
@@ -334,8 +345,40 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	const onStartStepReplayClicked = (): void => {
 		handleStartReplay(ReplayType.STEP);
 	};
+	const doSwitchToRecord = async (length?: number) => {
+		ipcRenderer.once(`replay-browser-ready-to-switch-${generateKeyByObject(story, flow)}`, () => {
+			ipcRenderer.once(`puppeteer-switched-${generateKeyByObject(story, flow)}`, async () => {
+				if (flow.steps) {
+					flow.steps.length = Math.min(flow.steps.length, length ? length : currentReplayStepIndex + 1);
+				}
+				saveFlow(story, flow);
+
+				// recover state
+				setState({
+					...state,
+					openStartReplay: ReplayType.NONE,
+					onReplay: ReplayType.NONE,
+					openStartRecord: false,
+					onRecord: true,
+					showAllSteps: true
+				});
+				setCurrentReplayStepIndex(-1);
+				setStepReplaying(false);
+				await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+					type: 'info',
+					title: 'Switch to record',
+					message: 'Switch successfully, enjoy record again.',
+					buttons: ['OK']
+				});
+			});
+			ipcRenderer.send('switch-puppeteer', { storyName: story.name, flowName: flow.name });
+		});
+		ipcRenderer.send(`continue-replay-step-${generateKeyByObject(story, flow)}`, {
+			command: 'switch-to-record'
+		});
+	};
 	const onSwitchToRecordClicked = async () => {
-		const ret: Electron.MessageBoxReturnValue = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+		let ret: Electron.MessageBoxReturnValue = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
 			type: 'info',
 			title: 'Switch to record',
 			message:
@@ -344,36 +387,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 		});
 		switch (ret.response) {
 			case 0:
-				ipcRenderer.once(`replay-browser-ready-to-switch-${generateKeyByObject(story, flow)}`, () => {
-					ipcRenderer.once(`puppeteer-switched-${generateKeyByObject(story, flow)}`, async () => {
-						if (flow.steps) {
-							flow.steps.length = Math.min(flow.steps.length, currentReplayStepIndex + 1);
-						}
-						saveFlow(story, flow);
-
-						// recover state
-						setState({
-							...state,
-							openStartReplay: ReplayType.NONE,
-							onReplay: ReplayType.NONE,
-							openStartRecord: false,
-							onRecord: true,
-							showAllSteps: true
-						});
-						setCurrentReplayStepIndex(-1);
-						setStepReplaying(false);
-						await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
-							type: 'info',
-							title: 'Switch to record',
-							message: 'Switch successfully, enjoy record again.',
-							buttons: ['OK']
-						});
-					});
-					ipcRenderer.send('switch-puppeteer', { storyName: story.name, flowName: flow.name });
-				});
-				ipcRenderer.send(`continue-replay-step-${generateKeyByObject(story, flow)}`, {
-					command: 'switch-to-record'
-				});
+				doSwitchToRecord();
 				break;
 			case 1:
 				break;
@@ -391,6 +405,49 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			flow,
 			index: index + 1
 		});
+	};
+	const doEndReplay = async (flowKey: String) => {
+		const ret: Electron.MessageBoxReturnValue = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+			type: 'info',
+			title: 'Replay finished',
+			message: 'Mission Accomplished. Congratulations!',
+			buttons: ['Disconnect only', 'Disconnect & close Chromium']
+		});
+		switch (ret.response) {
+			case 0:
+				ipcRenderer.once(`replay-browser-disconnect-${flowKey}`, (event, arg) =>
+					setReplaySummary({
+						summary: arg.summary,
+						error: null,
+						errorStack: null,
+						stepIndex: null
+					})
+				);
+				ipcRenderer.send(`continue-replay-step-${flowKey}`, {
+					command: 'disconnect'
+				});
+				break;
+			case 1:
+				ipcRenderer.once(`replay-browser-abolish-${flowKey}`, (event, arg) =>
+					setReplaySummary({
+						summary: arg.summary,
+						error: null,
+						errorStack: null,
+						stepIndex: null
+					})
+				);
+				ipcRenderer.send(`continue-replay-step-${flowKey}`, {
+					command: 'abolish'
+				});
+				break;
+		}
+		setState({
+			...state,
+			openStartReplay: ReplayType.NONE,
+			onReplay: ReplayType.NONE
+		});
+		setCurrentReplayStepIndex(-1);
+		setStepReplaying(false);
 	};
 	const handleReplayStepEnd = (story: Story, flow: Flow, type: ReplayType): void => {
 		const flowKey = generateKeyByObject(story, flow);
@@ -421,52 +478,12 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 				})();
 			} else if (flow.steps![index].type === StepType.END || index >= flow.steps!.length - 1) {
 				// the end or last step is finished
-				(async () => {
-					const ret: Electron.MessageBoxReturnValue = await remote.dialog.showMessageBox(
-						remote.getCurrentWindow(),
-						{
-							type: 'info',
-							title: 'Replay finished',
-							message: 'Mission Accomplished. Congratulations!',
-							buttons: ['Disconnect only', 'Disconnect & close Chromium']
-						}
-					);
-					switch (ret.response) {
-						case 0:
-							ipcRenderer.once(`replay-browser-disconnect-${flowKey}`, (event, arg) =>
-								setReplaySummary({
-									summary: arg.summary,
-									error: null,
-									errorStack: null,
-									stepIndex: null
-								})
-							);
-							ipcRenderer.send(`continue-replay-step-${flowKey}`, {
-								command: 'disconnect'
-							});
-							break;
-						case 1:
-							ipcRenderer.once(`replay-browser-abolish-${flowKey}`, (event, arg) =>
-								setReplaySummary({
-									summary: arg.summary,
-									error: null,
-									errorStack: null,
-									stepIndex: null
-								})
-							);
-							ipcRenderer.send(`continue-replay-step-${flowKey}`, {
-								command: 'abolish'
-							});
-							break;
-					}
-					setState({
-						...state,
-						openStartReplay: ReplayType.NONE,
-						onReplay: ReplayType.NONE
-					});
-					setCurrentReplayStepIndex(-1);
-					setStepReplaying(false);
-				})();
+				if (type !== ReplayType.FORCE_DEPENDENCY) {
+					doEndReplay(flowKey);
+				} else {
+					// leave the start step
+					doSwitchToRecord(1);
+				}
 			} else if (type === ReplayType.STEP) {
 				// set step replaying to false, enable the step play button
 				setStepReplaying(false);
@@ -533,9 +550,37 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	const onStartRecordClicked = (): void => {
 		setState({ ...state, openStartRecord: true, onRecord: false });
 	};
-	const onStartRecordDialogClose = (onRecord: boolean): void => {
+	const onStartRecordDialogClose = async (
+		onRecord: boolean,
+		options?: { url: string; device: Device; uuid: string }
+	) => {
 		// show all steps when on record
 		setState({ ...state, openStartRecord: false, onRecord, showAllSteps: onRecord });
+		if (onRecord) {
+			const forceDepends = (flow.settings || {}).forceDepends;
+			if (forceDepends) {
+				setState({ ...state, onReplay: ReplayType.FORCE_DEPENDENCY });
+				// force dependency exists, run replay first
+				const workspace = getCurrentWorkspaceStructure()!;
+				if (!loopCheck(workspace, forceDepends.story, forceDepends.flow, story.name, flow.name)) {
+					await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+						type: 'error',
+						title: 'Failed to start record',
+						message: 'Loop dependencies found, check flow settings please.'
+					});
+					return;
+				}
+				// merge all force depending flows
+				const mergedFlow = findAndMergeForceDependencyFlows(workspace, story, flow);
+				// replay
+				setStepReplaying(true);
+				handleReplayStepEnd(story, mergedFlow, ReplayType.FORCE_DEPENDENCY);
+				ipcRenderer.send('launch-replay', { flow: mergedFlow, index: 0, storyName: story.name });
+			} else {
+				// no force dependency
+				ipcRenderer.send('launch-puppeteer', { ...options, flowKey: generateKeyByObject(story, flow) });
+			}
+		}
 	};
 	const onPauseRecordClicked = (): void => {
 		// toggle pause state
@@ -695,10 +740,18 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 							<Button title="Start record" onClick={onStartRecordClicked} disabled={!canStartRecord}>
 								<RecordIcon />
 							</Button>
-							<Button title="Pause record" onClick={onPauseRecordClicked} disabled={!onRecord}>
+							<Button
+								title="Pause record"
+								onClick={onPauseRecordClicked}
+								disabled={!onRecord && onReplay !== ReplayType.FORCE_DEPENDENCY}
+							>
 								<PauseIcon />
 							</Button>
-							<Button title="Stop record" onClick={onStopRecordClicked} disabled={!onRecord}>
+							<Button
+								title="Stop record"
+								onClick={onStopRecordClicked}
+								disabled={!onRecord && onReplay !== ReplayType.FORCE_DEPENDENCY}
+							>
 								<StopIcon />
 							</Button>
 						</ButtonGroup>
