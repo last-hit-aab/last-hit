@@ -18,3 +18,19 @@ script:
     - cd ..
     - yarn install
     - yarn run pack:$TRAVIS_OS_NAME
+
+jobs:
+  include:
+    - stage: npm release
+      if: tag IS present AND branch = master
+      os: osx
+      before_deploy:
+        - cd replayer
+      deploy:
+        provider: npm
+        email: "$NPM_EMAIL"
+        api_key: "$NPM_TOKEN"
+        skip_cleanup: true
+        on:
+          branch: master
+          tags: true
