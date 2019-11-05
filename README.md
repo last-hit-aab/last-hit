@@ -1,6 +1,6 @@
 # Last Hit  
 
-![Last Hit  logo](./icons/128x128.png)
+![Last Hit  logo](icons/128x128.png)
 
 ![Travis (.org) branch](https://img.shields.io/travis/last-hit-aab/last-hit/master)
 ![GitHub last commit](https://img.shields.io/github/last-commit/last-hit-aab/last-hit)
