@@ -23,6 +23,13 @@
 ![npm](https://img.shields.io/npm/dw/last-hit-replayer)
 ![GitHub All Releases](https://img.shields.io/github/downloads/last-hit-aab/last-hit/total)
 
+![GitHub package.json dependency version (subfolder of monorepo)](https://img.shields.io/github/package-json/dependency-version/last-hit-aab/last-hit/puppeteer)
+![npm type definitions](https://img.shields.io/npm/types/typescript)
+
+
+[![codebeat badge](https://codebeat.co/badges/f3316c83-a06b-4307-b50a-3af48fab9ac3)](https://codebeat.co/projects/github-com-last-hit-aab-last-hit-master)
+![GitHub top language](https://img.shields.io/github/languages/top/last-hit-aab/last-hit)
+
 ### First UI automation testing tool design for all team members.
 
 

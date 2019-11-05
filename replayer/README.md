@@ -4,10 +4,17 @@
 
 
 
+<<<<<<< HEAD
+=======
+![npm](https://img.shields.io/npm/dw/last-hit-replayer)
+![GitHub All Releases](https://img.shields.io/github/downloads/last-hit-aab/last-hit/total)
+
+>>>>>>> 822ce53309d4e353e02b5ec06d55eb01107545f6
 ![Travis (.org) branch](https://img.shields.io/travis/last-hit-aab/last-hit/master)
 ![GitHub last commit](https://img.shields.io/github/last-commit/last-hit-aab/last-hit)
 ![GitHub Release Date](https://img.shields.io/github/release-date/last-hit-aab/last-hit)
 ![GitHub package.json version](https://img.shields.io/github/package-json/v/last-hit-aab/last-hit)
+<<<<<<< HEAD
 
 
 
@@ -18,6 +25,17 @@
 
 ![GitHub issues](https://img.shields.io/github/issues/last-hit-aab/last-hit)
 ![GitHub closed issues](https://img.shields.io/github/issues-closed/last-hit-aab/last-hit)
+=======
+![GitHub issues](https://img.shields.io/github/issues/last-hit-aab/last-hit)
+![GitHub closed issues](https://img.shields.io/github/issues-closed/last-hit-aab/last-hit)
+
+
+
+![GitHub package.json dependency version (subfolder of monorepo)](https://img.shields.io/github/package-json/dependency-version/last-hit-aab/last-hit/puppeteer)
+![npm type definitions](https://img.shields.io/npm/types/typescript)
+
+
+>>>>>>> 822ce53309d4e353e02b5ec06d55eb01107545f6
 [![codebeat badge](https://codebeat.co/badges/f3316c83-a06b-4307-b50a-3af48fab9ac3)](https://codebeat.co/projects/github-com-last-hit-aab-last-hit-master)
 ![GitHub top language](https://img.shields.io/github/languages/top/last-hit-aab/last-hit)
 
