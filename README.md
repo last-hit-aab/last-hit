@@ -8,7 +8,7 @@
 ![GitHub package.json version](https://img.shields.io/github/package-json/v/last-hit-aab/last-hit)
 ![David Dependencies](https://img.shields.io/david/last-hit-aab/last-hit)
 ![David Dev Dependencies](https://img.shields.io/david/dev/last-hit-aab/last-hit)
-![Static Platform](https://img.shields.io/badge/platform-osx%2Fwindows-green)
+![Static Platform](https://img.shields.io/badge/platform-osx%20%7C%20windows-green)
 ![GitHub All Releases](https://img.shields.io/github/downloads/last-hit-aab/last-hit/total)
 
 ![GitHub package.json dependency version (subfolder of monorepo)](https://img.shields.io/github/package-json/dependency-version/last-hit-aab/last-hit/puppeteer)
