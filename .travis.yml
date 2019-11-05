@@ -11,33 +11,30 @@ env:
 branches:
     only:
         - master
-        - prefix-flow
 
 stages:
-  - name: test
-    if: branch = master AND tag IS blank
-  # - name: deploy
-  #   if: tag IS present
+    - name: script
+      if: tag IS blank AND branch = master
 
 script:
     - cd renderer
-    # - yarn install
+    - yarn install
     - cd ..
-    # - yarn install
-    # - yarn run pack:$TRAVIS_OS_NAME
+    - yarn install
+    - yarn run pack:$TRAVIS_OS_NAME
 
 jobs:
     include:
         - stage: npm release
-          if: branch = prefix-flow
-          os: osx
+          if: tag IS present AND branch = master
+          os: linux
           before_deploy:
               - cd replayer
           deploy:
               provider: npm
-              dry_run: true
               email: '$NPM_EMAIL'
-              api_key: '$NPM_TOKEN'
-              skip_cleanup: true
+              api_token: '$NPM_TOKEN'
+              cleanup: false
               on:
-                  branch: prefix-flow
+                  branch: master
+                  tags: true
