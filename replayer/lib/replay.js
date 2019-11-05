@@ -232,6 +232,9 @@ const launchBrowser = async replayer => {
 	browserArgs.push(`--window-size=${width + chrome.x},${height + chrome.y}`);
 	browserArgs.push('--disable-infobars');
 	browserArgs.push('--ignore-certificate-errors');
+	browserArgs.push('--no-sandbox')
+	browserArgs.push('--disable-extensions')
+	// browserArgs.push('–-no-zygote')
 
 	const browser = await puppeteer.launch({
 		headless: !inElectron,
