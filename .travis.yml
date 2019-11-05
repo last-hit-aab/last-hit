@@ -38,4 +38,3 @@ jobs:
               on:
                   branch: master
                   tags: true
-
