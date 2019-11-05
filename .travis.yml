@@ -16,7 +16,7 @@ branches:
 script:
     - cd renderer
     # - yarn install
-    # - cd ..
+    - cd ..
     # - yarn install
     # - yarn run pack:$TRAVIS_OS_NAME
 
@@ -25,11 +25,10 @@ jobs:
     - stage: npm release
       if: branch = prefix-flow
       os: osx
-      before_deploy:
-        - cd replayer
       deploy:
         provider: npm
         dry_run: true
+        src: replayer
         email: "$NPM_EMAIL"
         api_key: "$NPM_TOKEN"
         skip_cleanup: true
