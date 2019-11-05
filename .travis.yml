@@ -12,9 +12,29 @@ branches:
     only:
         - master
 
+stages:
+    - name: script
+      if: tag IS blank AND branch = master
+
 script:
     - cd renderer
     - yarn install
     - cd ..
     - yarn install
     - yarn run pack:$TRAVIS_OS_NAME
+
+jobs:
+    include:
+        - stage: npm release
+          if: tag IS present AND branch = master
+          os: linux
+          before_deploy:
+              - cd replayer
+          deploy:
+              provider: npm
+              email: '$NPM_EMAIL'
+              api_token: '$NPM_TOKEN'
+              cleanup: false
+              on:
+                  branch: master
+                  tags: true

@@ -1,8 +1,8 @@
 import { faHtml5 } from '@fortawesome/free-brands-svg-icons';
 import {
 	faEdit,
-	faPaperPlane,
 	faFire,
+	faPaperPlane,
 	faQuestionCircle,
 	faRoute,
 	faSnowboarding,
@@ -30,6 +30,7 @@ import {
 	DialogOpenStep,
 	DomChangeStep,
 	EndStep,
+	Flow,
 	FocusStep,
 	LoadStep,
 	MouseDownStep,
@@ -89,74 +90,80 @@ const STEP_FORKS = {
 	// start & end
 	[StepType.START]: {
 		icon: <FontAwesomeIcon icon={faSnowboarding} />,
-		label: (step: StartStep): string => `Start from ${shorternUrl(step.url)}`
+		label: (step: StartStep, flow: Flow): string => {
+			if (flow.settings && flow.settings.forceDepends) {
+				return `Force depends on ${flow.settings.forceDepends.flow}@${flow.settings.forceDepends.story}`;
+			}
+			return `Start from ${shorternUrl(step.url)}`;
+		}
 	},
 	[StepType.END]: {
 		icon: <FontAwesomeIcon icon={faSnowman} />,
-		label: (step: EndStep): string => 'Happy Ending!'
+		label: (step: EndStep, flow: Flow): string => 'Happy Ending!'
 	},
 	// resource
 	[StepType.AJAX]: {
 		icon: <AjaxIcon style={{ transform: 'translateY(4px)' }} />,
-		label: (step: AjaxStep): string => {
+		label: (step: AjaxStep, flow: Flow): string => {
 			const { request } = step;
 			return `${request.resourceType.toUpperCase()} ${request.method} ${shorternUrl(request.url)}`;
 		}
 	},
 	[StepType.RESOURCE_LOAD]: {
 		icon: <ResourceLoadIcon style={{ transform: 'translateY(4px)' }} />,
-		label: (step: ResourceLoadStep): string => {
+		label: (step: ResourceLoadStep, flow: Flow): string => {
 			const { request } = step;
 			return `${request.resourceType.toUpperCase()} ${shorternUrl(request.url)}`;
 		}
 	},
 	[StepType.LOAD]: {
 		icon: <ResourceLoadIcon style={{ transform: 'translateY(4px)' }} />,
-		label: (step: LoadStep): string => `Load resource ${shorternTarget(step.target)}`
+		label: (step: LoadStep, flow: Flow): string => `Load resource ${shorternTarget(step.target)}`
 	},
 	[StepType.UNLOAD]: {
 		icon: <ResourceUnloadIcon style={{ transform: 'translateY(4px)' }} />,
-		label: (step: UnloadStep): string => `Unload resource ${shorternTarget(step.target)}`
+		label: (step: UnloadStep, flow: Flow): string => `Unload resource ${shorternTarget(step.target)}`
 	},
 	// page
 	[StepType.PAGE_CLOSED]: {
 		icon: <FontAwesomeIcon icon={faTimesCircle} />,
-		label: (step: PageClosedStep): string => `Page closed, ${shorternUrl(step.url)}`
+		label: (step: PageClosedStep, flow: Flow): string => `Page closed, ${shorternUrl(step.url)}`
 	},
 	[StepType.PAGE_CREATED]: {
 		icon: <PageCreateIcon style={{ transform: 'translateY(3px)' }} />,
-		label: (step: PageCreatedStep): string => `Page created, ${shorternUrl(step.url)}`
+		label: (step: PageCreatedStep, flow: Flow): string => `Page created, ${shorternUrl(step.url)}`
 	},
 	[StepType.DIALOG_OPEN]: {
 		icon: <DialogOpenIcon style={{ transform: 'translateY(6px)' }} />,
-		label: (step: DialogOpenStep): string => {
+		label: (step: DialogOpenStep, flow: Flow): string => {
 			const dialogType = step.dialog || 'Unknown Dialog';
 			return `${dialogType.charAt(0).toUpperCase() + dialogType.slice(1)} opened, ${shorternUrl(step.url)}`;
 		}
 	},
 	[StepType.DIALOG_CLOSE]: {
 		icon: <DialogCloseIcon style={{ transform: 'translateY(6px)' }} />,
-		label: (step: DialogCloseStep): string => {
+		label: (step: DialogCloseStep, flow: Flow): string => {
 			const dialogType = step.dialog || 'Unknown Dialog';
 			return `${dialogType.charAt(0).toUpperCase() + dialogType.slice(1)} closed, ${shorternUrl(step.url)}`;
 		}
 	},
 	[StepType.PAGE_ERROR]: {
 		icon: <PageErrorIcon style={{ transform: 'translateY(4px)' }} />,
-		label: (step: PageErrorStep): string => `Error occurred in page, ${shorternUrl(step.url)}`
+		label: (step: PageErrorStep, flow: Flow): string => `Error occurred in page, ${shorternUrl(step.url)}`
 	},
 	[StepType.PAGE_SWITCHED]: {
 		icon: <FontAwesomeIcon icon={faRoute} />,
-		label: (step: PageSwitchStep): string => `Navigate to ${shorternUrl(step.url)}.`
+		label: (step: PageSwitchStep, flow: Flow): string => `Navigate to ${shorternUrl(step.url)}.`
 	},
 	// dom
 	[StepType.CHANGE]: {
 		icon: <FontAwesomeIcon icon={faEdit} style={{ transform: 'translateY(-2px)' }} />,
-		label: (step: ChangeStep): string => `Value changed to [${step.value}] at ${shorternTarget(step.target)}`
+		label: (step: ChangeStep, flow: Flow): string =>
+			`Value changed to [${step.value}] at ${shorternTarget(step.target)}`
 	},
 	[StepType.VALUE_CHANGE]: {
 		icon: <FontAwesomeIcon icon={faEdit} />,
-		label: (step: ChangeStep): string => {
+		label: (step: ChangeStep, flow: Flow): string => {
 			if (step.target.match(/type="password"/)) {
 				return `Value changed to [**********] at ${shorternTarget(step.target)}`;
 			} else {
@@ -166,38 +173,38 @@ const STEP_FORKS = {
 	},
 	[StepType.CLICK]: {
 		icon: <MouseIcon style={{ transform: 'translateY(4px)' }} />,
-		label: (step: ClickStep): string => `Click on ${shorternTarget(step.target)}.`
+		label: (step: ClickStep, flow: Flow): string => `Click on ${shorternTarget(step.target)}.`
 	},
 	[StepType.DOM_CHANGE]: {
 		icon: <FontAwesomeIcon icon={faHtml5} />,
-		label: (step: DomChangeStep): string => 'DOM Changed.'
+		label: (step: DomChangeStep, flow: Flow): string => 'DOM Changed.'
 	},
 	[StepType.FOCUS]: {
 		icon: <FocusIcon style={{ transform: 'translateY(4px)' }} />,
-		label: (step: FocusStep): string => `Focus ${shorternTarget(step.target)}.`
+		label: (step: FocusStep, flow: Flow): string => `Focus ${shorternTarget(step.target)}.`
 	},
 	[StepType.MOUSE_DOWN]: {
 		icon: <MouseIcon style={{ transform: 'translateY(4px)' }} />,
-		label: (step: MouseDownStep): string => `Mouse down on ${shorternTarget(step.target)}.`
+		label: (step: MouseDownStep, flow: Flow): string => `Mouse down on ${shorternTarget(step.target)}.`
 	},
 	[StepType.KEY_DOWN]: {
 		icon: <KeyIcon style={{ transform: 'translateY(4px)' }} />,
-		label: (step: MouseDownStep): string => `Key down on ${shorternTarget(step.target)}.`
+		label: (step: MouseDownStep, flow: Flow): string => `Key down on ${shorternTarget(step.target)}.`
 	},
 	[StepType.SCROLL]: {
 		icon: <ScrollIcon style={{ transform: 'translateY(4px)' }} />,
-		label: (step: ScrollStep): string =>
+		label: (step: ScrollStep, flow: Flow): string =>
 			`Scroll to [${step.scrollTop},${step.scrollLeft}] on ${shorternTarget(step.target)}.`
 	},
 	[StepType.SUBMIT]: {
 		icon: <FontAwesomeIcon icon={faPaperPlane} />,
-		label: (step: Step): string => 'Tranditional sumbit triggered, your deserve it!'
+		label: (step: Step, flow: Flow): string => 'Tranditional sumbit triggered, your deserve it!'
 	},
 	[StepType.ANIMATION]: {
 		icon: <FontAwesomeIcon icon={faFire} />,
-		label: (step: Step): string => 'Animation is running.'
+		label: (step: Step, flow: Flow): string => 'Animation is running.'
 	}
-} as { [key in StepType]: { icon: JSX.Element; label: (step: Step) => string } };
+} as { [key in StepType]: { icon: JSX.Element; label: (step: Step, flow: Flow) => string } };
 
 export const getStepFork = (step: Step) => {
 	return STEP_FORKS[step.type] || DEFAULT_STEP_FORK;
@@ -236,5 +243,6 @@ export enum ReplayType {
 	SMART = 1,
 	REGULAR = 2,
 	STEP = 3,
-	NONE = 0
+	NONE = 0,
+	FORCE_DEPENDENCY = 4
 }
