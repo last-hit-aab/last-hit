@@ -2,6 +2,7 @@
 
 ![Last Hit  logo](./icons/128x128.png)
 
+![Travis (.org) branch](https://img.shields.io/travis/last-hit-aab/last-hit/master)
 ![GitHub last commit](https://img.shields.io/github/last-commit/last-hit-aab/last-hit)
 ![GitHub Release Date](https://img.shields.io/github/release-date/last-hit-aab/last-hit)
 ![GitHub package.json dependency version (subfolder of monorepo)](https://img.shields.io/github/package-json/dependency-version/last-hit-aab/last-hit/puppeteer)
