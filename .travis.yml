@@ -11,13 +11,14 @@ env:
 branches:
     only:
         - master
+        - prefix-flow
 
-script:
-    - cd renderer
-    - yarn install
-    - cd ..
-    - yarn install
-    - yarn run pack:$TRAVIS_OS_NAME
+# script:
+#     - cd renderer
+#     - yarn install
+#     - cd ..
+#     - yarn install
+#     - yarn run pack:$TRAVIS_OS_NAME
 
 jobs:
   include:
