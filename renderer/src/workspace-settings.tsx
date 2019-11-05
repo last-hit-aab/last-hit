@@ -188,7 +188,7 @@ export type WorkspaceStructure = {
 
 let currentWorkspaceSettings: WorkspaceSettings | null = null;
 let currentWorkspaceStructure: WorkspaceStructure | null = null;
-let searchEngine: SearchEngine | null = null
+// let searchEngine: SearchEngine | null = null
 
 export const isWorkspaceOpened = () => {
 	return currentWorkspaceSettings != null && currentWorkspaceStructure != null;
@@ -306,8 +306,8 @@ export const openWorkspace = (file: string): void => {
 	workspaces.addWorkspace({ name: settings.name, path: path.parse(file).dir });
 	currentWorkspaceSettings = settings;
 	const structure = loadWorkspaceStructure(settings);
-	const search_engine = new SearchEngine(structure)
-	searchEngine = search_engine
+	new SearchEngine(structure)
+	// searchEngine = search_engine
 	currentWorkspaceStructure = structure;
 	const current = remote.getCurrentWindow();
 	history.replace(paths.OPENED_WORKSPACE);
