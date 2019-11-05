@@ -25,9 +25,10 @@ jobs:
     - stage: npm release
       if: branch = prefix-flow
       os: osx
+      before_deploy:
+        - cd replayer
       deploy:
         provider: npm
-        src: replayer
         dry_run: true
         email: "$NPM_EMAIL"
         api_key: "$NPM_TOKEN"
