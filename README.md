@@ -8,7 +8,9 @@
 ![GitHub package.json version](https://img.shields.io/github/package-json/v/last-hit-aab/last-hit)
 ![David Dependencies](https://img.shields.io/david/last-hit-aab/last-hit)
 ![David Dev Dependencies](https://img.shields.io/david/dev/last-hit-aab/last-hit)
+
 ![Static Platform](https://img.shields.io/badge/platform-osx%20%7C%20windows-green)
+![GitHub Release Date](https://img.shields.io/github/release-date/last-hit-aab/last-hit) 
 ![GitHub All Releases](https://img.shields.io/github/downloads/last-hit-aab/last-hit/total)
 
 ![GitHub package.json dependency version (subfolder of monorepo)](https://img.shields.io/github/package-json/dependency-version/last-hit-aab/last-hit/puppeteer)
@@ -20,12 +22,11 @@
 
 # Last Hit Replayer
 [![npm version](https://badge.fury.io/js/last-hit-replayer.svg)](https://badge.fury.io/js/last-hit-replayer)
-![GitHub Release Date](https://img.shields.io/github/release-date/last-hit-aab/last-hit) 
 ![npm](https://img.shields.io/npm/dw/last-hit-replayer)
-
-![Welcome Anything](https://img.shields.io/badge/welcome-anything-orange)
+![npm](https://img.shields.io/npm/dm/last-hit-replayer)
 
 # First UI automation testing tool design for all team members.
+![Welcome Anything](https://img.shields.io/badge/welcome-anything-orange)
 
 # last-hit-quick-start
 
