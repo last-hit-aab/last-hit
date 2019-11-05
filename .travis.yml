@@ -13,6 +13,12 @@ branches:
         - master
         - prefix-flow
 
+stages:
+  - name: test
+    if: branch = master AND tag IS blank
+  # - name: deploy
+  #   if: tag IS present
+
 script:
     - cd renderer
     # - yarn install
@@ -21,16 +27,17 @@ script:
     # - yarn run pack:$TRAVIS_OS_NAME
 
 jobs:
-  include:
-    - stage: npm release
-      if: branch = prefix-flow
-      os: osx
-      deploy:
-        provider: npm
-        dry_run: true
-        src: replayer
-        email: "$NPM_EMAIL"
-        api_key: "$NPM_TOKEN"
-        skip_cleanup: true
-        on:
-          branch: prefix-flow
+    include:
+        - stage: npm release
+          if: branch = prefix-flow
+          os: osx
+          before_deploy:
+              - cd replayer
+          deploy:
+              provider: npm
+              dry_run: true
+              email: '$NPM_EMAIL'
+              api_key: '$NPM_TOKEN'
+              skip_cleanup: true
+              on:
+                  branch: prefix-flow

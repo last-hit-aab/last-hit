@@ -2,7 +2,6 @@
 	"name": "last-hit",
 	"version": "0.3.16",
 	"description": "last hit on enterprise web",
-	"private": true,
 	"main": "main/index.js",
 	"scripts": {
 		"build:renderer": "npm run build --prefix renderer",
