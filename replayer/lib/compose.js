@@ -15,9 +15,12 @@ const compose = options => {
 
 	let shouldGoThrough = false;
 	if (data.length === 0) {
+		// no story and flow given
 		shouldGoThrough = true;
 	} else if (data.length === 1) {
+		// at least story is given
 		if (!data[0].flow) {
+			// no flow given
 			shouldGoThrough = true;
 		}
 	}

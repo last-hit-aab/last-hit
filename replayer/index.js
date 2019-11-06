@@ -120,6 +120,105 @@ const handleReplayStepEnd = (emitter, story, flow, resolve) => {
 	});
 };
 
+/**
+ * @param {string} story
+ * @param {string} flow
+ * @param {{story: string, flow: string}[]} dependsChain
+ * @returns {boolean}
+ */
+const findInDependencyChain = (story, flow, dependsChain) => {
+	return dependsChain.some(node => node.story === story && node.flow === flow);
+};
+/**
+ *
+ * @param {string} dependsStoryName
+ * @param {string} dependsFlowName
+ * @param {{story: string, flow: string}[]} dependsChain
+ * @returns {boolean} true when pass check
+ */
+const doLoopCheck = (dependsStoryName, dependsFlowName, dependsChain) => {
+	if (findInDependencyChain(dependsStoryName, dependsFlowName, dependsChain)) {
+		dependsChain.push({ story: dependsStoryName, flow: dependsFlowName });
+		const chain = dependsChain.map(({ story, flow }) => `${flow}@${story}`).join(' -> ');
+		throw new Error(`Loop dependency[${chain}] found.`);
+	}
+
+	const dependsStoryFolder = path.join(workspace, dependsStoryName);
+	if (!fs.existsSync(dependsStoryFolder) || !fs.statSync(dependsStoryFolder).isDirectory()) {
+		throw new Error(`Dependency story[${dependsStoryName}] not found.`);
+	}
+	const dependsFlowFilename = path.join(dependsStoryFolder, `${dependsFlowName}.flow.json`);
+	if (!fs.existsSync(dependsFlowFilename) || !fs.statSync(dependsFlowFilename).isFile()) {
+		throw new Error(`Dependency flow[${dependsFlowName}@${dependsStoryName}] not found.`);
+	}
+
+	const dependsFlow = jsonfile.readFileSync(dependsFlowFilename);
+	const { forceDepends = null } = dependsFlow.settings || {};
+	if (forceDepends) {
+		if (findInDependencyChain(forceDepends.story, forceDepends.flow, dependsChain)) {
+			dependsChain.push({ story: dependsStoryName, flow: dependsFlowName });
+			const chain = dependsChain.map(({ story, flow }) => `${flow}@${story}`).join(' -> ');
+			throw new Error(`Loop dependency[${chain}] found.`);
+		} else {
+			// push dependency to chain
+			dependsChain.push({ story: dependsStoryName, flow: dependsFlowName });
+			return doLoopCheck(forceDepends.story, forceDepends.flow, dependsChain);
+		}
+	}
+	return true;
+};
+
+/**
+ * only check loop. return true even dependency flow not found.
+ * @param {string} dependsStoryName
+ * @param {string} dependsFlowName
+ * @param {string} myStoryName
+ * @param {string} myFlowName
+ * @returns {boolean} return true when pass the loop check
+ */
+const loopCheck = (dependsStoryName, dependsFlowName, myStoryName, myFlowName) => {
+	return doLoopCheck(dependsStoryName, dependsFlowName, [{ story: myStoryName, flow: myFlowName }]);
+};
+
+/**
+ * find all force dependencies, and merge steps to one flow
+ * @param {Flow} flow
+ * @returns {Flow}
+ */
+const findAndMergeForceDependencyFlows = flow => {
+	const forceDependencyFlow = { name: flow.name, description: `Merged force dependency flows`, steps: [] };
+
+	let currentFlow = flow;
+	while (currentFlow.settings && currentFlow.settings.forceDepends) {
+		const { story: storyName, flow: flowName } = currentFlow.settings.forceDepends;
+		const dependsFlowFilename = path.join(workspace, storyName, `${flowName}.flow.json`);
+		if (!fs.existsSync(dependsFlowFilename) || !fs.statSync(dependsFlowFilename).isFile()) {
+			throw new Error(`Dependency flow[${flowName}@${storyName}] not found.`);
+		}
+		const dependsFlow = jsonfile.readFileSync(dependsFlowFilename);
+
+		const steps = dependsFlow.steps || [];
+
+		forceDependencyFlow.steps.splice(
+			0,
+			0,
+			...steps.map(step => ({
+				...step,
+				origin: { story: storyName, flow: dependsFlow.name, stepIndex: step.stepIndex }
+			}))
+		);
+		currentFlow = dependsFlow;
+	}
+
+	forceDependencyFlow.steps = forceDependencyFlow.steps.filter((step, index) => {
+		return index === 0 || (step.type !== 'start' && step.type !== 'end');
+	});
+	forceDependencyFlow.steps.push({ type: 'end' });
+	forceDependencyFlow.steps.forEach((step, index) => (step.stepIndex = index));
+
+	return forceDependencyFlow;
+};
+
 const hanldeFlowObject = flowObject => {
 	const { story: storyName, flow: flowName } = flowObject;
 	const flowKey = `${flowName}@${storyName}`;
@@ -148,6 +247,34 @@ const hanldeFlowObject = flowObject => {
 	if (flow.steps == null || flow.steps.length === 0) {
 		console.info(`Process[${processId}] Flow ${flowKey} has no steps, ignored.`.red);
 		return;
+	}
+
+	if (flow.settings && flow.settings.forceDepends) {
+		// has force dependency
+		const { story: dependsStoryName, flow: dependsFlowName } = flow.settings.forceDepends;
+		try {
+			loopCheck(dependsStoryName, dependsFlowName, storyName, flowName);
+		} catch (e) {
+			logger.error(e);
+			console.info(`Process[${processId}] Flow ${flowKey} failed on force dependency loop check, ignored.`.red);
+			return;
+		}
+		const forceDependsFlow = findAndMergeForceDependencyFlows(flow);
+		// remove end step
+		forceDependsFlow.steps.length = forceDependsFlow.steps.length - 1;
+		flow.steps
+			.filter((step, index) => index !== 0)
+			.forEach(step =>
+				forceDependsFlow.steps.push({
+					...step,
+					origin: {
+						story: storyName,
+						flow: flow.name,
+						stepIndex: step.stepIndex
+					}
+				})
+			);
+		flow = forceDependsFlow;
 	}
 
 	const startStep = flow.steps[0];
@@ -247,6 +374,8 @@ if (parallel === 1) {
 			await promise;
 			try {
 				await hanldeFlowObject(flowObject);
+			} catch (e) {
+				logger.error(e);
 			} finally {
 				// do nothing
 				return Promise.resolve();
@@ -329,11 +458,19 @@ if (parallel === 1) {
 		};
 	});
 
+	/**
+	 * get first action of actions queue.
+	 * when exists, do action and do next when action accomplished.
+	 * when not exists, do nothing and quit
+	 */
 	const next = () => {
 		const action = actions.shift();
 		action && action().then(() => next());
 	};
 
+	/**
+	 * do actions until reach the parallel count
+	 */
 	let init = 0;
 	while (true) {
 		init++;
