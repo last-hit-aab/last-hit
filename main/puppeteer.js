@@ -123,7 +123,6 @@ const installListenersOnPage = async page => {
 			/^.+\d{10,}$/,
 			/^\s*$/,
 			/^.+-\d{2,10}--value$/,
-			/^.+-\d{2,}$/,
 			/^.+-\d{1,}$/,
 			/^react-select.+-.+$/
 		];
@@ -496,9 +495,9 @@ const installListenersOnPage = async page => {
 					element === document
 						? 'document'
 						: `<${element.tagName.toLowerCase()} ${element
-							.getAttributeNames()
-							.map(name => `${name}="${element.getAttribute(name)}"`)
-							.join(' ')}>`
+								.getAttributeNames()
+								.map(name => `${name}="${element.getAttribute(name)}"`)
+								.join(' ')}>`
 				// bubbles: e.bubbles,
 				// cancelBubble: e.cancelBubble,
 				// cancelable: e.cancelable,
@@ -834,7 +833,7 @@ const controlPage = async (page, options, allPages) => {
 
 		try {
 			client.detach();
-		} catch { }
+		} catch {}
 	});
 	// page created by window.open or anchor
 	page.on('popup', async newPage => {
@@ -1067,7 +1066,7 @@ const launch = () => {
 				/^.+\d{10,}$/,
 				/^\s*$/,
 				/^.+-\d{2,10}--value$/,
-				/^.+-\d{2,}$/,
+				/^.+-\d{1,}$/,
 				/^react-select.+-.+$/
 			];
 			this.attrIdMap = new Map();
