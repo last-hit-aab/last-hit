@@ -41,7 +41,7 @@ export default (props: { open: boolean; story: Story; flow: Flow; close: () => v
 		}
 	};
 	const forceDepends = asDependsString((flow.settings || {}).forceDepends);
-	const softDepends = asDependsString((flow.settings || {}).softDepends);
+	// const softDepends = asDependsString((flow.settings || {}).softDepends);
 
 	const checkDependency = (
 		value: string,
@@ -138,13 +138,13 @@ export default (props: { open: boolean; story: Story; flow: Flow; close: () => v
 					inputRef={forceDependencyRef}
 					defaultValue={forceDepends}
 				/>
-				<TextField
+				{/* <TextField
 					margin="dense"
 					label="Soft Dependency (fill with flow@story)"
 					fullWidth
 					inputRef={softDependencyRef}
 					defaultValue={softDepends}
-				/>
+				/> */}
 			</DialogContent>
 			<DialogActions>
 				<Button onClick={() => close()} variant="contained">
