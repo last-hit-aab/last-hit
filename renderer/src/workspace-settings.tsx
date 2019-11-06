@@ -510,7 +510,11 @@ const isStoryFileExists = (settings: WorkspaceSettings, story: Story): boolean =
 	return fs.existsSync(storyFilePath) && fs.statSync(storyFilePath).isFile();
 };
 
-const findInDependencyChain = (story: string, flow: string, dependsChain: { story: string; flow: string }[]) => {
+const findInDependencyChain = (
+	story: string,
+	flow: string,
+	dependsChain: { story: string; flow: string }[]
+): boolean => {
 	return dependsChain.some(node => node.story === story && node.flow === flow);
 };
 const doLoopCheck = (
