@@ -537,7 +537,8 @@ const doLoopCheck = (
 		if (findInDependencyChain(forceDepends.story, forceDepends.flow, dependsChain)) {
 			return false;
 		} else {
-			dependsChain.push({ story: forceDepends.story, flow: forceDepends.flow });
+			// push dependency to chain
+			dependsChain.push({ story: dependsStoryName, flow: dependsFlowName });
 			return doLoopCheck(workspace, forceDepends.story, forceDepends.flow, dependsChain);
 		}
 	}
@@ -545,7 +546,8 @@ const doLoopCheck = (
 		if (findInDependencyChain(softDepends.story, softDepends.flow, dependsChain)) {
 			return false;
 		} else {
-			dependsChain.push({ story: softDepends.story, flow: softDepends.flow });
+			// push dependency to chain
+			dependsChain.push({ story: dependsStoryName, flow: dependsFlowName });
 			return doLoopCheck(workspace, softDepends.story, softDepends.flow, dependsChain);
 		}
 	}
