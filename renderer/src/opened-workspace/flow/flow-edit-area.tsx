@@ -159,6 +159,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 		openStartReplay: ReplayType.NONE as ReplayType,
 		showAllSteps: false,
 		onReplay: ReplayType.NONE as ReplayType,
+		replayFlow: null as Flow | null,
 		onRecord: false,
 		onPause: false,
 		openStepFreeMove: false,
@@ -258,10 +259,14 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 				div.scrollTop = div.scrollHeight - div.clientHeight;
 			} else if (onReplay !== ReplayType.NONE) {
 				const div = stepContainerRef.current!;
-				const current = div.children[currentReplayStepIndex];
-				if (current) {
-					current.scrollIntoView(true);
-					div.scrollTop = div.scrollTop - 10;
+				const stepUuid = state.replayFlow!.steps![currentReplayStepIndex].stepUuid;
+				const children = div.children;
+				for (let index = 0, count = children.length; index < count; index++) {
+					if (children[index].getAttribute('data-step-uuid') === stepUuid) {
+						children[index].scrollIntoView(true);
+						div.scrollTop = div.scrollTop - 10;
+						break;
+					}
 				}
 			}
 		} catch (e) {
@@ -333,11 +338,12 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			setState({
 				...state,
 				openStartReplay: type,
-				onReplay: ReplayType.NONE
+				onReplay: ReplayType.NONE,
+				replayFlow: null
 			});
 		} else {
 			// already started, means continue next step
-			replayNextStep(story, flow, onReplay, currentReplayStepIndex);
+			replayNextStep(story, state.replayFlow!, onReplay, currentReplayStepIndex);
 		}
 	};
 	const onStartRegularReplayClicked = (): void => {
@@ -362,6 +368,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 					...state,
 					openStartReplay: ReplayType.NONE,
 					onReplay: ReplayType.NONE,
+					replayFlow: null,
 					openStartRecord: false,
 					onRecord: true,
 					showAllSteps: true
@@ -452,7 +459,8 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 		setState({
 			...state,
 			openStartReplay: ReplayType.NONE,
-			onReplay: ReplayType.NONE
+			onReplay: ReplayType.NONE,
+			replayFlow: null
 		});
 		setCurrentReplayStepIndex(-1);
 		setStepReplaying(false);
@@ -481,7 +489,8 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 						openStartRecord: false,
 						onRecord: false,
 						openStartReplay: ReplayType.NONE,
-						onReplay: ReplayType.NONE
+						onReplay: ReplayType.NONE,
+						replayFlow: null
 					});
 					setCurrentReplayStepIndex(-1);
 					setStepReplaying(false);
@@ -495,8 +504,20 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 					doSwitchToRecord(1);
 				}
 			} else if (type === ReplayType.STEP) {
-				// set step replaying to false, enable the step play button
-				setStepReplaying(false);
+				// check is force dependency or not
+				const step = flow.steps![index]!;
+				// when has force dependency, all step has origin field.
+				// otherwise, no origin field
+				const { flow: flowName = null } = step.origin || {};
+				if (flowName && flowName !== flow.name) {
+					// in force dependency step, continue
+					replayNextStep(story, flow, type, index);
+				} else {
+					// has force dependency, but step is my step
+					// or has no force dependency
+					// set step replaying to false, enable the step play button
+					setStepReplaying(false);
+				}
 			} else {
 				const nextStep = flow.steps![index + 1];
 				if (nextStep && nextStep.breakpoint) {
@@ -511,13 +532,6 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	};
 	const onStartReplayDialogClose = async (onReplay: boolean) => {
 		const replayType = state.openStartReplay;
-		setState({
-			...state,
-			openStartReplay: ReplayType.NONE,
-			onReplay: onReplay ? replayType : ReplayType.NONE,
-			showAllSteps: onReplay
-		});
-		setCurrentReplayStepIndex(onReplay ? 0 : -1);
 		if (onReplay) {
 			let replayFlow: Flow;
 			const forceDepends = (flow.settings || {}).forceDepends;
@@ -549,10 +563,27 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			} else {
 				replayFlow = flow;
 			}
+			setState({
+				...state,
+				openStartReplay: ReplayType.NONE,
+				onReplay: replayType,
+				replayFlow,
+				showAllSteps: true
+			});
+			setCurrentReplayStepIndex(0);
 			// set as step replaying anyway, it will disable the step play button
 			setStepReplaying(true);
 			handleReplayStepEnd(story, replayFlow, replayType);
 			ipcRenderer.send('launch-replay', { flow: replayFlow, index: 0, storyName: story.name });
+		} else {
+			setState({
+				...state,
+				openStartReplay: ReplayType.NONE,
+				onReplay: ReplayType.NONE,
+				replayFlow: null,
+				showAllSteps: onReplay
+			});
+			setCurrentReplayStepIndex(-1);
 		}
 	};
 	const onStopReplayClicked = (): void => {
@@ -581,7 +612,8 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			setState({
 				...state,
 				openStartReplay: ReplayType.NONE,
-				onReplay: ReplayType.NONE
+				onReplay: ReplayType.NONE,
+				replayFlow: null
 			});
 			setCurrentReplayStepIndex(-1);
 			setStepReplaying(false);
@@ -598,13 +630,6 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 		if (onRecord) {
 			const forceDepends = (flow.settings || {}).forceDepends;
 			if (forceDepends) {
-				setState({
-					...state,
-					openStartRecord: false,
-					onRecord,
-					showAllSteps: onRecord,
-					onReplay: ReplayType.FORCE_DEPENDENCY
-				});
 				// force dependency exists, run replay first
 				const workspace = getCurrentWorkspaceStructure()!;
 				if (!loopCheck(workspace, forceDepends.story, forceDepends.flow, story.name, flow.name)) {
@@ -618,6 +643,14 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 				// merge all force depending flows
 				const mergedFlow = findAndMergeForceDependencyFlows(workspace, story, flow);
 				// replay
+				setState({
+					...state,
+					openStartRecord: false,
+					onRecord,
+					showAllSteps: onRecord,
+					onReplay: ReplayType.FORCE_DEPENDENCY,
+					replayFlow: mergedFlow
+				});
 				setStepReplaying(true);
 				handleReplayStepEnd(story, mergedFlow, ReplayType.FORCE_DEPENDENCY);
 				ipcRenderer.send('launch-replay', { flow: mergedFlow, index: 0, storyName: story.name });
@@ -838,6 +871,12 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 						data-on-record={onRecord && !onPause}
 					>
 						{(flow.steps || NO_STEPS).map((step, index) => {
+							let replayStepIndex = -1;
+							if (currentReplayStepIndex >= 0 && state.replayFlow) {
+								// in replay
+								const stepUuid = state.replayFlow!.steps![currentReplayStepIndex].stepUuid;
+								replayStepIndex = stepUuid === step.stepUuid ? index : 0;
+							}
 							return (
 								<FlowStep
 									key={uuidv4()}
@@ -848,7 +887,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 										onRecord,
 										onPause,
 										onReplay,
-										replayStepIndex: currentReplayStepIndex,
+										replayStepIndex,
 										stepReplaying,
 										myIndex: index
 									}}

@@ -591,6 +591,7 @@ export const findAndMergeForceDependencyFlows = (workspace: WorkspaceStructure, 
 			0,
 			...steps.map(step => ({
 				...step,
+				breakpoint: false,
 				origin: { story: dependsStory.name, flow: dependsFlow.name, stepIndex: step.stepIndex }
 			}))
 		);

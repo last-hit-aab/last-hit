@@ -286,6 +286,7 @@ export default (props: {
 			className={classes.root}
 			tabIndex={0}
 			data-step-type={type}
+			data-step-uuid={step.stepUuid}
 			data-index={myIndex + 1}
 			data-is-irrelevant={irrelevant}
 			data-on-replay={onReplay !== ReplayType.NONE && replayStepIndex === myIndex}
