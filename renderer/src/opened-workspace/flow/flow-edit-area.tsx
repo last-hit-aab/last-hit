@@ -36,7 +36,7 @@ import { getStepFork, IRRELEVANT_STEPS, ReplayType } from './step-definition';
 import StepFreeMoveDialog from './step-free-move';
 
 //log message to file in render process
-const logger = remote.getGlobal('logger');
+// const logger = remote.getGlobal('logger');
 
 // a hint step for start recording
 const NO_STEPS = [
@@ -328,6 +328,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	})();
 	const handleStartReplay = (type: ReplayType): void => {
 		if (onReplay === ReplayType.NONE) {
+			// currently not started, show dialog
 			setCurrentReplayStepIndex(-1);
 			setState({
 				...state,
@@ -335,6 +336,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 				onReplay: ReplayType.NONE
 			});
 		} else {
+			// already started, means continue next step
 			replayNextStep(story, flow, onReplay, currentReplayStepIndex);
 		}
 	};
@@ -401,7 +403,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 		// set as step replaying anyway, it will disable the step play button
 		setStepReplaying(true);
 		handleReplayStepEnd(story, flow, type);
-		logger.debug(`continue-replay-step-${generateKeyByObject(story, flow)}`);
+		// logger.debug(`continue-replay-step-${generateKeyByObject(story, flow)}`);
 		ipcRenderer.send(`continue-replay-step-${generateKeyByObject(story, flow)}`, {
 			storyName: story.name,
 			flow,
@@ -507,7 +509,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			}
 		});
 	};
-	const onStartReplayDialogClose = (onReplay: boolean): void => {
+	const onStartReplayDialogClose = async (onReplay: boolean) => {
 		const replayType = state.openStartReplay;
 		setState({
 			...state,
@@ -517,10 +519,40 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 		});
 		setCurrentReplayStepIndex(onReplay ? 0 : -1);
 		if (onReplay) {
+			let replayFlow: Flow;
+			const forceDepends = (flow.settings || {}).forceDepends;
+			if (forceDepends) {
+				// force dependency exists, run replay first
+				const workspace = getCurrentWorkspaceStructure()!;
+				if (!loopCheck(workspace, forceDepends.story, forceDepends.flow, story.name, flow.name)) {
+					await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+						type: 'error',
+						title: 'Failed to start replay',
+						message: 'Loop dependencies found, check flow settings please.'
+					});
+					return;
+				}
+				// merge all force depending flows
+				replayFlow = findAndMergeForceDependencyFlows(workspace, story, flow);
+				// remove end step
+				replayFlow.steps!.length = replayFlow.steps!.length - 1;
+				flow.steps!.filter((step, index) => index !== 0).forEach(step =>
+					replayFlow.steps!.push({
+						...step,
+						origin: {
+							story: story.name,
+							flow: flow.name,
+							stepIndex: step.stepIndex
+						}
+					})
+				);
+			} else {
+				replayFlow = flow;
+			}
 			// set as step replaying anyway, it will disable the step play button
 			setStepReplaying(true);
-			handleReplayStepEnd(story, flow, replayType);
-			ipcRenderer.send('launch-replay', { flow, index: 0, storyName: story.name });
+			handleReplayStepEnd(story, replayFlow, replayType);
+			ipcRenderer.send('launch-replay', { flow: replayFlow, index: 0, storyName: story.name });
 		}
 	};
 	const onStopReplayClicked = (): void => {
