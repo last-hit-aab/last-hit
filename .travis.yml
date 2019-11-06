@@ -15,7 +15,7 @@ branches:
 stages:
     - name: script
       if: tag IS blank AND branch = master
-    - name: deploy
+    - name: npm release
       if: tag IS present AND branch = master
 
 script:
