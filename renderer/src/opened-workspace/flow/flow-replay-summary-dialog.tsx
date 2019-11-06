@@ -152,18 +152,20 @@ const useStyles = makeStyles(theme => ({
 }));
 
 export default (props: {
-	story: Story;
-	flow: Flow;
-	data: { summary: any | null; error: string | null; errorStack: string | null; stepIndex: number | null };
+	data: {
+		story: Story | null;
+		flow: Flow | null;
+		summary: any | null;
+		error: string | null;
+		errorStack: string | null;
+		stepIndex: number | null;
+	};
 	close: () => void;
 }): JSX.Element => {
-	const {
-		story: { name: storyName },
-		flow,
-		data,
-		close
-	} = props;
-	const { name: flowName } = flow;
+	const { data, close } = props;
+	const { story = null, flow = null } = data || {};
+	const { name: storyName = '' } = story || {};
+	const { name: flowName = '' } = flow || {};
 	const { error = null, errorStack = null, summary = null, stepIndex = null } = data || {};
 	const classes = useStyles({});
 
@@ -176,10 +178,21 @@ export default (props: {
 		return <Fragment />;
 	}
 
-	const title = `Replay Summary, ${error ? 'Error Occurred' : 'Successfully'}`;
-	let errorThumbnail = error
-		? `${remote.app.getPath('logs')}/error-${flow.steps![stepIndex!].uuid}-${stepIndex}.png`
-		: null;
+	let title = null;
+	let errorStep = null;
+	if (error) {
+		errorStep = flow!.steps![stepIndex!];
+		const origin = errorStep.origin;
+		if (origin) {
+			title = `Replay Summary, Error Occurred @ Step${origin.stepIndex}@${origin.flow}@${origin.story}`;
+		} else {
+			title = `Replay Summary, Error Occurred @ Step${stepIndex}@${flowName}@${storyName}`;
+		}
+	} else {
+		title = 'Replay Summary, Successfully';
+	}
+
+	let errorThumbnail = error ? `${remote.app.getPath('logs')}/error-${errorStep!.uuid}-${stepIndex}.png` : null;
 	if (errorThumbnail && !fs.existsSync(errorThumbnail)) {
 		errorThumbnail = null;
 	}
@@ -271,9 +284,18 @@ export default (props: {
 										const folder = path.join(
 											remote.app.getPath('logs'),
 											'screen-record',
-											storyName,
-											flowName
+											storyName!,
+											flowName!
 										);
+										const step = flow!.steps!.find(step => step.stepUuid === stepUuid);
+										const location = step
+											? (() => {
+													const origin = step!.origin;
+													if (origin) {
+														return `Step#${origin.stepIndex}@${origin.flow}@${origin.story}`;
+													}
+											  })()
+											: '';
 										return (
 											<ListItem key={stepUuid} button={true}>
 												<span>Record:</span>
@@ -300,6 +322,7 @@ export default (props: {
 														setThumbnail(path.join(folder, `${stepUuid}_diff.png`))
 													}
 												/>
+												<span>{location}</span>
 											</ListItem>
 										);
 									})}

@@ -6,8 +6,7 @@ import path from 'path';
 import history from './common/history';
 import { WorkspaceFileExt, workspaces } from './global-settings';
 import paths from './paths';
-import { SearchEngine } from './search'
-
+import { SearchEngine } from './search';
 
 export type ExecuteEnv = {
 	name?: string;
@@ -75,6 +74,12 @@ export type Step = {
 	breakpoint?: boolean;
 	assertions?: StepAssertion[];
 	conditions?: StepConditions;
+	/** originial step, only exists when step is merged from force dependency flows */
+	origin?: {
+		story: string;
+		flow: string;
+		stepIndex: number;
+	};
 };
 export type Device = {
 	name: string;
@@ -306,7 +311,7 @@ export const openWorkspace = (file: string): void => {
 	workspaces.addWorkspace({ name: settings.name, path: path.parse(file).dir });
 	currentWorkspaceSettings = settings;
 	const structure = loadWorkspaceStructure(settings);
-	new SearchEngine(structure)
+	new SearchEngine(structure);
 	// searchEngine = search_engine
 	currentWorkspaceStructure = structure;
 	const current = remote.getCurrentWindow();
@@ -581,7 +586,14 @@ export const findAndMergeForceDependencyFlows = (workspace: WorkspaceStructure, 
 
 		const steps = dependsFlow.steps || [];
 
-		forceDependencyFlow.steps!.splice(0, 0, ...steps);
+		forceDependencyFlow.steps!.splice(
+			0,
+			0,
+			...steps.map(step => ({
+				...step,
+				origin: { story: dependsStory.name, flow: dependsFlow.name, stepIndex: step.stepIndex }
+			}))
+		);
 		currentFlow = dependsFlow;
 	}
 
@@ -589,6 +601,7 @@ export const findAndMergeForceDependencyFlows = (workspace: WorkspaceStructure, 
 		return index === 0 || (step.type !== StepType.START && step.type !== StepType.END);
 	});
 	forceDependencyFlow.steps.push({ type: StepType.END } as Step);
+	forceDependencyFlow.steps.forEach((step, index) => (step.stepIndex = index));
 
 	return forceDependencyFlow;
 };

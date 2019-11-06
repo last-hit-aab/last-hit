@@ -168,6 +168,8 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	// step replaying or not
 	const [stepReplaying, setStepReplaying] = React.useState(false);
 	const [replaySummary, setReplaySummary] = React.useState({
+		story: null as Story | null,
+		flow: null as Flow | null,
 		summary: null,
 		error: null,
 		errorStack: null,
@@ -417,6 +419,8 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			case 0:
 				ipcRenderer.once(`replay-browser-disconnect-${flowKey}`, (event, arg) =>
 					setReplaySummary({
+						story,
+						flow,
 						summary: arg.summary,
 						error: null,
 						errorStack: null,
@@ -430,6 +434,8 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			case 1:
 				ipcRenderer.once(`replay-browser-abolish-${flowKey}`, (event, arg) =>
 					setReplaySummary({
+						story,
+						flow,
 						summary: arg.summary,
 						error: null,
 						errorStack: null,
@@ -461,7 +467,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 						message: error
 					});
 					ipcRenderer.once(`replay-browser-disconnect-${flowKey}`, (event, arg) =>
-						setReplaySummary({ summary: arg.summary, error, errorStack, stepIndex: index })
+						setReplaySummary({ story, flow, summary: arg.summary, error, errorStack, stepIndex: index })
 					);
 					// disconnect
 					ipcRenderer.send(`continue-replay-step-${flowKey}`, {
@@ -470,6 +476,8 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 					// recover state
 					setState({
 						...state,
+						openStartRecord: false,
+						onRecord: false,
 						openStartReplay: ReplayType.NONE,
 						onReplay: ReplayType.NONE
 					});
@@ -555,11 +563,16 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 		options?: { url: string; device: Device; uuid: string }
 	) => {
 		// show all steps when on record
-		setState({ ...state, openStartRecord: false, onRecord, showAllSteps: onRecord });
 		if (onRecord) {
 			const forceDepends = (flow.settings || {}).forceDepends;
 			if (forceDepends) {
-				setState({ ...state, onReplay: ReplayType.FORCE_DEPENDENCY });
+				setState({
+					...state,
+					openStartRecord: false,
+					onRecord,
+					showAllSteps: onRecord,
+					onReplay: ReplayType.FORCE_DEPENDENCY
+				});
 				// force dependency exists, run replay first
 				const workspace = getCurrentWorkspaceStructure()!;
 				if (!loopCheck(workspace, forceDepends.story, forceDepends.flow, story.name, flow.name)) {
@@ -577,9 +590,12 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 				handleReplayStepEnd(story, mergedFlow, ReplayType.FORCE_DEPENDENCY);
 				ipcRenderer.send('launch-replay', { flow: mergedFlow, index: 0, storyName: story.name });
 			} else {
+				setState({ ...state, openStartRecord: false, onRecord, showAllSteps: onRecord });
 				// no force dependency
 				ipcRenderer.send('launch-puppeteer', { ...options, flowKey: generateKeyByObject(story, flow) });
 			}
+		} else {
+			setState({ ...state, openStartRecord: false, onRecord, showAllSteps: onRecord });
 		}
 	};
 	const onPauseRecordClicked = (): void => {
@@ -619,7 +635,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	};
 
 	const onReplaySummaryDialogClose = () =>
-		setReplaySummary({ summary: null, error: null, errorStack: null, stepIndex: null });
+		setReplaySummary({ story: null, flow: null, summary: null, error: null, errorStack: null, stepIndex: null });
 
 	const canMoveUp = (flow: Flow, step: Step): boolean => {
 		const steps = flow.steps || [];
@@ -838,12 +854,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			{state.openStartReplay !== ReplayType.NONE ? (
 				<StartReplayDialog open={true} story={story} flow={flow} close={onStartReplayDialogClose} />
 			) : null}
-			<FlowReplaySummaryDialog
-				story={story}
-				flow={flow}
-				data={replaySummary}
-				close={onReplaySummaryDialogClose}
-			/>
+			<FlowReplaySummaryDialog data={replaySummary} close={onReplaySummaryDialogClose} />
 			<FlowSettingsDialog open={settingsOpen} story={story} flow={flow} close={onSettingsOpenDialogClose} />
 		</Fragment>
 	);
