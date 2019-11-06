@@ -72,8 +72,8 @@ export default (props: {
 		return (flow.settings || {}).forceDepends != null;
 	};
 	const onConfirmClicked = (): void => {
+		const { url, device } = values;
 		if (!hasForceDependency()) {
-			const { url, device } = values;
 			if (!url || url.trim().length === 0) {
 				remote.dialog.showMessageBox(remote.getCurrentWindow(), {
 					type: 'error',
