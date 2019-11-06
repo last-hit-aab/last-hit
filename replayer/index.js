@@ -436,7 +436,7 @@ if (parallel === 1) {
 								all[key] = config[key];
 								return all;
 							},
-							{ data: Array.isArray(flow) ? flow : [flow], child: true }
+							{ data: [flow], child: true }
 						);
 					jsonfile.writeFileSync(path.join(workspace, filename), childConfig);
 					const child = spawn(
