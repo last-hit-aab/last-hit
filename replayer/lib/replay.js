@@ -1197,6 +1197,8 @@ class Replayer {
 			return elements[0];
 		}
 
+
+
 		// fallback to css path
 		const csspath = step.csspath;
 		if (csspath) {
@@ -1213,6 +1215,19 @@ class Replayer {
 				return element;
 			}
 		}
+
+		const frames = page.frames()
+
+		if (frames.length > 0) {
+			for (let index = 0; index < frames.length; index++) {
+				const frame = frames[index];
+				const element = await frame.$x(xpath)
+				if (element.length > 0) {
+					return element[0];
+				}
+			}
+		}
+
 
 		const paths = (() => {
 			const paths = { xpath, csspath, custompath };
