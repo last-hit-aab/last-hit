@@ -193,7 +193,6 @@ export type WorkspaceStructure = {
 
 let currentWorkspaceSettings: WorkspaceSettings | null = null;
 let currentWorkspaceStructure: WorkspaceStructure | null = null;
-// let searchEngine: SearchEngine | null = null
 
 export const isWorkspaceOpened = () => {
 	return currentWorkspaceSettings != null && currentWorkspaceStructure != null;

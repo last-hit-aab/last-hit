@@ -15,6 +15,8 @@ branches:
 stages:
     - name: script
       if: tag IS blank AND branch = master
+    - name: deploy
+      if: tag IS present AND branch = master AND os = osx
 
 script:
     - cd renderer
@@ -23,18 +25,13 @@ script:
     - yarn install
     - yarn run pack:$TRAVIS_OS_NAME
 
-jobs:
-    include:
-        - stage: npm release
-          if: tag IS present AND branch = master
-          os: linux
-          before_deploy:
-              - cd replayer
-          deploy:
-              provider: npm
-              email: '$NPM_EMAIL'
-              api_token: '$NPM_TOKEN'
-              cleanup: false
-              on:
-                  branch: master
-                  tags: true
+before_deploy:
+    - cd replayer
+deploy:
+    provider: npm
+    email: '$NPM_EMAIL'
+    api_token: '$NPM_TOKEN'
+    cleanup: false
+    on:
+        branch: master
+        tags: true

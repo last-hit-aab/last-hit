@@ -13,7 +13,8 @@ import {
 } from '@material-ui/core';
 import React, { Fragment } from 'react';
 import { getTheme } from '../../global-settings';
-import { Flow, getCurrentWorkspace, Story } from '../../workspace-settings';
+import { Flow, getCurrentWorkspace, Step, Story } from '../../workspace-settings';
+// import { SearchEngine } from '../../search';
 
 const myTheme = getTheme();
 const useStyles = makeStyles(theme => ({
@@ -60,16 +61,18 @@ export default (props: {
 
 	const [state, setState] = React.useState({
 		text: '',
-		items: [] as { story: Story; flow: Flow }[]
+		items: [] as { story: Story; flow: Flow; step?: Step }[]
 	});
 	if (!open) {
 		return <Fragment />;
 	}
 
+	// const searchEngine = new SearchEngine(getCurrentWorkspaceStructure()!);
+
 	const handleTextChange = (event: any): void => {
 		const text = event.target.value;
 		let items: { story: Story; flow: Flow }[] = [];
-		if (text.trim().length !== 0) {
+		if (text.trim().length > 1) {
 			const { structure } = getCurrentWorkspace();
 			const str = text.toLowerCase();
 			items = (structure.stories || [])
@@ -78,6 +81,7 @@ export default (props: {
 						.filter(flow => {
 							return (
 								story.name.toLowerCase().indexOf(str) !== -1 ||
+								(story.description || '').toLowerCase().indexOf(str) !== -1 ||
 								flow.name.toLowerCase().indexOf(str) !== -1 ||
 								(flow.description || '').toLowerCase().indexOf(str) !== -1
 							);
@@ -85,6 +89,13 @@ export default (props: {
 						.map(flow => ({ story, flow }));
 				})
 				.flat();
+			// const steps = searchEngine.search(text.trim());
+			// items = steps.map(fuseStep => {
+			// 	const { storyName, flowName } = fuseStep;
+			// 	const story = structure.stories!.find(s => s.name === storyName)!;
+			// 	const flow = story.flows!.find(f => f.name === flowName)!;
+			// 	return { story, flow };
+			// });
 		}
 		setState({ text, items });
 	};
