@@ -17,7 +17,7 @@ type StepFuse = {
 };
 
 export class SearchEngine {
-	private fuse: Fuse<StepFuse, Fuse.FuseOptions<StepFuse>>;
+	private fuse: Fuse<StepFuse, any>;
 
 	constructor(workspace: WorkspaceStructure) {
 		const stepFuseList: StepFuse[] = [];
@@ -47,9 +47,9 @@ export class SearchEngine {
 
 		const options: Fuse.FuseOptions<StepFuse> = {
 			shouldSort: true,
-			// includeMatches: true,
+			includeMatches: true,
 			minMatchCharLength: 2,
-			// tokenize: true,
+			tokenize: true,
 			keys: [
 				{ name: 'storyName', weight: 1 },
 				{ name: 'storyDescription', weight: 0.1 },
@@ -64,7 +64,15 @@ export class SearchEngine {
 		};
 		this.fuse = new Fuse(stepFuseList, options);
 	}
-	search(key: string): StepFuse[] {
-		return this.fuse.search(key);
+	search(key: string): Fuse.FuseResult<StepFuse>[] {
+		// return this.fuse.search(key);
+		const searchList = this.fuse.search(key) as Fuse.FuseResult<StepFuse>[];
+		const results = this.filterEmptyMatch(searchList);
+		return results;
+	}
+	private filterEmptyMatch(results: Fuse.FuseResult<StepFuse>[]) {
+		return results.filter((result: Fuse.FuseResult<StepFuse>) => {
+			return result.matches.length > 0;
+		});
 	}
 }

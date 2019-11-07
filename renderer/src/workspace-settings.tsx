@@ -312,9 +312,6 @@ export const openWorkspace = (file: string): void => {
 	currentWorkspaceSettings = settings;
 	const structure = loadWorkspaceStructure(settings);
 
-	// searchEngine = new SearchEngine(structure);
-
-	// console.log(searchEngine.search("pa"))
 	currentWorkspaceStructure = structure;
 	const current = remote.getCurrentWindow();
 	history.replace(paths.OPENED_WORKSPACE);
