@@ -871,8 +871,8 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 						data-on-record={onRecord && !onPause}
 					>
 						{(flow.steps || NO_STEPS).map((step, index) => {
-							let replayStepIndex = -1;
-							if (currentReplayStepIndex >= 0 && state.replayFlow) {
+							let replayStepIndex = currentReplayStepIndex;
+							if ((flow.settings || {}).forceDepends && currentReplayStepIndex >= 0 && state.replayFlow) {
 								// in replay
 								const stepUuid = state.replayFlow!.steps![currentReplayStepIndex].stepUuid;
 								replayStepIndex = stepUuid === step.stepUuid ? index : 0;

@@ -83,6 +83,7 @@ export type Step = {
 export type Device = {
 	name: string;
 	userAgent: string;
+	wechat?: boolean;
 	viewport: {
 		width: number;
 		height: number;

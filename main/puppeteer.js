@@ -639,6 +639,131 @@ const installListenersOnPage = async page => {
 			return ret;
 		};
 
+		// wechat related
+		(window => {
+			if (!/MicroMessenger/i.test(navigator.userAgent)) {
+				return;
+			}
+			const WeixinJSBridgeData = {};
+			let imageData = null;
+			const transformPNG2JPEG = base64Image => {
+				return new Promise(resolve => {
+					const canvas = document.createElement('canvas');
+					const ctx = canvas.getContext('2d');
+
+					const image = new Image();
+					image.crossOrigin = 'anonymous';
+					image.onload = function() {
+						const { width, height } = image;
+						canvas.width = width;
+						canvas.height = height;
+						ctx.fillStyle = '#fff';
+						ctx.fillRect(0, 0, width, height);
+						ctx.drawImage(image, 0, 0, width, height);
+						resolve(canvas.toDataURL('image/jpeg', 1.0));
+					};
+					image.src = base64Image;
+				});
+			};
+			window.WeixinJSBridge = {
+				invoke: (event, data, func) => {
+					// console.info(event, data);
+					switch (event) {
+						case 'sendAppMessage':
+						case 'shareTimeline':
+							WeixinJSBridgeData[event] = data;
+							WeixinJSBridgeData[event]._callback = func;
+							break;
+						case 'preVerifyJSAPI':
+							func({});
+							break;
+						case 'chooseImage':
+							const input = document.createElement('INPUT');
+							input.setAttribute('type', 'file');
+							input.style.visibility = 'hidden';
+							input.onchange = evt => {
+								const file = input.files[0];
+								const reader = new FileReader();
+								reader.onload = evt => {
+									const base64Image = evt.target.result;
+									if (typeof base64Image === 'string' && base64Image.startsWith('data:image/png;')) {
+										// 是PNG, 转成JPEG
+										transformPNG2JPEG(base64Image).then(base64Image => {
+											imageData = base64Image;
+											func({ localIds: [0], errMsg: 'chooseImage:ok' });
+										});
+									} else {
+										imageData = base64Image;
+										func({ localIds: [0], errMsg: 'chooseImage:ok' });
+									}
+								};
+								reader.readAsDataURL(file);
+							};
+							document.body.append(input);
+							input.click();
+							break;
+						case 'getLocalImgData':
+							func({ localData: imageData, errMsg: 'getLocalImgData:ok' });
+							break;
+					}
+					// console.log(WeixinJSBridgeData);
+				},
+				on: (event, func) => {
+					func({});
+				}
+			};
+			window.addEventListener('DOMContentLoaded', event => {
+				if (document.getElementById('last-hit-bars') != null) {
+					return;
+				}
+				const div = document.createElement('DIV');
+				div.id = 'last-hit-bars';
+				div.style.position = 'fixed';
+				div.style.display = 'flex';
+				div.style.top = '0';
+				div.style.right = '0';
+				div.style.backgroundColor = 'transparent';
+				div.style.zIndex = 100000;
+				const span = document.createElement('SPAN');
+				span.id = 'last-hit-wechat-share';
+				span.style.height = '24px';
+				span.style.width = '24px';
+				// span.style.border = '1px solid red';
+				span.style.backgroundColor = 'burlywood';
+				span.style.opacity = '0.7';
+				span.style.borderRadius = '100%';
+				span.style.margin = '3px';
+				span.style.boxSizing = 'border-box';
+				span.style.cursor = 'pointer';
+				span.style.fontWeight = 'bold';
+				span.style.lineHeight = '24px';
+				span.style.fontSize = '12px';
+				span.style.color = '#fff';
+				// span.style.transform = 'scale(0.8)';
+				const textSpan = document.createElement('span');
+				textSpan.lineHeight = '24px';
+				textSpan.textContent = 'Share';
+				textSpan.style.transform = 'scale(0.7)';
+				textSpan.style.display = 'block';
+				textSpan.style.transformOrigin = 'left';
+				textSpan.style.whiteSpace = 'nowrap';
+				span.append(textSpan);
+				span.onclick = () => {
+					const data = WeixinJSBridgeData['sendAppMessage'];
+					if (data && data.link) {
+						// use prepared share data
+						window.open(data.link);
+						data._callback && data._callback({ errMsg: 'sendAppMessage:ok' });
+					} else {
+						// use current url
+						window.open(location.href);
+					}
+				};
+				div.append(span);
+				document.body.append(div);
+			});
+		})(window);
+
 		console.log('%c last-hit: %c evaluate on new document end...', 'color:red', 'color:brown');
 	};
 	// some pages postpones the page created or popup event. so evaluateOnNewDocument doesn't work.

@@ -1,10 +1,12 @@
 import {
 	Button,
+	Checkbox,
 	Dialog,
 	DialogActions,
 	DialogContent,
 	DialogContentText,
 	DialogTitle,
+	FormControlLabel,
 	MenuItem,
 	TextField
 } from '@material-ui/core';
@@ -55,18 +57,19 @@ export default (props: {
 
 	let url = '';
 	let device = null;
+	let wechat = false;
 	if (steps && steps.length > 0) {
 		const startStep: StartStep = steps[0] as StartStep;
 		url = startStep.url;
-		if (!url.startsWith('http')) {
-			url = '';
-		} else {
-			device = startStep.device.name;
-		}
+		device = (startStep.device || {}).name;
+		wechat = startStep.device.wechat || false;
 	}
-	const [values, setValues] = React.useState({ url, device });
+	const [values, setValues] = React.useState({ url, device, wechat });
 	const handleChange = (name: string) => (evt: any): void => {
 		setValues({ ...values, [name]: evt.target.value });
+	};
+	const handleCheckBoxChange = (name: string) => (evt: any): void => {
+		setValues({ ...values, [name]: evt.target.checked });
 	};
 	const hasForceDependency = (): boolean => {
 		return (flow.settings || {}).forceDepends != null;
@@ -94,7 +97,14 @@ export default (props: {
 
 		const options = {
 			url,
-			device: devices.find(d => d.name === values.device)!,
+			device: (() => {
+				const device = devices.find(d => d.name === values.device)!;
+				if (values.wechat) {
+					device.userAgent += ' MicroMessenger/6.5.7';
+				}
+				device.wechat = true;
+				return device;
+			})(),
 			uuid: uuidv4()
 		};
 		flow.steps = [{ type: StepType.START, stepIndex: 0, stepUuid: uuidv4(), ...options }];
@@ -145,6 +155,10 @@ export default (props: {
 						);
 					})}
 			</TextField>
+			<FormControlLabel
+				control={<Checkbox checked={values.wechat} onChange={handleCheckBoxChange('wechat')} color="primary" />}
+				label="Wechat"
+			/>
 		</React.Fragment>
 	);
 	return (
