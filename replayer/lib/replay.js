@@ -76,7 +76,6 @@ const getUrlPath = url => {
 };
 
 const installListenersOnPage = async page => {
-	console.log('install listener on page');
 	const god = () => {
 		console.log('%c last-hit: %c evaluate on new document start...', 'color:red', 'color:brown');
 
