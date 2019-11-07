@@ -13,8 +13,8 @@ import {
 } from '@material-ui/core';
 import React, { Fragment } from 'react';
 import { getTheme } from '../../global-settings';
-import { Flow, getCurrentWorkspace, Step, Story, getCurrentWorkspaceStructure } from '../../workspace-settings';
-import { SearchEngine } from '../../search';
+import { Flow, getCurrentWorkspace, Step, Story } from '../../workspace-settings';
+// import { SearchEngine } from '../../search';
 
 const myTheme = getTheme();
 const useStyles = makeStyles(theme => ({
@@ -67,7 +67,7 @@ export default (props: {
 		return <Fragment />;
 	}
 
-	const searchEngine = new SearchEngine(getCurrentWorkspaceStructure()!);
+	// const searchEngine = new SearchEngine(getCurrentWorkspaceStructure()!);
 
 	const handleTextChange = (event: any): void => {
 		const text = event.target.value;
