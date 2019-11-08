@@ -122,7 +122,6 @@ export default (props: {
 				onToggle={onOutlineCollapseToggleClicked}
 				collapsed={state.collapsed}
 				createStory={createStory}
-				openFlow={openFlow}
 			/>
 			<OultineContent
 				collapsed={state.collapsed}

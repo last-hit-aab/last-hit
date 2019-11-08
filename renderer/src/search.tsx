@@ -14,6 +14,8 @@ type StepFuse = {
 	csspath?: string;
 	url?: string;
 	human?: string;
+	stepUuid: string;
+	stepIndex: number;
 };
 
 export class SearchEngine {
@@ -35,7 +37,9 @@ export class SearchEngine {
 								xpath: step.path,
 								csspath: step.csspath,
 								url: (step as any).url,
-								human: step.human
+								human: step.human,
+								stepUuid: step.stepUuid,
+								stepIndex: step.stepIndex
 							};
 
 							stepFuseList.push(stepFuse);

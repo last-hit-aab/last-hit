@@ -13,7 +13,6 @@ import StoryAddIcon from '@material-ui/icons/LibraryAdd';
 // import SettingsIcon from '@material-ui/icons/Settings';
 import React from 'react';
 import { getTheme } from '../../global-settings';
-import { Flow, Story } from '../../workspace-settings';
 import SearchDialog from './search-dialog';
 import EnvsDialog from './envs-dialog';
 
@@ -32,13 +31,8 @@ const useVerticalIconBarStyles = makeStyles(theme => ({
 		flexGrow: 1
 	}
 }));
-export default (props: {
-	onToggle: () => void;
-	collapsed: boolean;
-	createStory: () => void;
-	openFlow: (story: Story, flow: Flow) => void;
-}): JSX.Element => {
-	const { onToggle, collapsed, createStory, openFlow } = props;
+export default (props: { onToggle: () => void; collapsed: boolean; createStory: () => void }): JSX.Element => {
+	const { onToggle, collapsed, createStory } = props;
 	const classes = useVerticalIconBarStyles({});
 
 	const [state, setState] = React.useState({
@@ -67,7 +61,7 @@ export default (props: {
 			<IconButton
 				color="inherit"
 				aria-label="outline search"
-				title="Flow Search"
+				title="Step Search"
 				onClick={() => setState({ ...state, searchOpen: true })}
 			>
 				<FontAwesomeIcon icon={faSearch} />
@@ -87,11 +81,7 @@ export default (props: {
 			{/* <IconButton color="inherit" aria-label="outline help" title="Help">
 				<HelpIcon />
 			</IconButton> */}
-			<SearchDialog
-				open={state.searchOpen}
-				close={() => setState({ ...state, searchOpen: false })}
-				openFlow={openFlow}
-			/>
+			<SearchDialog open={state.searchOpen} close={() => setState({ ...state, searchOpen: false })} />
 			<EnvsDialog open={state.envsOpen} close={() => setState({ ...state, envsOpen: false })} />
 		</Grid>
 	);

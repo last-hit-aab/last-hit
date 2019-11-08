@@ -111,6 +111,7 @@ const installListenersOnPage = async page => {
 					switch (event) {
 						case 'sendAppMessage':
 						case 'shareTimeline':
+							console.log('%c Ready for share', 'color:red', data);
 							WeixinJSBridgeData[event] = data;
 							WeixinJSBridgeData[event]._callback = func;
 							break;
@@ -194,10 +195,12 @@ const installListenersOnPage = async page => {
 					// console.info(data);
 					if (data && data.link) {
 						// use prepared share data
+						console.log(`%c Share to: %c ${data.link}`, 'color:red', 'color:brown');
 						window.open(data.link);
 						data._callback && data._callback({ errMsg: 'sendAppMessage:ok' });
 					} else {
 						// use current url
+						console.log(`%c Share to: %c ${location.href}`, 'color:red', 'color:brown');
 						window.open(location.href);
 					}
 				};

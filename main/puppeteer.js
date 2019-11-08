@@ -496,9 +496,9 @@ const installListenersOnPage = async page => {
 					element === document
 						? 'document'
 						: `<${element.tagName.toLowerCase()} ${element
-							.getAttributeNames()
-							.map(name => `${name}="${element.getAttribute(name)}"`)
-							.join(' ')}>`
+								.getAttributeNames()
+								.map(name => `${name}="${element.getAttribute(name)}"`)
+								.join(' ')}>`
 				// bubbles: e.bubbles,
 				// cancelBubble: e.cancelBubble,
 				// cancelable: e.cancelable,
@@ -672,6 +672,7 @@ const installListenersOnPage = async page => {
 					switch (event) {
 						case 'sendAppMessage':
 						case 'shareTimeline':
+							console.log('%c Ready for share', 'color:red', data);
 							WeixinJSBridgeData[event] = data;
 							WeixinJSBridgeData[event]._callback = func;
 							break;
@@ -753,10 +754,12 @@ const installListenersOnPage = async page => {
 					const data = WeixinJSBridgeData['sendAppMessage'];
 					if (data && data.link) {
 						// use prepared share data
+						console.log(`%c Share to: %c ${data.link}`, 'color:red', 'color:brown');
 						window.open(data.link);
 						data._callback && data._callback({ errMsg: 'sendAppMessage:ok' });
 					} else {
 						// use current url
+						console.log(`%c Share to: %c ${location.href}`, 'color:red', 'color:brown');
 						window.open(location.href);
 					}
 				};
@@ -959,7 +962,7 @@ const controlPage = async (page, options, allPages) => {
 
 		try {
 			client.detach();
-		} catch { }
+		} catch {}
 	});
 	// page created by window.open or anchor
 	page.on('popup', async newPage => {
