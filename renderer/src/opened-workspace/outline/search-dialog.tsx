@@ -16,6 +16,7 @@ import {
 	TextField
 } from '@material-ui/core';
 import DeleteIcon from '@material-ui/icons/HighlightOff';
+import DoIcon from '@material-ui/icons/OfflinePin';
 import React, { Fragment } from 'react';
 import { getTheme } from '../../global-settings';
 import { Flow, getCurrentWorkspace, Step, Story } from '../../workspace-settings';
@@ -67,6 +68,7 @@ const useStyles = makeStyles(theme => ({
 	story: {
 		paddingTop: 0,
 		paddingBottom: 0,
+		paddingRight: theme.spacing(10),
 		cursor: 'pointer',
 		fontSize: '0.8rem',
 		'&:hover': {
@@ -91,6 +93,7 @@ const useStyles = makeStyles(theme => ({
 	flow: {
 		paddingTop: 0,
 		paddingBottom: 0,
+		paddingRight: theme.spacing(10),
 		cursor: 'pointer',
 		fontSize: '0.8rem',
 		'&:hover': {
@@ -116,6 +119,7 @@ const useStyles = makeStyles(theme => ({
 	step: {
 		paddingTop: 0,
 		paddingBottom: 0,
+		paddingRight: theme.spacing(10),
 		cursor: 'pointer',
 		fontSize: '0.8rem',
 		'&:hover': {
@@ -266,6 +270,18 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 			})
 		);
 	};
+	const replaceStory = (matchedStory: MatchedStory): void => {
+		removeStory(matchedStory);
+	};
+	const replaceFlow = (matchedStory: MatchedStory, matchedFlow: MatchedFlow): void => {
+		removeFlow(matchedStory, matchedFlow);
+	};
+	const replaceStep = (matchedStory: MatchedStory, matchedFlow: MatchedFlow, matchedStep: MatchedStep): void => {
+		removeStep(matchedStory, matchedFlow, matchedStep);
+	};
+	const replaceAll = (): void => {
+		items.forEach((story: MatchedStory) => replaceStory(story));
+	};
 
 	return (
 		<Dialog open={open} onClose={() => close()} fullWidth={true} disableBackdropClick={true} maxWidth="lg">
@@ -304,7 +320,7 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 						Search
 					</Button>
 					<Button
-						onClick={() => {}}
+						onClick={replaceAll}
 						variant="contained"
 						size="small"
 						disabled={items.length === 0}
@@ -322,6 +338,16 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 									<span>S</span>
 									<ListItemText primary={story.name} secondary={story.description} />
 									<ListItemSecondaryAction>
+										<IconButton
+											edge="end"
+											size="small"
+											title="Replace"
+											onClick={() => replaceStory(matchedStory)}
+											color="secondary"
+											className={classes.itemButton}
+										>
+											<DoIcon />
+										</IconButton>
 										<IconButton
 											edge="end"
 											size="small"
@@ -348,6 +374,16 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 												<span>F</span>
 												<ListItemText primary={flow.name} secondary={flow.description} />
 												<ListItemSecondaryAction>
+													<IconButton
+														edge="end"
+														size="small"
+														title="Replace"
+														onClick={() => replaceFlow(matchedStory, matchedFlow)}
+														color="secondary"
+														className={classes.itemButton}
+													>
+														<DoIcon />
+													</IconButton>
 													<IconButton
 														edge="end"
 														size="small"
@@ -395,6 +431,22 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 															<span>S</span>
 															<ListItemText primary={matched} />
 															<ListItemSecondaryAction>
+																<IconButton
+																	edge="end"
+																	size="small"
+																	title="Replace"
+																	onClick={() =>
+																		replaceStep(
+																			matchedStory,
+																			matchedFlow,
+																			matchedStep
+																		)
+																	}
+																	color="secondary"
+																	className={classes.itemButton}
+																>
+																	<DoIcon />
+																</IconButton>
 																<IconButton
 																	edge="end"
 																	size="small"
