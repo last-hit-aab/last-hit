@@ -148,8 +148,9 @@ enum MatchType {
 	HUMAN = 0,
 	URL = 1,
 	XPATH = 2,
-	CSSPATH = 3,
-	TARGET = 4
+	'CSS-PATH' = 3,
+	'CUSTOM-PATH' = 4,
+	TARGET = 5
 }
 type MatchedStep = { step: Step; matchTypes: MatchType[] };
 type MatchedFlow = { flow: Flow; steps: MatchedStep[] };
@@ -214,6 +215,7 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 								(step as any).url,
 								step.path,
 								step.csspath,
+								(step as any).custompath,
 								(step as any).target
 							].map((content: string) => {
 								if (status.regexp) {
