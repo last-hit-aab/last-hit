@@ -141,6 +141,14 @@ const useStyles = makeStyles(theme => ({
 			fontWeight: 'bold',
 			alignSelf: 'center'
 		}
+	},
+	matched: {
+		'& > span:not(:last-child)': {
+			marginRight: theme.spacing(0.5)
+		},
+		'& > span:last-child > .highlight': {
+			color: theme.palette.primary.main
+		}
 	}
 }));
 
@@ -152,7 +160,9 @@ enum MatchType {
 	'CUSTOM-PATH' = 4,
 	TARGET = 5
 }
-type MatchedStep = { step: Step; matchTypes: MatchType[] };
+type MatchedChunk = { highlight: boolean; start: number; end: number };
+type Matched = { matchType: MatchType; chunks: MatchedChunk[] };
+type MatchedStep = { step: Step; matches: Matched[] };
 type MatchedFlow = { flow: Flow; steps: MatchedStep[] };
 type MatchedStory = { story: Story; flows: MatchedFlow[] };
 type SearchResult = MatchedStory[];
@@ -191,18 +201,25 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 		searchHandler = setTimeout(() => {
 			let items: SearchResult = [];
 			if (text.trim().length > 1) {
-				let test: RegExp | string = text;
+				let test: RegExp;
 				if (status.regexp) {
 					if (status.caseSensitive) {
 						// regexp and case not sensitive
-						test = new RegExp(text);
+						test = new RegExp(text, 'g');
 					} else {
 						// regexp and case sensitive
-						test = new RegExp(text, 'i');
+						test = new RegExp(text, 'gi');
 					}
-				} else if (!status.caseSensitive) {
-					// case not sensitive
-					test = text.toLowerCase();
+				} else {
+					// escape to regexp string
+					// eslint-disable-next-line
+					const escapedText = text.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+					if (status.caseSensitive) {
+						// case not sensitive
+						test = new RegExp(escapedText, 'g');
+					} else {
+						test = new RegExp(escapedText, 'gi');
+					}
 				}
 
 				(structure.stories || []).forEach(story => {
@@ -218,15 +235,26 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 								(step as any).custompath,
 								(step as any).target
 							].map((content: string) => {
-								if (status.regexp) {
-									return (test as RegExp).test(content);
-								} else if (status.caseSensitive) {
-									return (content || '').indexOf(test as string) !== -1;
-								} else {
-									return (content || '').toLowerCase().indexOf(test as string) !== -1;
+								const chunks: MatchedChunk[] = [];
+								let match;
+								while ((match = test.exec(content))) {
+									let start = match.index;
+									let end = test.lastIndex;
+									// We do not return zero-length matches
+									if (end > start) {
+										chunks.push({ highlight: true, start, end });
+									}
+
+									// Prevent browsers like Firefox from getting stuck in an infinite loop
+									// See http://www.regexguru.com/2008/04/watch-out-for-zero-length-matches/
+									if (match.index === test.lastIndex) {
+										test.lastIndex++;
+									}
 								}
+
+								return chunks;
 							});
-							if (match.some(value => value === true)) {
+							if (match.some(chunks => chunks.length !== 0)) {
 								// match anyone
 								if (!matchedStory) {
 									matchedStory = { story, flows: [] };
@@ -238,9 +266,11 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 								}
 								matchedFlow.steps.push({
 									step,
-									matchTypes: match
-										.map((value: boolean, index: number) => (value ? index : -1))
-										.filter(value => value !== -1)
+									matches: match
+										.map((chunks: MatchedChunk[], index: number) => {
+											return { matchType: index, chunks };
+										})
+										.filter(({ chunks }) => chunks.length !== 0)
 								});
 							}
 						});
@@ -399,29 +429,74 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 												</ListItemSecondaryAction>
 											</ListItem>
 											{steps.map((matchedStep: MatchedStep) => {
-												const { step, matchTypes } = matchedStep;
-												return matchTypes.map(matchType => {
-													let matched = null;
+												const { step, matches } = matchedStep;
+												return matches.map(({ matchType, chunks }) => {
+													let matched: string;
 													switch (matchType) {
 														case MatchType.HUMAN:
-															matched = step.human;
+															matched = step.human!;
 															break;
 														case MatchType.URL:
 															matched = (step as any).url;
 															break;
 														case MatchType.XPATH:
-															matched = step.path;
+															matched = step.path!;
 															break;
-														case MatchType.CSSPATH:
-															matched = step.csspath;
+														case MatchType['CSS-PATH']:
+															matched = step.csspath!;
+															break;
+														case MatchType['CUSTOM-PATH']:
+															matched = (step as any).custompath;
 															break;
 														case MatchType.TARGET:
 															matched = (step as any).target;
 															break;
 													}
-													matched = `#${step.stepIndex} [${step.type.toUpperCase()}] [${
-														MatchType[matchType]
-													}] ${matched}`;
+													const matchedText = chunks
+														.map(({ highlight, start, end }, index: number) => {
+															const pair = [];
+															const segment = matched.substr(start, end - start);
+															if (index === 0) {
+																if (start !== 0) {
+																	pair.push(<span>{matched.substr(0, start)}</span>);
+																} else {
+																	// matched for first character, do nothing
+																}
+															} else {
+																const previous = chunks[index - 1];
+																if (start - previous.end > 1) {
+																	pair.push(
+																		<span>
+																			{matched.substr(
+																				previous.end,
+																				start - previous.end
+																			)}
+																		</span>
+																	);
+																} else {
+																	// continue matched, do nothing
+																}
+															}
+															pair.push(<span className="highlight">{segment}</span>);
+															return pair;
+														})
+														.flat();
+													if (chunks[chunks.length - 1].end !== matched!.length - 1) {
+														matchedText.push(
+															<span>
+																{matched!.substr(chunks[chunks.length - 1].end)}
+															</span>
+														);
+													}
+													const matchedDom = (
+														<span className={classes.matched}>
+															<span>#{step.stepIndex}</span>
+															<span>[{step.type.toUpperCase()}]</span>
+															<span>[{MatchType[matchType]}]</span>
+															<span>[{matchedText}]</span>
+														</span>
+													);
+
 													return (
 														<ListItem
 															key={`${step.stepUuid}-${matchType}`}
@@ -431,7 +506,7 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 															className={classes.step}
 														>
 															<span>S</span>
-															<ListItemText primary={matched} />
+															<ListItemText primary={matchedDom} />
 															<ListItemSecondaryAction>
 																<IconButton
 																	edge="end"
