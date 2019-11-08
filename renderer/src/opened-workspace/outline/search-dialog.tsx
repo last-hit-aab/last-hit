@@ -1,10 +1,12 @@
 import {
 	Button,
+	Checkbox,
 	Dialog,
 	DialogActions,
 	DialogContent,
 	DialogContentText,
 	DialogTitle,
+	FormControlLabel,
 	List,
 	ListItem,
 	ListItemText,
@@ -18,9 +20,28 @@ import { Flow, getCurrentWorkspace, Step, Story } from '../../workspace-settings
 const myTheme = getTheme();
 const useStyles = makeStyles(theme => ({
 	dialogContent: {
-		overflowY: 'hidden'
+		overflowY: 'hidden',
+		display: 'grid',
+		gridTemplateColumns: 'auto auto',
+		gridColumnGap: theme.spacing(2)
+	},
+	dialogContentText: {
+		gridColumn: 'span 2'
+	},
+	statusBar: {
+		gridColumn: 'span 2',
+		display: 'grid',
+		gridTemplateColumns: 'auto auto 1fr auto auto',
+		'& > .MuiFormControlLabel-root > span:first-child': {
+			paddingTop: 4,
+			paddingBottom: 4
+		},
+		'& > button:last-child': {
+			marginLeft: theme.spacing(2)
+		}
 	},
 	list: {
+		gridColumn: 'span 2',
 		paddingTop: 0,
 		paddingBottom: 0,
 		overflowY: 'auto',
@@ -124,31 +145,54 @@ type MatchedFlow = { flow: Flow; steps: MatchedStep[] };
 type MatchedStory = { story: Story; flows: MatchedFlow[] };
 type SearchResult = MatchedStory[];
 
-export default (props: {
-	open: boolean;
-	close: () => void;
-}): JSX.Element => {
+export default (props: { open: boolean; close: () => void }): JSX.Element => {
 	const { open, close } = props;
 	const classes = useStyles({});
 
 	const [text, setText] = React.useState('');
+	const [status, setStatus] = React.useState({ caseSensitive: false, regexp: false });
+	const [replacement, setReplacement] = React.useState('');
 	const [items, setItems] = React.useState([] as SearchResult);
 	if (!open) {
 		return <Fragment />;
 	}
 
-	const { structure } = getCurrentWorkspace();
-	let searchHandler: NodeJS.Timeout | null = null;
-
 	const handleTextChange = (event: any): void => {
 		const text = event.target.value;
+		setText(text);
+	};
+	const handleStatusChange = (name: string) => (evt: any): void => {
+		const checked = evt.target.checked;
+		setStatus({ ...status, [name]: checked });
+	};
+	const handleReplacementChange = (evt: any): void => {
+		setReplacement(evt.target.value);
+	};
+
+	const { structure } = getCurrentWorkspace();
+	let searchHandler: NodeJS.Timeout | null = null;
+	const onSearchClicked = () => {
 		if (searchHandler) {
 			clearTimeout(searchHandler);
 		}
+
 		searchHandler = setTimeout(() => {
 			let items: SearchResult = [];
 			if (text.trim().length > 1) {
-				const str = text.toLowerCase();
+				let test: RegExp | string = text;
+				if (status.regexp) {
+					if (status.caseSensitive) {
+						// regexp and case not sensitive
+						test = new RegExp(text);
+					} else {
+						// regexp and case sensitive
+						test = new RegExp(text, 'i');
+					}
+				} else if (!status.caseSensitive) {
+					// case not sensitive
+					test = text.toLowerCase();
+				}
+
 				(structure.stories || []).forEach(story => {
 					let matchedStory: MatchedStory | null = null;
 					(story.flows || []).forEach(flow => {
@@ -161,7 +205,13 @@ export default (props: {
 								step.csspath,
 								(step as any).target
 							].map((content: string) => {
-								return (content || '').toLowerCase().indexOf(str) !== -1;
+								if (status.regexp) {
+									return (test as RegExp).test(content);
+								} else if (status.caseSensitive) {
+									return (content || '').indexOf(test as string) !== -1;
+								} else {
+									return (content || '').toLowerCase().indexOf(test as string) !== -1;
+								}
 							});
 							if (match.some(value => value === true)) {
 								// match anyone
@@ -186,28 +236,59 @@ export default (props: {
 			}
 			setItems(items);
 		}, 500);
-		setText(text);
 	};
-	// const handleItemClicked = (story: Story, flow: Flow): void => {
-	// 	openFlow(story, flow);
-	// 	setText('');
-	// 	setItems([]);
-	// 	close();
-	// };
 
 	return (
 		<Dialog open={open} onClose={() => close()} fullWidth={true} disableBackdropClick={true} maxWidth="lg">
 			<DialogTitle>Step Search</DialogTitle>
 			<DialogContent className={classes.dialogContent}>
-				<DialogContentText>Please, specify search text.</DialogContentText>
+				<DialogContentText className={classes.dialogContentText}>
+					Please, specify search text.
+				</DialogContentText>
+				<TextField label="Search By" value={text} margin="dense" onChange={handleTextChange} autoFocus />
 				<TextField
-					label="Search Text"
-					value={text}
+					label="Replacement To"
+					value={replacement}
 					margin="dense"
-					fullWidth
-					onChange={handleTextChange}
-					autoFocus
+					onChange={handleReplacementChange}
 				/>
+				<div className={classes.statusBar}>
+					<FormControlLabel
+						control={
+							<Checkbox
+								checked={status.caseSensitive}
+								onChange={handleStatusChange('caseSensitive')}
+								color="primary"
+							/>
+						}
+						label="Case sensitive"
+					/>
+					<FormControlLabel
+						control={
+							<Checkbox checked={status.regexp} onChange={handleStatusChange('regexp')} color="primary" />
+						}
+						label="Use regexp"
+					/>
+					<span></span>
+					<Button
+						onClick={onSearchClicked}
+						variant="contained"
+						size="small"
+						disabled={(text || '').trim().length === 0}
+						color="primary"
+					>
+						Search
+					</Button>
+					<Button
+						onClick={() => {}}
+						variant="contained"
+						size="small"
+						disabled={items.length === 0}
+						color="primary"
+					>
+						Replace
+					</Button>
+				</div>
 				<List dense className={classes.list}>
 					{items.map(({ story, flows }) => {
 						return (
