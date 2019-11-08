@@ -49,7 +49,7 @@ const useStyles = makeStyles(theme => ({
 		paddingTop: 0,
 		paddingBottom: 0,
 		overflowY: 'auto',
-		height: theme.spacing(36),
+		height: theme.spacing(45),
 		'&:hover::-webkit-scrollbar-thumb': {
 			opacity: 1
 		},
