@@ -7,12 +7,15 @@ import {
 	DialogContentText,
 	DialogTitle,
 	FormControlLabel,
+	IconButton,
 	List,
 	ListItem,
+	ListItemSecondaryAction,
 	ListItemText,
 	makeStyles,
 	TextField
 } from '@material-ui/core';
+import DeleteIcon from '@material-ui/icons/HighlightOff';
 import React, { Fragment } from 'react';
 import { getTheme } from '../../global-settings';
 import { Flow, getCurrentWorkspace, Step, Story } from '../../workspace-settings';
@@ -56,6 +59,10 @@ const useStyles = makeStyles(theme => ({
 		'&::-webkit-scrollbar-thumb': {
 			backgroundColor: myTheme.textScrollBarThumbBackgroundColor
 		}
+	},
+	itemButton: {
+		transform: 'scale(0.7)',
+		opacity: 0.7
 	},
 	story: {
 		paddingTop: 0,
@@ -237,6 +244,28 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 			setItems(items);
 		}, 500);
 	};
+	const removeStory = (matchedStory: MatchedStory): void => {
+		setItems(items.filter(story => story !== matchedStory));
+	};
+	const removeFlow = (matchedStory: MatchedStory, matchedFlow: MatchedFlow): void => {
+		setItems(
+			items.filter(story => {
+				story.flows = story.flows.filter(flow => flow !== matchedFlow);
+				return story.flows.length !== 0;
+			})
+		);
+	};
+	const removeStep = (matchedStory: MatchedStory, matchedFlow: MatchedFlow, matchedStep: MatchedStep): void => {
+		setItems(
+			items.filter(story => {
+				story.flows = story.flows.filter(flow => {
+					flow.steps = flow.steps.filter(step => step !== matchedStep);
+					return flow.steps.length !== 0;
+				});
+				return story.flows.length !== 0;
+			})
+		);
+	};
 
 	return (
 		<Dialog open={open} onClose={() => close()} fullWidth={true} disableBackdropClick={true} maxWidth="lg">
@@ -246,12 +275,7 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 					Please, specify search text.
 				</DialogContentText>
 				<TextField label="Search By" value={text} margin="dense" onChange={handleTextChange} autoFocus />
-				<TextField
-					label="Replacement To"
-					value={replacement}
-					margin="dense"
-					onChange={handleReplacementChange}
-				/>
+				<TextField label="Replace To" value={replacement} margin="dense" onChange={handleReplacementChange} />
 				<div className={classes.statusBar}>
 					<FormControlLabel
 						control={
@@ -290,20 +314,28 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 					</Button>
 				</div>
 				<List dense className={classes.list}>
-					{items.map(({ story, flows }) => {
+					{items.map((matchedStory: MatchedStory) => {
+						const { story, flows } = matchedStory;
 						return (
 							<Fragment key={story.name}>
-								<ListItem
-									alignItems="flex-start"
-									dense
-									disableGutters
-									className={classes.story}
-									// onClick={() => handleItemClicked(story, flow)}
-								>
+								<ListItem alignItems="flex-start" dense disableGutters className={classes.story}>
 									<span>S</span>
 									<ListItemText primary={story.name} secondary={story.description} />
+									<ListItemSecondaryAction>
+										<IconButton
+											edge="end"
+											size="small"
+											title="Remove from search list"
+											onClick={() => removeStory(matchedStory)}
+											color="secondary"
+											className={classes.itemButton}
+										>
+											<DeleteIcon />
+										</IconButton>
+									</ListItemSecondaryAction>
 								</ListItem>
-								{flows.map(({ flow, steps }) => {
+								{flows.map((matchedFlow: MatchedFlow) => {
+									const { flow, steps } = matchedFlow;
 									return (
 										<Fragment key={flow.name}>
 											<ListItem
@@ -312,12 +344,24 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 												dense
 												disableGutters
 												className={classes.flow}
-												// onClick={() => handleItemClicked(story, flow)}
 											>
 												<span>F</span>
 												<ListItemText primary={flow.name} secondary={flow.description} />
+												<ListItemSecondaryAction>
+													<IconButton
+														edge="end"
+														size="small"
+														title="Remove from search list"
+														onClick={() => removeFlow(matchedStory, matchedFlow)}
+														color="secondary"
+														className={classes.itemButton}
+													>
+														<DeleteIcon />
+													</IconButton>
+												</ListItemSecondaryAction>
 											</ListItem>
-											{steps.map(({ step, matchTypes }) => {
+											{steps.map((matchedStep: MatchedStep) => {
+												const { step, matchTypes } = matchedStep;
 												return matchTypes.map(matchType => {
 													let matched = null;
 													switch (matchType) {
@@ -347,10 +391,27 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 															dense
 															disableGutters
 															className={classes.step}
-															// onClick={() => handleItemClicked(story, flow)}
 														>
 															<span>S</span>
 															<ListItemText primary={matched} />
+															<ListItemSecondaryAction>
+																<IconButton
+																	edge="end"
+																	size="small"
+																	title="Remove from search list"
+																	onClick={() =>
+																		removeStep(
+																			matchedStory,
+																			matchedFlow,
+																			matchedStep
+																		)
+																	}
+																	color="secondary"
+																	className={classes.itemButton}
+																>
+																	<DeleteIcon />
+																</IconButton>
+															</ListItemSecondaryAction>
 														</ListItem>
 													);
 												});
