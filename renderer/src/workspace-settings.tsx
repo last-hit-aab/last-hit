@@ -129,7 +129,12 @@ export type ResourceLoadStep = Step & {
 export type LoadStep = Step & { type: StepType.LOAD; target: string };
 export type UnloadStep = Step & { type: StepType.UNLOAD; target: string };
 export type PageClosedStep = Step & { type: StepType.PAGE_CLOSED; url: string };
-export type PageCreatedStep = Step & { type: StepType.PAGE_CREATED; url: string };
+export type PageCreatedStep = Step & {
+	type: StepType.PAGE_CREATED;
+	url: string;
+	/** for install uuid of popup, manually input */
+	forStepUuid: string;
+};
 export type PageErrorStep = Step & { type: StepType.PAGE_ERROR; url: string };
 export type PageSwitchStep = Step & { type: StepType.PAGE_SWITCHED; url: string };
 export type DialogOpenStep = Step & {

@@ -98,11 +98,11 @@ export default (props: {
 		const options = {
 			url,
 			device: (() => {
-				const device = devices.find(d => d.name === values.device)!;
+				const device = JSON.parse(JSON.stringify(devices.find(d => d.name === values.device)!));
 				if (values.wechat) {
 					device.userAgent += ' MicroMessenger/6.5.7';
+					device.wechat = true;
 				}
-				device.wechat = true;
 				return device;
 			})(),
 			uuid: uuidv4()

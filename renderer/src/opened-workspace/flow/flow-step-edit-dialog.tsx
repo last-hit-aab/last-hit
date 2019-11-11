@@ -38,7 +38,7 @@ export default (props: {
 
 	const onValueChanged = (name: string) => (event: any): void => {
 		const value = event.target.value;
-		(clonedStep as any)[name] = value.trim().length === 0 ? undefined: value;
+		(clonedStep as any)[name] = value.trim().length === 0 ? undefined : value;
 		forceUpdate(ignored);
 	};
 	const onConfirmClicked = () => {
@@ -70,9 +70,11 @@ export default (props: {
 		case StepType.START:
 			properties.push({ label: 'Start URL', propName: 'url', writeable: false });
 			break;
+		case StepType.PAGE_CREATED:
+			properties.push({ label: 'For', propName: 'forStepUuid', writeable: true });
+		// eslint-disable-next-line
 		case StepType.END:
 		case StepType.PAGE_CLOSED:
-		case StepType.PAGE_CREATED:
 		case StepType.PAGE_ERROR:
 		case StepType.PAGE_SWITCHED:
 		case StepType.DIALOG_OPEN:

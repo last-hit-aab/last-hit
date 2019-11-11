@@ -265,10 +265,15 @@ const controlPage = async (replayer, page, device, uuid) => {
 		// find steps from next step of current step, the closest page-created event
 		const steps = replayer.getSteps();
 		const currentIndex = replayer.getCurrentIndex();
+		const currentStep = steps[currentIndex];
 		// IMPORTANT do not compare url here, since might have random token. only path compare is necessary
 		const pageCreateStep = steps
 			.filter((step, index) => index >= currentIndex)
-			.find(step => step.type === 'page-created' && newUrl === getUrlPath(step.url));
+			.find(
+				step =>
+					step.type === 'page-created' &&
+					(step.forStepUuid === currentStep.stepUuid || newUrl === getUrlPath(step.url))
+			);
 		if (pageCreateStep == null) {
 			logger.error(new Error('Cannot find page created step for current popup, flow is broken for replay.'));
 			return;
@@ -469,9 +474,15 @@ class LoggedRequests {
 			} else {
 				this.requestsOffsetAt[url] = [new Date().getTime()];
 			}
-			const usedTime =
-				this.requestsOffsetAt[url][this.requestsOffsetAt[url].length - 1] -
-				this.requestsCreateAt[url][this.requestsCreateAt[url].length - 1];
+			const startTime = (() => {
+				const times = this.requestsCreateAt[url];
+				return (times ? times[times.length - 1] : 0) || 0;
+			})();
+			const endTime = () => {
+				const times = this.requestsOffsetAt[url];
+				return (times ? times[times.length - 1] : 0) || 0;
+			};
+			const usedTime = endTime - startTime;
 			// console.log(`Used ${usedTime}ms for url[${url}]`);
 			if (success) {
 				this.summary.handleAjaxSuccess(url, usedTime);

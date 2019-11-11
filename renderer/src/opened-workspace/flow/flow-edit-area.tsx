@@ -937,7 +937,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 				story={story}
 				flow={flow}
 				clonedStep={(() => JSON.parse(JSON.stringify(editingStep)))()}
-				stepIndex={(() => flow.steps!.findIndex(step => step === editingStep))()}
+				stepIndex={(() => (flow.steps || []).findIndex(step => step === editingStep))()}
 				close={onFlowStepEditDialogClose}
 			/>
 		</Fragment>
