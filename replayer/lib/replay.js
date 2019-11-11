@@ -1085,7 +1085,7 @@ class Replayer {
 
 		const scrollTop = step.scrollTop || 0;
 		const scrollLeft = step.scrollLeft || 0;
-		logger.log(scrollTop, scrollLeft);
+		// logger.log(scrollTop, scrollLeft);
 
 		if (step.target === 'document') {
 			await page.evaluate(
