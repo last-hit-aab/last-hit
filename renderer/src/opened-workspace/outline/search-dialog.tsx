@@ -19,7 +19,7 @@ import DeleteIcon from '@material-ui/icons/HighlightOff';
 import DoIcon from '@material-ui/icons/OfflinePin';
 import React, { Fragment } from 'react';
 import { getTheme } from '../../global-settings';
-import { Flow, getCurrentWorkspace, Step, Story } from '../../workspace-settings';
+import { Flow, getCurrentWorkspace, Step, Story, saveFlow } from '../../workspace-settings';
 
 const myTheme = getTheme();
 const useStyles = makeStyles(theme => ({
@@ -147,7 +147,10 @@ const useStyles = makeStyles(theme => ({
 			marginRight: theme.spacing(0.5)
 		},
 		'& > span:last-child > .highlight': {
-			color: theme.palette.primary.main
+			color: theme.palette.secondary.main,
+			'&.replace-from': {
+				textDecoration: 'line-through'
+			}
 		}
 	}
 }));
@@ -193,6 +196,29 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 
 	const { structure } = getCurrentWorkspace();
 	let searchHandler: NodeJS.Timeout | null = null;
+	const generateSearchRegexp = (): RegExp => {
+		let test: RegExp;
+		if (status.regexp) {
+			if (status.caseSensitive) {
+				// regexp and case not sensitive
+				test = new RegExp(text, 'g');
+			} else {
+				// regexp and case sensitive
+				test = new RegExp(text, 'gi');
+			}
+		} else {
+			// escape to regexp string
+			// eslint-disable-next-line
+			const escapedText = text.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+			if (status.caseSensitive) {
+				// case not sensitive
+				test = new RegExp(escapedText, 'g');
+			} else {
+				test = new RegExp(escapedText, 'gi');
+			}
+		}
+		return test;
+	};
 	const onSearchClicked = () => {
 		if (searchHandler) {
 			clearTimeout(searchHandler);
@@ -201,26 +227,7 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 		searchHandler = setTimeout(() => {
 			let items: SearchResult = [];
 			if (text.trim().length > 1) {
-				let test: RegExp;
-				if (status.regexp) {
-					if (status.caseSensitive) {
-						// regexp and case not sensitive
-						test = new RegExp(text, 'g');
-					} else {
-						// regexp and case sensitive
-						test = new RegExp(text, 'gi');
-					}
-				} else {
-					// escape to regexp string
-					// eslint-disable-next-line
-					const escapedText = text.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
-					if (status.caseSensitive) {
-						// case not sensitive
-						test = new RegExp(escapedText, 'g');
-					} else {
-						test = new RegExp(escapedText, 'gi');
-					}
-				}
+				const test = generateSearchRegexp();
 
 				(structure.stories || []).forEach(story => {
 					let matchedStory: MatchedStory | null = null;
@@ -303,12 +310,39 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 		);
 	};
 	const replaceStory = (matchedStory: MatchedStory): void => {
+		matchedStory.flows.forEach(matchedFlow => replaceFlow(matchedStory, matchedFlow));
 		removeStory(matchedStory);
 	};
 	const replaceFlow = (matchedStory: MatchedStory, matchedFlow: MatchedFlow): void => {
+		matchedFlow.steps.forEach(matchedStep => replaceStep(matchedStory, matchedFlow, matchedStep));
 		removeFlow(matchedStory, matchedFlow);
 	};
 	const replaceStep = (matchedStory: MatchedStory, matchedFlow: MatchedFlow, matchedStep: MatchedStep): void => {
+		const regex = generateSearchRegexp();
+		const { step, matches } = matchedStep;
+		matches.forEach(({ matchType }) => {
+			switch (matchType) {
+				case MatchType.HUMAN:
+					step.human = step.human!.replace(regex, replacement);
+					break;
+				case MatchType.URL:
+					(step as any).url = (step as any).url!.replace(regex, replacement);
+					break;
+				case MatchType.XPATH:
+					step.path = step.path!.replace(regex, replacement);
+					break;
+				case MatchType['CSS-PATH']:
+					step.csspath = step.csspath!.replace(regex, replacement);
+					break;
+				case MatchType['CUSTOM-PATH']:
+					(step as any).custompath = (step as any).custompath!.replace(regex, replacement);
+					break;
+				case MatchType.TARGET:
+					(step as any).target = (step as any).target!.replace(regex, replacement);
+					break;
+			}
+		});
+		saveFlow(matchedStory.story, matchedFlow.flow);
 		removeStep(matchedStory, matchedFlow, matchedStep);
 	};
 	const replaceAll = (): void => {
@@ -477,7 +511,20 @@ export default (props: { open: boolean; close: () => void }): JSX.Element => {
 																	// continue matched, do nothing
 																}
 															}
-															pair.push(<span className="highlight">{segment}</span>);
+															if (replacement) {
+																pair.push(
+																	<span className="highlight replace-from">
+																		{segment}
+																	</span>
+																);
+																pair.push(
+																	<span className="highlight replace-to">
+																		{replacement}
+																	</span>
+																);
+															} else {
+																pair.push(<span className="highlight">{segment}</span>);
+															}
 															return pair;
 														})
 														.flat();
