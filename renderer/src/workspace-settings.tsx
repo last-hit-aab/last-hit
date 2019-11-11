@@ -81,6 +81,8 @@ export type Step = {
 		flow: string;
 		stepIndex: number;
 	};
+	/** sleep for given time(in ms) after step executed */
+	sleep?: number;
 };
 export type Device = {
 	name: string;

@@ -268,9 +268,11 @@ export default (props: {
 						<FreeMoveIcon />
 					</Button>
 				) : null,
-				<Button title="Edit" key="edit" onClick={() => onEdit(step)}>
-					<EditIcon />
-				</Button>,
+				!onRecord && onReplay === ReplayType.NONE ? (
+					<Button title="Edit" key="edit" onClick={() => onEdit(step)}>
+						<EditIcon />
+					</Button>
+				) : null,
 				StepType.START !== type && !onRecord && onReplay === ReplayType.NONE ? (
 					<Button title="Delete" key="delete" onClick={() => onDelete(step)}>
 						<DeleteIcon />

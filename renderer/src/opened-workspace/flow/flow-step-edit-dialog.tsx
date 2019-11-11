@@ -38,7 +38,7 @@ export default (props: {
 
 	const onValueChanged = (name: string) => (event: any): void => {
 		const value = event.target.value;
-		(clonedStep as any)[name] = value;
+		(clonedStep as any)[name] = value.trim().length === 0 ? undefined: value;
 		forceUpdate(ignored);
 	};
 	const onConfirmClicked = () => {
@@ -87,6 +87,7 @@ export default (props: {
 		case StepType.ANIMATION:
 			break;
 	}
+	properties.push({ label: 'Sleep After Execution (ms)', propName: 'sleep', writeable: true });
 
 	return (
 		<Dialog open={open} onClose={() => close()} fullWidth={true} disableBackdropClick={true} maxWidth="md">

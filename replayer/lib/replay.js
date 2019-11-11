@@ -737,6 +737,13 @@ class Replayer {
 			return new Promise(resolve => setTimeout(resolve, 30));
 		}
 	}
+	async sleepAfterStep(step) {
+		const sleep = step.sleep;
+		if (sleep && sleep > 0) {
+			const wait = util.promisify(setTimeout);
+			await wait(sleep);
+		}
+	}
 	async start() {
 		const page = await launchBrowser(this);
 		await this.isRemoteFinsihed(page);
@@ -831,6 +838,7 @@ class Replayer {
 				// const page = await this.getPageOrThrow(step.uuid);
 				await this.isRemoteFinsihed(page);
 			}
+			await this.sleepAfterStep(step);
 
 			if (step.image && page != null && !page.isClosed()) {
 				const screenshotPath = path.join(getTempFolder(process.cwd()), 'screen-record');
