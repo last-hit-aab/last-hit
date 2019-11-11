@@ -35,7 +35,7 @@ const useStyles = makeStyles(theme => ({
 			'& > .MuiTab-wrapper': {
 				textOverflow: 'ellipsis',
 				overflowX: 'hidden',
-				whiteSpace: 'nowrap',
+				whiteSpace: 'nowrap'
 			}
 		},
 		'& .MuiTabs-indicator': {
@@ -90,7 +90,7 @@ const TabPanel = (props: {
 			<TextField
 				autoFocus
 				margin="dense"
-				label="URL Replacement Regexp"
+				label={`URL Replacement Regexp, Use "&&" To Split.`}
 				fullWidth
 				onChange={onUrlReplacementRegexpChange}
 				value={tab.urlReplaceRegexp}
@@ -98,7 +98,7 @@ const TabPanel = (props: {
 			<TextField
 				autoFocus
 				margin="dense"
-				label="URL Replacement To"
+				label={`URL Replace To, Use "&&" To Split.`}
 				fullWidth
 				onChange={onUrlReplacementToChange}
 				value={tab.urlReplaceTo}

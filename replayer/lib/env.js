@@ -13,8 +13,13 @@ class Environment {
 		}
 
 		this.constructed = true;
-		this.urlReplaceRegexp = options.urlReplaceRegexp ? new RegExp(options.urlReplaceRegexp) : null;
-		this.urlReplaceTo = options.urlReplaceTo;
+		if (options.urlReplaceRegexp) {
+			this.urlReplaceRegexps = options.urlReplaceRegexp.split('&&').map(text => new RegExp(text));
+			this.urlReplaceTos = (options.urlReplaceTo || '').split('&&');
+			this.urlReplaceTos.length = this.urlReplaceRegexps.length;
+			this.urlReplaceTos = this.urlReplaceTos.map(to => (to ? to : ''));
+		}
+
 		this.sleepAfterChange = options.sleepAfterChange;
 		this.slowAjaxTime = options.slowAjaxTime;
 
@@ -31,9 +36,11 @@ class Environment {
 		return this.getWrappers().reduce((step, wrapper) => wrapper.call(this, step), step);
 	}
 	wrapUrl(step) {
-		const regexp = this.getUrlReplaceRegexp();
-		if (step.url && regexp) {
-			step.url = step.url.replace(regexp, this.getUrlReplaceTo());
+		const regexps = this.getUrlReplaceRegexps();
+		if (step.url && regexps) {
+			step.url = regexps.reduce((url, regexp, index) => {
+				return url.replace(regexp, this.getUrlReplaceTos(index) || '');
+			}, step.url);
 		}
 		return step;
 	}
@@ -43,11 +50,17 @@ class Environment {
 	isConstructed() {
 		return this.constructed;
 	}
-	getUrlReplaceRegexp() {
-		return this.urlReplaceRegexp;
+	/**
+	 * @returns {RegExp[]}
+	 */
+	getUrlReplaceRegexps() {
+		return this.urlReplaceRegexps;
 	}
-	getUrlReplaceTo() {
-		return this.urlReplaceTo;
+	/**
+	 * @returns {string[]}
+	 */
+	getUrlReplaceTos() {
+		return this.urlReplaceTos;
 	}
 	getSleepAfterChange() {
 		return this.sleepAfterChange;
