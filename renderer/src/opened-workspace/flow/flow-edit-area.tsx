@@ -34,6 +34,7 @@ import StartRecordDialog from './start-record';
 import StartReplayDialog from './start-replay';
 import { getStepFork, IRRELEVANT_STEPS, ReplayType } from './step-definition';
 import StepFreeMoveDialog from './step-free-move';
+import FlowStepEditDialog from './flow-step-edit-dialog';
 
 //log message to file in render process
 // const logger = remote.getGlobal('logger');
@@ -177,6 +178,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 		stepIndex: null
 	});
 	const [settingsOpen, setSettingsOpen] = React.useState(false);
+	const [editingStep, setEditingStep] = React.useState(null as Step | null);
 
 	React.useEffect(() => {
 		ipcRenderer.on(`message-captured-${generateKeyByObject(story, flow)}`, (evt, arg) => {
@@ -732,6 +734,8 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 	};
 	const handleStepFreeMove = (step: Step): void => setState({ ...state, openStepFreeMove: true, freeMoveStep: step });
 	const onStepFreeMoveDialogClose = (): void => setState({ ...state, openStepFreeMove: false, freeMoveStep: null });
+	const onFlowStepEditDialogClose = (): void => setEditingStep(null);
+	const handleStepEdit = (step: Step): void => setEditingStep(step);
 	const handleStepDelete = (step: Step): void => {
 		remote.dialog
 			.showMessageBox(remote.getCurrentWindow(), {
@@ -898,6 +902,7 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 									onMoveUp={handleStepMoveUp}
 									onMoveDown={handleStepMoveDown}
 									onFreeMove={handleStepFreeMove}
+									onEdit={handleStepEdit}
 									onDelete={handleStepDelete}
 								/>
 							);
@@ -927,6 +932,14 @@ export default (props: { story: Story; flow: Flow; show: boolean }): JSX.Element
 			) : null}
 			<FlowReplaySummaryDialog data={replaySummary} close={onReplaySummaryDialogClose} />
 			<FlowSettingsDialog open={settingsOpen} story={story} flow={flow} close={onSettingsOpenDialogClose} />
+			<FlowStepEditDialog
+				open={editingStep != null}
+				story={story}
+				flow={flow}
+				clonedStep={(() => JSON.parse(JSON.stringify(editingStep)))()}
+				stepIndex={(() => flow.steps!.findIndex(step => step === editingStep))()}
+				close={onFlowStepEditDialogClose}
+			/>
 		</Fragment>
 	);
 };

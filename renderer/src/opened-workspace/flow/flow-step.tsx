@@ -5,6 +5,7 @@ import ConditionIcon from '@material-ui/icons/CallSplit';
 import CaptureScreenIcon from '@material-ui/icons/CameraEnhance';
 import AssertIcon from '@material-ui/icons/ControlCamera';
 import DeleteIcon from '@material-ui/icons/DeleteForever';
+import EditIcon from '@material-ui/icons/Edit';
 import FreeMoveIcon from '@material-ui/icons/ImportExport';
 import BreakpointIcon from '@material-ui/icons/PauseCircleFilled';
 import { ipcRenderer, remote } from 'electron';
@@ -28,7 +29,7 @@ const myTheme = getTheme();
 const useStyles = makeStyles(theme => ({
 	root: {
 		display: 'grid',
-		gridTemplateColumns: `${theme.spacing(6)}px 1fr auto 200px`,
+		gridTemplateColumns: `${theme.spacing(6)}px 1fr auto auto`,
 		height: theme.spacing(6),
 		marginBottom: theme.spacing(1),
 		border: `1px solid ${myTheme.stepFocusColor}`,
@@ -150,6 +151,7 @@ export default (props: {
 	onMoveUp: (step: Step) => void;
 	onMoveDown: (step: Step) => void;
 	onFreeMove: (step: Step) => void;
+	onEdit: (step: Step) => void;
 	onDelete: (step: Step) => void;
 }): JSX.Element => {
 	const {
@@ -169,6 +171,7 @@ export default (props: {
 		onMoveUp,
 		onMoveDown,
 		onFreeMove,
+		onEdit,
 		onDelete
 	} = props;
 	const { type } = step;
@@ -265,6 +268,9 @@ export default (props: {
 						<FreeMoveIcon />
 					</Button>
 				) : null,
+				<Button title="Edit" key="edit" onClick={() => onEdit(step)}>
+					<EditIcon />
+				</Button>,
 				StepType.START !== type && !onRecord && onReplay === ReplayType.NONE ? (
 					<Button title="Delete" key="delete" onClick={() => onDelete(step)}>
 						<DeleteIcon />
