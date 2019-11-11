@@ -25,8 +25,9 @@ export default (props: {
 	openFlow: (story: Story, flow: Flow) => void;
 	onFlowRenamed: (story: Story, flow: Flow) => void;
 	onFlowDeleted: (story: Story, flow: Flow) => void;
+	forceUpdateAll: () => void;
 }): JSX.Element => {
-	const { openFlow } = props;
+	const { openFlow, forceUpdateAll } = props;
 
 	const classes = useStyles({});
 
@@ -122,6 +123,7 @@ export default (props: {
 				onToggle={onOutlineCollapseToggleClicked}
 				collapsed={state.collapsed}
 				createStory={createStory}
+				forceUpdateAll={forceUpdateAll}
 			/>
 			<OultineContent
 				collapsed={state.collapsed}

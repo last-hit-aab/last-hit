@@ -31,8 +31,13 @@ const useVerticalIconBarStyles = makeStyles(theme => ({
 		flexGrow: 1
 	}
 }));
-export default (props: { onToggle: () => void; collapsed: boolean; createStory: () => void }): JSX.Element => {
-	const { onToggle, collapsed, createStory } = props;
+export default (props: {
+	onToggle: () => void;
+	collapsed: boolean;
+	createStory: () => void;
+	forceUpdateAll: () => void;
+}): JSX.Element => {
+	const { onToggle, collapsed, createStory, forceUpdateAll } = props;
 	const classes = useVerticalIconBarStyles({});
 
 	const [state, setState] = React.useState({
@@ -81,7 +86,13 @@ export default (props: { onToggle: () => void; collapsed: boolean; createStory: 
 			{/* <IconButton color="inherit" aria-label="outline help" title="Help">
 				<HelpIcon />
 			</IconButton> */}
-			<SearchDialog open={state.searchOpen} close={() => setState({ ...state, searchOpen: false })} />
+			<SearchDialog
+				open={state.searchOpen}
+				close={() => {
+					setState({ ...state, searchOpen: false });
+					forceUpdateAll();
+				}}
+			/>
 			<EnvsDialog open={state.envsOpen} close={() => setState({ ...state, envsOpen: false })} />
 		</Grid>
 	);

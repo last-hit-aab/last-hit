@@ -105,6 +105,7 @@ const onBeforeUnload = (evt: BeforeUnloadEvent) => {
 export default (): JSX.Element => {
 	const classes = useStyles();
 
+	const [ignored, forceUpdate] = React.useReducer((x: number): number => x + 1, 0);
 	React.useEffect(() => {
 		window.onbeforeunload = onBeforeUnload;
 		return () => {
@@ -249,7 +250,12 @@ export default (): JSX.Element => {
 		<Grid container className={classes.root} direction="column" wrap="nowrap">
 			<Grid item className={classes.top} />
 			<Grid item className={classes.center} container>
-				<Outline openFlow={openFlow} onFlowRenamed={openFlow} onFlowDeleted={removeOpenedFlow} />
+				<Outline
+					openFlow={openFlow}
+					onFlowRenamed={openFlow}
+					onFlowDeleted={removeOpenedFlow}
+					forceUpdateAll={() => forceUpdate(ignored)}
+				/>
 				<WorkArea
 					openedFlows={state.openedFlows}
 					activeFlow={state.activeFlow}

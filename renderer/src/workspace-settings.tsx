@@ -11,8 +11,8 @@ import util from 'util';
 
 export type ExecuteEnv = {
 	name?: string;
-	urlReplaceRegexp?: string;
-	urlReplaceTo?: string;
+	urlReplaceRegexp?: string | string[];
+	urlReplaceTo?: string | string[];
 };
 export type WorkspaceSettings = {
 	name: string;
