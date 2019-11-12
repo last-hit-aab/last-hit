@@ -319,15 +319,72 @@ const report = [];
 const coverages = [];
 
 const print = () => {
+	const shorternUrl = url => {
+		try {
+			const parsed = new URL(url);
+			parsed.search = '';
+			parsed.hash = '';
+			return parsed.href;
+		} catch {
+			// parse fail, not a valid url, return directly
+			return url;
+		}
+	};
+	const binarySearch = (target, array) => {
+		let firstIndex = 0;
+		let lastIndex = array.length - 1;
+		let middleIndex = Math.floor((lastIndex + firstIndex) / 2);
+		while (firstIndex <= lastIndex) {
+			console.log(firstIndex, middleIndex, lastIndex);
+			const item = array[middleIndex];
+			if (item.start === target.start && item.end === target.end) {
+				return middleIndex;
+			} else if (target.start > item.end) {
+				firstIndex = middleIndex + 1;
+			} else if (target.end < item.start) {
+				lastIndex = middleIndex - 1;
+			} else {
+				break;
+			}
+			middleIndex = Math.floor((lastIndex + firstIndex) / 2);
+		}
+		return 0 - middleIndex;
+	};
 	const report = [];
+	const coverageMap = {};
+	const allCoverageData = [];
 	const threads = fs.readdirSync(path.join(workspace, 'result-temp'));
 	threads.forEach(threadFolder => {
-		const filename = path.join(path.join(workspace, 'result-temp', threadFolder, 'summary.json'));
-		const data = jsonfile.readFileSync(filename);
+		const summaryFilename = path.join(path.join(workspace, 'result-temp', threadFolder, 'summary.json'));
+		const data = jsonfile.readFileSync(summaryFilename);
 		(data || []).forEach(item => report.push(item));
+		const coverageFilename = path.join(path.join(workspace, 'result-temp', threadFolder, 'coverages.json'));
+		if (fs.existsSync(coverageFilename)) {
+			const coverageData = jsonfile.readFileSync(coverageFilename);
+			coverageData.reduce((map, item) => {
+				const { ranges, text } = item;
+				const url = shorternUrl(item.url);
+				let data = map[url];
+				if (!data) {
+					data = { url, ranges, text };
+					allCoverageData.push(data);
+					map[url] = data;
+				} else {
+					(ranges || []).forEach(range => {
+						const index = binarySearch(range, data);
+						if (index < 0) {
+							data.splice(index * -1 + 1, 0, range);
+						}
+					});
+				}
+				return map;
+			}, coverageMap);
+		}
 	});
 	generate_report({ file_name: 'report.html', results: report });
-
+	pti.write(allCoverageData);
+	spawnSync('nyc', ['report', '--reporter=html'], { stdio: 'inherit' });
+	
 	console.table(
 		report.map(item => {
 			return {
@@ -382,13 +439,11 @@ if (parallel === 1) {
 			}
 		}, Promise.resolve())
 		.finally(() => {
-			pti.write(coverages);
-
-			spawnSync('nyc', ['report', '--reporter=html'], { stdio: 'inherit' });
 			const isChildProcess = config.child === 'true' || config.child;
 
 			const resultTempFolder = path.join(workspace, 'result-temp');
 			if (!isChildProcess) {
+				// not in child process, delete the result temp folder
 				fs.rmdirSync(resultTempFolder, { recursive: true });
 			}
 			if (!fs.existsSync(resultTempFolder)) {
@@ -399,6 +454,7 @@ if (parallel === 1) {
 				fs.mkdirSync(threadTempFolder);
 			}
 			jsonfile.writeFileSync(path.join(threadTempFolder, 'summary.json'), report);
+			jsonfile.writeFileSync(path.join(resultTempFolder, processId, 'coverages.json'), coverages);
 
 			// print when not child process
 			!isChildProcess && print();

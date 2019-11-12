@@ -28,9 +28,9 @@ const getTempFolder = fallbackFolder => {
 class CI {
 	async startCoverage(page) {
 		if (!inElectron) {
-			// Enable both JavaScript and CSS coverage only in CI
+			// Enable both JavaScript coverage only in CI
 			await page.coverage.startJSCoverage();
-			await page.coverage.startCSSCoverage();
+			// await page.coverage.startCSSCoverage();
 		}
 	}
 
@@ -39,17 +39,17 @@ class CI {
 			return await pages.reduce(async (coverages, page) => {
 				try {
 					let jsCoverage = [];
-					let cssCoverage = [];
+					// let cssCoverage = [];
 					try {
 						jsCoverage = await page.coverage.stopJSCoverage();
 					} catch (e) {
 						console.error(e);
 					}
-					try {
-						cssCoverage = await page.coverage.stopCSSCoverage();
-					} catch (e) {
-						console.error(e);
-					}
+					// try {
+					// 	cssCoverage = await page.coverage.stopCSSCoverage();
+					// } catch (e) {
+					// 	console.error(e);
+					// }
 					return coverages.concat(jsCoverage);
 				} catch {
 					return coverages;
