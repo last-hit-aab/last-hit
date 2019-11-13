@@ -77,7 +77,11 @@ const getUrlPath = url => {
 
 const installListenersOnPage = async page => {
 	const god = () => {
-		console.log('%c last-hit: %c evaluate on new document start...', 'color:red', 'color:brown');
+		console.log(
+			'%c last-hit: %c evaluate on new document start...',
+			'color:red',
+			'color:brown'
+		);
 
 		// wechat related
 		(window => {
@@ -127,7 +131,10 @@ const installListenersOnPage = async page => {
 								const reader = new FileReader();
 								reader.onload = evt => {
 									const base64Image = evt.target.result;
-									if (typeof base64Image === 'string' && base64Image.startsWith('data:image/png;')) {
+									if (
+										typeof base64Image === 'string' &&
+										base64Image.startsWith('data:image/png;')
+									) {
 										// 是PNG, 转成JPEG
 										transformPNG2JPEG(base64Image).then(base64Image => {
 											imageData = base64Image;
@@ -226,7 +233,8 @@ const controlPage = async (replayer, page, device, uuid) => {
 	await installListenersOnPage(page);
 	await page.emulate(device);
 	await page.emulateMedia('screen');
-	const setBackground = () => (document.documentElement.style.backgroundColor = 'rgba(25,25,25,0.8)');
+	const setBackground = () =>
+		(document.documentElement.style.backgroundColor = 'rgba(25,25,25,0.8)');
 	await page.evaluate(setBackground);
 	await page.exposeFunction('$lhGetUuid', () => uuid);
 	const client = await page.target().createCDPSession();
@@ -275,7 +283,11 @@ const controlPage = async (replayer, page, device, uuid) => {
 					(step.forStepUuid === currentStep.stepUuid || newUrl === getUrlPath(step.url))
 			);
 		if (pageCreateStep == null) {
-			logger.error(new Error('Cannot find page created step for current popup, flow is broken for replay.'));
+			logger.error(
+				new Error(
+					'Cannot find page created step for current popup, flow is broken for replay.'
+				)
+			);
 			return;
 		}
 
@@ -376,9 +388,8 @@ const launchBrowser = async replayer => {
 	const {
 		viewport: { width, height }
 	} = device;
-	const chrome = { x: 0, y: 200 };
 	const browserArgs = [];
-	browserArgs.push(`--window-size=${width + chrome.x},${height + chrome.y}`);
+	browserArgs.push(`--window-size=${width},${height + 150}`);
 	browserArgs.push('--disable-infobars');
 	browserArgs.push('--ignore-certificate-errors');
 	browserArgs.push('--no-sandbox');
@@ -886,7 +897,9 @@ class Replayer {
 			this.getSummary().handleError(step, e);
 
 			// TODO count ignore error
-			const file_path = `${getTempFolder(process.cwd())}/error-${step.uuid}-${this.getSteps().indexOf(step)}.png`;
+			const file_path = `${getTempFolder(process.cwd())}/error-${
+				step.uuid
+			}-${this.getSteps().indexOf(step)}.png`;
 			if (page) {
 				await page.screenshot({ path: file_path, type: 'png' });
 			} else {
@@ -1324,7 +1337,9 @@ class Replayer {
 			const type = await this.getElementType(element);
 			if (
 				!type ||
-				['text', 'password', 'url', 'search', 'email', 'hidden', 'number', 'tel'].includes(type.toLowerCase())
+				['text', 'password', 'url', 'search', 'email', 'hidden', 'number', 'tel'].includes(
+					type.toLowerCase()
+				)
 			) {
 				// sometimes key event was bound in input
 				// force trigger change event cannot cover this scenario
@@ -1367,56 +1382,79 @@ const launch = () => {
 	 */
 	const waitForNextStep = options => {
 		const { storyName, flowName, replayer } = options;
-		emitter.once(`continue-replay-step-${generateKeyByString(storyName, flowName)}`, async (event, arg) => {
-			const { flow, index, command } = arg;
-			const step = replayer.getSteps()[index];
-			switch (command) {
-				case 'disconnect':
-					await replayer.end(false);
-					event.reply(`replay-browser-disconnect-${generateKeyByString(storyName, flowName)}`, {
-						summary: replayer.getSummaryData()
-					});
-					break;
-				case 'abolish':
-					await replayer.end(true);
-					event.reply(`replay-browser-abolish-${generateKeyByString(storyName, flowName)}`, {
-						summary: replayer.getSummaryData()
-					});
-					break;
-				case 'switch-to-record':
-					// keep replayer instance in replayers map
-					replayer.switchToRecord();
-					event.reply(`replay-browser-ready-to-switch-${generateKeyByString(storyName, flowName)}`, {});
-					break;
-				default:
-					try {
-						logger.log(`Continue step[${index}]@${generateKeyByString(storyName, flowName)}.`);
-						replayer.getSummary().handle(step);
-						await replayer.next(flow, index, storyName);
+		emitter.once(
+			`continue-replay-step-${generateKeyByString(storyName, flowName)}`,
+			async (event, arg) => {
+				const { flow, index, command } = arg;
+				const step = replayer.getSteps()[index];
+				switch (command) {
+					case 'disconnect':
+						await replayer.end(false);
+						event.reply(
+							`replay-browser-disconnect-${generateKeyByString(storyName, flowName)}`,
+							{
+								summary: replayer.getSummaryData()
+							}
+						);
+						break;
+					case 'abolish':
+						await replayer.end(true);
+						event.reply(
+							`replay-browser-abolish-${generateKeyByString(storyName, flowName)}`,
+							{
+								summary: replayer.getSummaryData()
+							}
+						);
+						break;
+					case 'switch-to-record':
+						// keep replayer instance in replayers map
+						replayer.switchToRecord();
+						event.reply(
+							`replay-browser-ready-to-switch-${generateKeyByString(
+								storyName,
+								flowName
+							)}`,
+							{}
+						);
+						break;
+					default:
+						try {
+							logger.log(
+								`Continue step[${index}]@${generateKeyByString(
+									storyName,
+									flowName
+								)}.`
+							);
+							replayer.getSummary().handle(step);
+							await replayer.next(flow, index, storyName);
 
-						waitForNextStep({ event, replayer, storyName, flowName, index });
-					} catch (e) {
-						logger.error('Step execution failed, failed step as below:');
-						logger.error(step);
-						logger.error(e);
-						// failed, prepare for next step
-						// send back
-						replayer.getSummary().handleError(step, e);
-						waitForNextStep({
-							event,
-							replayer,
-							storyName,
-							flowName,
-							index,
-							error: e.message,
-							errorStack: e.stack
-						});
-					}
+							waitForNextStep({ event, replayer, storyName, flowName, index });
+						} catch (e) {
+							logger.error('Step execution failed, failed step as below:');
+							logger.error(step);
+							logger.error(e);
+							// failed, prepare for next step
+							// send back
+							replayer.getSummary().handleError(step, e);
+							waitForNextStep({
+								event,
+								replayer,
+								storyName,
+								flowName,
+								index,
+								error: e.message,
+								errorStack: e.stack
+							});
+						}
+				}
 			}
-		});
+		);
 
 		logger.log(
-			`Reply message step[${options.index}]@[replay-step-end-${generateKeyByString(storyName, flowName)}].`
+			`Reply message step[${options.index}]@[replay-step-end-${generateKeyByString(
+				storyName,
+				flowName
+			)}].`
 		);
 
 		options.event.reply(`replay-step-end-${generateKeyByString(storyName, flowName)}`, {

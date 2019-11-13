@@ -22,6 +22,84 @@ import { Device } from '../workspace-settings';
 
 const devices: Device[] = [
 	{
+		name: 'Mac 1404 * 686',
+		userAgent:
+			'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3765.0 Safari/537.36',
+		viewport: {
+			width: 1404,
+			height: 686,
+			deviceScaleFactor: 1,
+			isMobile: false,
+			hasTouch: false,
+			isLandscape: false
+		}
+	},
+	{
+		name: 'Mac 1400 * 900',
+		userAgent:
+			'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3765.0 Safari/537.36',
+		viewport: {
+			width: 1400,
+			height: 616,
+			deviceScaleFactor: 1,
+			isMobile: false,
+			hasTouch: false,
+			isLandscape: false
+		}
+	},
+	{
+		name: 'Mac 1440 * 900',
+		userAgent:
+			'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3765.0 Safari/537.36',
+		viewport: {
+			width: 1440,
+			height: 616,
+			deviceScaleFactor: 1,
+			isMobile: false,
+			hasTouch: false,
+			isLandscape: false
+		}
+	},
+	{
+		name: 'Laptop 1366 * 768',
+		userAgent:
+			'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3765.0 Safari/537.36',
+		viewport: {
+			width: 1366,
+			height: 558,
+			deviceScaleFactor: 1,
+			isMobile: false,
+			hasTouch: false,
+			isLandscape: false
+		}
+	},
+	{
+		name: 'Laptop 1280 * 800',
+		userAgent:
+			'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3765.0 Safari/537.36',
+		viewport: {
+			width: 1280,
+			height: 590,
+			deviceScaleFactor: 1,
+			isMobile: false,
+			hasTouch: false,
+			isLandscape: false
+		}
+	},
+	{
+		name: 'Laptop 1920 * 1080',
+		userAgent:
+			'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3765.0 Safari/537.36',
+		viewport: {
+			width: 1920,
+			height: 870,
+			deviceScaleFactor: 1,
+			isMobile: false,
+			hasTouch: false,
+			isLandscape: false
+		}
+	},
+	{
 		name: 'Blackberry PlayBook',
 		userAgent:
 			'Mozilla/5.0 (PlayBook; U; RIM Tablet OS 2.1.0; en-US) AppleWebKit/536.2+ (KHTML like Gecko) Version/7.2.1.0 Safari/536.2+',
@@ -942,19 +1020,6 @@ const devices: Device[] = [
 			isMobile: true,
 			hasTouch: true,
 			isLandscape: true
-		}
-	},
-	{
-		name: 'Mac 1404 * 686',
-		userAgent:
-			'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3765.0 Safari/537.36',
-		viewport: {
-			width: 1404,
-			height: 686,
-			deviceScaleFactor: 1,
-			isMobile: false,
-			hasTouch: false,
-			isLandscape: false
 		}
 	}
 ];

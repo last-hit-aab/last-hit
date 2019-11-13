@@ -13,3 +13,4 @@ replayer/stderr.log
 replayer/stdout.log
 replayer/report.html
 replayer/error-*.png
+.vscode/settings.json

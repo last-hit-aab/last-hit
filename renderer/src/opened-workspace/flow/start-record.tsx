@@ -146,7 +146,7 @@ export default (props: {
 				SelectProps={{ MenuProps: { PaperProps: { className: classes.selectPopupMenu } } }}
 			>
 				{devices
-					.sort((a, b) => a.name.localeCompare(b.name))
+					// .sort((a, b) => a.name.localeCompare(b.name))
 					.map(device => {
 						return (
 							<MenuItem key={device.name} value={device.name} dense>
