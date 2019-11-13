@@ -31,7 +31,7 @@
 	"homepage": "https://www.last-hit.com",
 	"devDependencies": {
 		"electron": "^6.0.11",
-		"electron-builder": "21.1.6",
+		"electron-builder": "^22.1.0",
 		"nyc": "^14.1.1"
 	},
 	"dependencies": {
