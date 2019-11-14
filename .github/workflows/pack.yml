@@ -7,27 +7,37 @@ on:
 
 jobs:
   build:
-    runs-on: [macos-latest, windows-latest]
+    name: Package on node ${{ matrix.node_version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node_version: [12]
+        os: [windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
+      - name: Setup Node Env
+        uses: actions/setup-node@v1
         with:
-          node-version: 12
-      - uses: actions/cache@v1
+          version: ${{ matrix.node_version }}
+      - name: Cache Renderer Node Modules
+        uses: actions/cache@v1
         with:
           path: renderer/node_modules
           key: ${{ runner.OS }}-build-${{ hashFiles('renderer/package.json') }}
-      - run: |
+      - name: Install Renderer Node Modules
+        run: |
           cd renderer
           yarn install
-      - uses: actions/cache@v1
+      - name: Cache App Node Modules
+        uses: actions/cache@v1
         with:
           path: node_modules
           key: ${{ runner.OS }}-build-${{ hashFiles('package.json') }}
-      - run: yarn install
-      - name: Pack on windows
+      - name: Install App Node Modules
+        run: yarn install
+      - name: Package for Windows
         if: runner.os == 'Windows'
         run: yarn run pack:windows
-      - name: Pack on macos
+      - name: Pack For OSX
         if: runner.os == 'macOS'
         run: yarn run pack:osx
