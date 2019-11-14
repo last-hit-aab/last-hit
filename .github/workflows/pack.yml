@@ -1,4 +1,4 @@
-name: Package-App
+name: Package-And-Release-App
 
 on:
   push:
@@ -38,14 +38,12 @@ jobs:
       - name: Package for Windows
         if: runner.os == 'Windows'
         run: |
-          yarn run build:renderer
-          electron-builder -w --publish onTagOrDraft
+          yarn run publish:windows
         env:
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      - name: Pack For OSX
+      - name: Package For OSX
         if: runner.os == 'macOS'
         run: |
-          yarn run build:renderer
-          electron-builder -m --publish onTagOrDraft
+          yarn run publish:osx
         env:
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
