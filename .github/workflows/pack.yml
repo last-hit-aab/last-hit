@@ -1,0 +1,33 @@
+name: Package-App
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: [macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - uses: actions/cache@v1
+        with:
+          path: renderer/node_modules
+          key: ${{ runner.OS }}-build-${{ hashFiles('renderer/package.json') }}
+      - run: |
+          cd renderer
+          yarn install
+      - uses: actions/cache@v1
+        with:
+          path: node_modules
+          key: ${{ runner.OS }}-build-${{ hashFiles('package.json') }}
+      - run: yarn install
+      - name: Pack on windows
+        if: runner.os == 'Windows'
+        run: yarn run pack:windows
+      - name: Pack on macos
+        if: runner.os == 'macOS'
+        run: yarn run pack:osx
