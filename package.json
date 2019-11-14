@@ -30,13 +30,13 @@
 	},
 	"homepage": "https://www.last-hit.com",
 	"devDependencies": {
+		"electron": "^7.1.1",
 		"electron-builder": "^22.1.0",
 		"nyc": "^14.1.1"
 	},
 	"dependencies": {
 		"atob": "^2.1.2",
 		"cross-spawn": "^6.0.5",
-		"electron": "^7.1.1",
 		"image-ssim": "^0.2.0",
 		"node-resemble-js": "^0.2.0",
 		"pino": "^5.13.4",
