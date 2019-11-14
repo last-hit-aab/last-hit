@@ -1,4 +1,4 @@
-name: NpmPublish
+name: Pulibsh-NPM
 
 on:
   release:
