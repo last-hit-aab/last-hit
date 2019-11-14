@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node Env
         uses: actions/setup-node@v1
         with:
-          version: ${{ matrix.node_version }}
+          node-version: ${{ matrix.node_version }}
       - name: Cache Renderer Node Modules
         uses: actions/cache@v1
         with:
@@ -41,3 +41,8 @@ jobs:
       - name: Pack For OSX
         if: runner.os == 'macOS'
         run: yarn run pack:osx
+      - name: Upload to Draft Release
+        uses: fnkr/github-action-ghr@v1
+        env:
+          GHR_PATH: dist/
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
