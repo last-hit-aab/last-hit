@@ -5,7 +5,7 @@
 [![codebeat badge](https://codebeat.co/badges/f3316c83-a06b-4307-b50a-3af48fab9ac3)](https://codebeat.co/projects/github-com-last-hit-aab-last-hit-master)
 ![Scrutinizer](https://scrutinizer-ci.com/g/last-hit-aab/last-hit/badges/quality-score.png?b=master)
 
-![Travis (.org) branch](https://img.shields.io/travis/last-hit-aab/last-hit/master)
+![Github Actions](https://github.com/last-hit-aab/last-hit/workflows/Package-And-Release-App/badge.svg)
 ![GitHub last commit](https://img.shields.io/github/last-commit/last-hit-aab/last-hit)
 ![GitHub package.json version](https://img.shields.io/github/package-json/v/last-hit-aab/last-hit)
 ![David Dependencies](https://img.shields.io/david/last-hit-aab/last-hit)
@@ -19,7 +19,7 @@
 
 ![GitHub issues](https://img.shields.io/github/issues/last-hit-aab/last-hit)
 ![GitHub closed issues](https://img.shields.io/github/issues-closed/last-hit-aab/last-hit)
-![Static Platform](https://img.shields.io/badge/platform-osx%20%7C%20windows-green)
+![Static Platform](https://img.shields.io/badge/platform-osx%20%7C%20windows%20%7C%20linux-green)
 [![GitHub release](https://img.shields.io/github/release/last-hit-aab/last-hit.svg)](https://github.com/last-hit-aab/last-hit/releases/)
 ![GitHub Release Date](https://img.shields.io/github/release-date/last-hit-aab/last-hit) 
 ![GitHub All Releases](https://img.shields.io/github/downloads/last-hit-aab/last-hit/total)
