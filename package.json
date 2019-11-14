@@ -14,7 +14,8 @@
 		"pack:all": "npm run build:renderer && electron-builder -mw",
 		"coverage": "nyc report --reporter=html",
 		"publish:osx": "npm run build:renderer && electron-builder -m --publish onTagOrDraft",
-		"publish:windows": "npm run build:renderer && electron-builder -w --publish onTagOrDraft"
+		"publish:windows": "npm run build:renderer && electron-builder -w --publish onTagOrDraft",
+		"publish:linux": "npm run build:renderer && electron-builder -l --publish onTagOrDraft"
 	},
 	"repository": {
 		"type": "git",

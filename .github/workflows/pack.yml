@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         node_version: [12]
-        os: [windows-latest, macos-latest]
+        os: [windows-latest, macos-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v1
       - name: Setup Node Env
@@ -45,5 +45,11 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           yarn run publish:osx
+        env:
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Package For Linux
+        if: runner.os == 'Linux'
+        run: |
+          yarn run publish:linux
         env:
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
