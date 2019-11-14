@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Package on node ${{ matrix.node_version }} and ${{ matrix.os }}
+    name: Pack@${{ matrix.os }}&Node${{ matrix.node_version }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
