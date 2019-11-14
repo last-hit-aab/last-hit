@@ -14,6 +14,10 @@ jobs:
         with:
           node-version: 12
           registry-url: https://registry.npmjs.org/
+      - uses: actions/cache@v1
+        with:
+          path: replayer/node_modules
+          key: ${{ runner.OS }}-build-${{ hashFiles('replayer/package.json') }}
       - run: cd replayer 
       - run: yarn install
         env:
