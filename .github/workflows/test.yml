@@ -1,8 +1,9 @@
 name: TestNpmPublish
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - master
 
 jobs:
   build:
@@ -15,6 +16,5 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - run: cd replayer 
       - run: yarn install
-      # - run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
