@@ -17,8 +17,9 @@ jobs:
         with:
           path: replayer/node_modules
           key: ${{ runner.OS }}-build-${{ hashFiles('replayer/package.json') }}
-      - run: cd replayer 
-      - run: yarn install
-      - run: npm publish --access public
+      - run: |
+          cd replayer 
+          yarn install
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}

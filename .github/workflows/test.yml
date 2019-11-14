@@ -18,4 +18,6 @@ jobs:
         with:
           path: replayer/node_modules
           key: ${{ runner.OS }}-build-${{ hashFiles('replayer/package.json') }}
-      - run: cd replayer && yarn install
+      - run: |
+          cd replayer
+          yarn install
