@@ -1,0 +1,51 @@
+name: Package-App
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Package on node ${{ matrix.node_version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node_version: [12]
+        os: [windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup Node Env
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node_version }}
+      - name: Cache Renderer Node Modules
+        uses: actions/cache@v1
+        with:
+          path: renderer/node_modules
+          key: ${{ runner.OS }}-build-${{ hashFiles('renderer/package.json') }}
+      - name: Install Renderer Node Modules
+        run: |
+          cd renderer
+          yarn install
+      - name: Cache App Node Modules
+        uses: actions/cache@v1
+        with:
+          path: node_modules
+          key: ${{ runner.OS }}-build-${{ hashFiles('package.json') }}
+      - name: Install App Node Modules
+        run: yarn install
+      - name: Package for Windows
+        if: runner.os == 'Windows'
+        run: |
+          yarn run build:renderer
+          electron-builder -w --publish onTagOrDraft
+        env:
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Pack For OSX
+        if: runner.os == 'macOS'
+        run: |
+          yarn run build:renderer
+          electron-builder -m --publish onTagOrDraft
+        env:
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
