@@ -222,6 +222,12 @@ class Recorder {
 			}
 		);
 	}
+	private handleAbolish(): void {
+		ipcMain.on('abolish-puppeteer', async (event: IpcMainEvent, arg: { flowKey: string }) => {
+			const { flowKey } = arg;
+			await this.disconnectPuppeteer(flowKey, true);
+		});
+	}
 	private handleSwitchToRecord(): void {
 		ipcMain.on(
 			'switch-puppeteer',
@@ -344,6 +350,7 @@ class Recorder {
 	private launch(): void {
 		this.handleLaunch();
 		this.handleDisconnect();
+		this.handleAbolish();
 		this.handleSwitchToRecord();
 		this.handleCaptureScreen();
 		this.handleStartPickDOM();
