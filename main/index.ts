@@ -1,56 +1,25 @@
 // Modules to control application life and create native browser window
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
-const fs = require('fs');
-const argv = require('yargs').argv;
-const buildMenu = require('./menus');
-const console = require('console');
-const monitors = require('./workspace-monitor');
-const puppeteer = require('./puppeteer');
-const replay = require('./replay');
-const package = require('../package.json');
+import { app, BrowserWindow } from 'electron';
+import path from 'path';
+import buildMenu from './menus';
+import monitors from './workspace-monitor';
+import puppeteer from './puppeteer';
+import replay from './replay';
+import packageFile from '../package.json';
 
 if (process.platform !== 'win32') {
 	app.setAboutPanelOptions({
 		applicationName: 'Last Hit',
-		applicationVersion: package.version,
+		applicationVersion: packageFile.version,
 		iconPath: path.join(__dirname, '../icons/64x64.png')
 	});
 }
 
-// add console log
-app.console = new console.Console(process.stdout, process.stderr);
 // build app menus
 buildMenu();
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
-
-// Watch renderer source folder, auto compile and reload
-if (argv['watch-renderer'] === 'true') {
-	const spawn = require('cross-spawn');
-	const debounce = (func, ms) => {
-		let ts;
-		return () => {
-			clearTimeout(ts);
-			ts = setTimeout(() => func(), ms);
-		};
-	};
-	fs.watch(
-		path.join(__dirname, '../renderer/src'),
-		{ recursive: true },
-		debounce(() => {
-			new Promise(() => {
-				spawn.sync('npm', ['run', 'build', '--prefix', 'renderer'], { stdio: 'inherit' });
-				if (mainWindow) {
-					mainWindow.reload();
-				} else {
-					createWindow();
-				}
-			});
-		}, 5000)
-	);
-}
 
 const createWindow = () => {
 	// Create the browser window.
@@ -77,9 +46,7 @@ const createWindow = () => {
 	// Open the DevTools.
 	// mainWindow.webContents.openDevTools()
 
-	mainWindow.once('ready-to-show', () => {
-		mainWindow.show();
-	});
+	mainWindow.once('ready-to-show', () => mainWindow.show());
 	// Emitted when the window is closed.
 	mainWindow.on('closed', () => {
 		// Dereference the window object, usually you would store windows

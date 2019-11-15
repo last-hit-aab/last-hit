@@ -6,8 +6,6 @@
 	"scripts": {
 		"build:renderer": "npm run build --prefix renderer",
 		"start": "npm run build:renderer && electron .",
-		"start:dev": "npm run build:renderer && electron . --watch-renderer=true",
-		"pack:pre": "export PKG_CONFIG_PATH=/opt/local/lib/pkgconfig:/opt/X11/lib/pkgconfig",
 		"pack": "npm run build:renderer && electron-builder --dir",
 		"pack:windows": "npm run build:renderer && electron-builder -w",
 		"pack:osx": "npm run build:renderer && electron-builder -m",
@@ -46,6 +44,7 @@
 		"pino-pretty": "^3.2.1",
 		"puppeteer": "^2.0.0",
 		"puppeteer-to-istanbul": "^1.2.2",
+		"typescript": "^3.7.2",
 		"uuid": "^3.3.3",
 		"watchr": "^4.1.0",
 		"yargs": "^13.3.0"
