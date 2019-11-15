@@ -5,17 +5,16 @@
 	"main": "main/index.js",
 	"scripts": {
 		"build:renderer": "npm run build --prefix renderer",
-		"start": "npm run build:renderer && electron .",
-		"start:dev": "npm run build:renderer && electron . --watch-renderer=true",
-		"pack:pre": "export PKG_CONFIG_PATH=/opt/local/lib/pkgconfig:/opt/X11/lib/pkgconfig",
-		"pack": "npm run build:renderer && electron-builder --dir",
-		"pack:windows": "npm run build:renderer && electron-builder -w",
-		"pack:osx": "npm run build:renderer && electron-builder -m",
-		"pack:all": "npm run build:renderer && electron-builder -mw",
+		"build": "npm run build:renderer && tsc",
+		"start": "npm run build && electron .",
+		"pack": "npm run build && electron-builder --dir",
+		"pack:windows": "npm run build && electron-builder -w",
+		"pack:osx": "npm run build && electron-builder -m",
+		"pack:all": "npm run build && electron-builder -mw",
 		"coverage": "nyc report --reporter=html",
-		"publish:osx": "npm run build:renderer && electron-builder -m --publish onTagOrDraft",
-		"publish:windows": "npm run build:renderer && electron-builder -w --publish onTagOrDraft",
-		"publish:linux": "npm run build:renderer && electron-builder -l --publish onTagOrDraft"
+		"publish:osx": "npm run build && electron-builder -m --publish onTagOrDraft",
+		"publish:windows": "npm run build && electron-builder -w --publish onTagOrDraft",
+		"publish:linux": "npm run build && electron-builder -l --publish onTagOrDraft"
 	},
 	"repository": {
 		"type": "git",
@@ -38,6 +37,9 @@
 		"nyc": "^14.1.1"
 	},
 	"dependencies": {
+		"@types/pino": "^5.8.13",
+		"@types/puppeteer": "^1.20.2",
+		"@types/uuid": "^3.4.6",
 		"atob": "^2.1.2",
 		"cross-spawn": "^6.0.5",
 		"image-ssim": "^0.2.0",
@@ -46,6 +48,7 @@
 		"pino-pretty": "^3.2.1",
 		"puppeteer": "^2.0.0",
 		"puppeteer-to-istanbul": "^1.2.2",
+		"typescript": "^3.7.2",
 		"uuid": "^3.3.3",
 		"watchr": "^4.1.0",
 		"yargs": "^13.3.0"

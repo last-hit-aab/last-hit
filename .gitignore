@@ -1,3 +1,6 @@
+# mac
+.DS_Store
+
 dist
 node_modules
 build
@@ -8,10 +11,13 @@ log/**
 package-lock.json
 replayer/upload-temp
 replayer/screen_record
-.DS_Store
 replayer/stderr.log
 replayer/stdout.log
 replayer/report.html
 replayer/error-*.png
 .vscode/settings.json
 yarn-error.log
+
+# ignore compiled js and map files
+main/**/*.js
+main/**/*.js.map

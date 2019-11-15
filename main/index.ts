@@ -1,56 +1,25 @@
 // Modules to control application life and create native browser window
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
-const fs = require('fs');
-const argv = require('yargs').argv;
-const buildMenu = require('./menus');
-const console = require('console');
-const monitors = require('./workspace-monitor');
-const puppeteer = require('./puppeteer');
-const replay = require('./replay');
-const package = require('../package.json');
+import { app, BrowserWindow } from 'electron';
+import path from 'path';
+import * as Menus from './menus';
+import * as WorkspaceMonitors from './workspace-monitor';
+import recorder from './recorder';
+import replayer from './replayer';
+import packageFile from '../package.json';
 
 if (process.platform !== 'win32') {
 	app.setAboutPanelOptions({
 		applicationName: 'Last Hit',
-		applicationVersion: package.version,
+		applicationVersion: packageFile.version,
 		iconPath: path.join(__dirname, '../icons/64x64.png')
 	});
 }
 
-// add console log
-app.console = new console.Console(process.stdout, process.stderr);
 // build app menus
-buildMenu();
+Menus.buildMenu();
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
-
-// Watch renderer source folder, auto compile and reload
-if (argv['watch-renderer'] === 'true') {
-	const spawn = require('cross-spawn');
-	const debounce = (func, ms) => {
-		let ts;
-		return () => {
-			clearTimeout(ts);
-			ts = setTimeout(() => func(), ms);
-		};
-	};
-	fs.watch(
-		path.join(__dirname, '../renderer/src'),
-		{ recursive: true },
-		debounce(() => {
-			new Promise(() => {
-				spawn.sync('npm', ['run', 'build', '--prefix', 'renderer'], { stdio: 'inherit' });
-				if (mainWindow) {
-					mainWindow.reload();
-				} else {
-					createWindow();
-				}
-			});
-		}, 5000)
-	);
-}
 
 const createWindow = () => {
 	// Create the browser window.
@@ -62,7 +31,6 @@ const createWindow = () => {
 		resizable: false,
 		maximizable: false,
 		title: 'Welcome to LastHit',
-		// titleBarStyle: 'hidden',
 		webPreferences: {
 			preload: path.join(__dirname, '../preload/index.js'),
 			plugins: true,
@@ -77,9 +45,7 @@ const createWindow = () => {
 	// Open the DevTools.
 	// mainWindow.webContents.openDevTools()
 
-	mainWindow.once('ready-to-show', () => {
-		mainWindow.show();
-	});
+	mainWindow.once('ready-to-show', () => mainWindow.show());
 	// Emitted when the window is closed.
 	mainWindow.on('closed', () => {
 		// Dereference the window object, usually you would store windows
@@ -89,16 +55,14 @@ const createWindow = () => {
 	});
 };
 
-monitors.initialize();
-puppeteer.initialize(replay);
-replay.initialize();
+WorkspaceMonitors.initialize();
+recorder.initialize(replayer);
+replayer.initialize();
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', () => {
-	createWindow();
-});
+app.on('ready', () => createWindow());
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
