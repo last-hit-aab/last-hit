@@ -1,10 +1,10 @@
 // Modules to control application life and create native browser window
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
-import buildMenu from './menus';
-import monitors from './workspace-monitor';
-import puppeteer from './puppeteer';
-import replay from './replay';
+import * as Menus from './menus';
+import * as WorkspaceMonitors from './workspace-monitor';
+import recorder from './recorder';
+import replayer from './replayer';
 import packageFile from '../package.json';
 
 if (process.platform !== 'win32') {
@@ -16,7 +16,7 @@ if (process.platform !== 'win32') {
 }
 
 // build app menus
-buildMenu();
+Menus.buildMenu();
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
@@ -31,7 +31,6 @@ const createWindow = () => {
 		resizable: false,
 		maximizable: false,
 		title: 'Welcome to LastHit',
-		// titleBarStyle: 'hidden',
 		webPreferences: {
 			preload: path.join(__dirname, '../preload/index.js'),
 			plugins: true,
@@ -56,16 +55,14 @@ const createWindow = () => {
 	});
 };
 
-monitors.initialize();
-puppeteer.initialize(replay);
-replay.initialize();
+WorkspaceMonitors.initialize();
+recorder.initialize(replayer);
+replayer.initialize();
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', () => {
-	createWindow();
-});
+app.on('ready', () => createWindow());
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {

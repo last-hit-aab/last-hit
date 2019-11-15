@@ -10,7 +10,8 @@
 		"noImplicitAny": false,
 		"suppressImplicitAnyIndexErrors": true,
 		"resolveJsonModule": true,
-		"esModuleInterop": true
+		"esModuleInterop": true,
+		"maxNodeModuleJsDepth": 5
 	},
-	"exclude": ["node_modules"]
+	"exclude": ["node_modules", "renderer"]
 }

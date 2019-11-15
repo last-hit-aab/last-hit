@@ -1,6 +1,6 @@
-import { Menu, app, MenuItemConstructorOptions } from 'electron';
+import { Menu, MenuItemConstructorOptions } from 'electron';
 
-export default () => {
+export const buildMenu = (): void => {
 	const isMac = process.platform === 'darwin';
 	const menuTemplate: MenuItemConstructorOptions[] = [
 		...(isMac
