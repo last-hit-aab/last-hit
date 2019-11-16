@@ -5,7 +5,7 @@ import { doOnMultipleProcesses, doOnSingleProcess } from './lib/handler';
 import { findFlows, getProcessId } from './lib/utils';
 
 const processId = getProcessId();
-console.info(((`Process[${processId}] started.`.bold as unknown) as String).green);
+console.info((`Process[${processId}] started.`.bold as any).green);
 
 (async (): Promise<void> => {
 	try {

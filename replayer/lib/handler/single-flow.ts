@@ -148,8 +148,8 @@ const handleReplayStepEnd = (
 			if (error) {
 				(async () => {
 					console.error(
-						((`Process[${processId}] Replay flow ${key} failed on step ${index}.`
-							.bold as unknown) as String).red,
+						(`Process[${processId}] Replay flow ${key} failed on step ${index}.`
+							.bold as any).red,
 						error
 					);
 					emitter.once(`replay-browser-abolish-${key}`, () => resolve());
@@ -160,8 +160,7 @@ const handleReplayStepEnd = (
 				// the end or last step is finished
 				(async () => {
 					console.info(
-						((`Process[${processId}] Replay flow ${key} finished.`
-							.bold as unknown) as String).green
+						(`Process[${processId}] Replay flow ${key} finished.`.bold as any).green
 					);
 					emitter.once(`replay-browser-abolish-${key}`, () => resolve());
 					emitter.send(`continue-replay-step-${key}`, { command: 'abolish' });
@@ -189,7 +188,9 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 	const timeLogger = new console.Console({ stdout: timeLoggerStream });
 	timeLogger.time(flowKey);
 
-	console.info(`Process[${processId}] Start to replay [${flowKey}].`.italic.blue.underline);
+	console.info(
+		(`Process[${processId}] Start to replay [${flowKey}].` as any).italic.blue.underline
+	);
 	const file = path.join(workspace, storyName, `${flowName}.flow.json`);
 	let flow: Flow;
 	try {
@@ -201,7 +202,7 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 	flow.name = flowName;
 
 	if (flow.steps == null || flow.steps.length === 0) {
-		console.info(`Process[${processId}] Flow ${flowKey} has no steps, ignored.`.red);
+		console.info((`Process[${processId}] Flow ${flowKey} has no steps, ignored.` as any).red);
 		return Promise.reject();
 	}
 
@@ -213,7 +214,7 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 		} catch (e) {
 			logger.error(e);
 			console.info(
-				`Process[${processId}] Flow ${flowKey} failed on force dependency loop check, ignored.`
+				(`Process[${processId}] Flow ${flowKey} failed on force dependency loop check, ignored.` as any)
 					.red
 			);
 			return Promise.reject();
@@ -238,11 +239,15 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 
 	const startStep = flow.steps[0];
 	if (startStep.type !== 'start') {
-		console.info(`Process[${processId}] Flow ${flowKey} has no start step, ignored.`.red);
+		console.info(
+			(`Process[${processId}] Flow ${flowKey} has no start step, ignored.` as any).red
+		);
 		return Promise.reject();
 	}
 	if (!startStep.url) {
-		console.info(`Process[${processId}] Flow ${flowKey} has no start url, ignored.`.red);
+		console.info(
+			(`Process[${processId}] Flow ${flowKey} has no start url, ignored.` as any).red
+		);
 		return Promise.reject();
 	}
 

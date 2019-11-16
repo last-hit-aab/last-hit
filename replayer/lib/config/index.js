@@ -104,8 +104,7 @@ var buildEnvironment = function (config, workspaceConfig) { return __awaiter(voi
         if (envName) {
             env = (workspaceConfig.envs || []).find(function (env) { return env.name === envName; });
             if (env == null) {
-                console.error(("Process[" + processId + "] Given environment[" + envName + "] not found.")
-                    .bold.red);
+                console.error(("Process[" + processId + "] Given environment[" + envName + "] not found.").bold.red);
                 return [2 /*return*/, Promise.reject()];
             }
         }

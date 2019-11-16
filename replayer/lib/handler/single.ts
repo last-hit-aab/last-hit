@@ -65,6 +65,6 @@ export const doOnSingleProcess = async (flows: FlowFile[], env: Environment): Pr
 
 		// print when not child process
 		!isChildProcess && print(env);
-		console.info(((`Process[${processId}] finished`.bold as unknown) as String).green);
+		console.info((`Process[${processId}] finished`.bold as any).green);
 	}
 };

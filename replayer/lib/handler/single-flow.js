@@ -171,8 +171,7 @@ var handleReplayStepEnd = function (emitter, story, flow, resolve) {
             // the end or last step is finished
             (function () { return __awaiter(void 0, void 0, void 0, function () {
                 return __generator(this, function (_a) {
-                    console.info(("Process[" + processId + "] Replay flow " + key + " finished.")
-                        .bold.green);
+                    console.info(("Process[" + processId + "] Replay flow " + key + " finished.").bold.green);
                     emitter.once("replay-browser-abolish-" + key, function () { return resolve(); });
                     emitter.send("continue-replay-step-" + key, { command: 'abolish' });
                     return [2 /*return*/];

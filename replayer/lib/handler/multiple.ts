@@ -43,7 +43,7 @@ export const doOnMultipleProcesses = async (flows: FlowFile[], env: Environment)
 	const resolves = [];
 	Promise.all(flows.map(() => new Promise(resolve => resolves.push(resolve)))).finally(() => {
 		print(env);
-		console.info(((`Process[${processId}] finished`.bold as unknown) as String).green);
+		console.info((`Process[${processId}] finished`.bold as any).green);
 	});
 
 	const { composeTempFolder } = createTemporaryFolders(env);

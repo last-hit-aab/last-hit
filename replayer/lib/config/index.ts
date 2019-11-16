@@ -13,8 +13,8 @@ const assertWorkspace = async (): Promise<string> => {
 	if (!workspace) {
 		// workspace must be appointed
 		console.error(
-			((`Process[${processId}] Please specify workspace folder via [--workspace=folder].`
-				.bold as unknown) as String).red
+			(`Process[${processId}] Please specify workspace folder via [--workspace=folder].`
+				.bold as any).red
 		);
 		return Promise.reject();
 	}
@@ -74,8 +74,7 @@ const buildEnvironment = async (
 		env = (workspaceConfig.envs || []).find((env: EnvironmentOptions) => env.name === envName);
 		if (env == null) {
 			console.error(
-				((`Process[${processId}] Given environment[${envName}] not found.`
-					.bold as unknown) as String).red
+				(`Process[${processId}] Given environment[${envName}] not found.`.bold as any).red
 			);
 			return Promise.reject();
 		}
