@@ -50,6 +50,7 @@
 		"atob": "^2.1.2",
 		"clone": "^2.1.2",
 		"cross-spawn": "^6.0.5",
+		"html-creator": "^0.4.3",
 		"image-ssim": "^0.2.0",
 		"jsonfile": "^5.0.0",
 		"mkdirp": "^0.5.1",
