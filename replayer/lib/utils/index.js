@@ -5,9 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs_1 = __importDefault(require("fs"));
 var path_1 = __importDefault(require("path"));
-var output = fs_1.default.createWriteStream(path_1.default.join(process.cwd(), 'stdout.log'));
-var errorOutput = fs_1.default.createWriteStream(path_1.default.join(process.cwd(), 'stderr.log'));
-var logger = new console.Console({ stdout: output, stderr: errorOutput });
 exports.inElectron = !!process.versions.electron;
 exports.getTempFolder = function (fallbackFolder) {
     if (exports.inElectron) {
@@ -26,7 +23,15 @@ exports.getProcessId = function () { return "" + process.pid; };
 /**
  * rewrite log files, note only be called in CI
  */
-exports.getLogger = function () { return logger; };
+var logger;
+exports.getLogger = function () {
+    if (!logger) {
+        var output = fs_1.default.createWriteStream(path_1.default.join(process.cwd(), 'stdout.log'));
+        var errorOutput = fs_1.default.createWriteStream(path_1.default.join(process.cwd(), 'stderr.log'));
+        logger = new console.Console({ stdout: output, stderr: errorOutput });
+    }
+    return logger;
+};
 exports.shorternUrl = function (url) {
     try {
         var parsed = new URL(url);

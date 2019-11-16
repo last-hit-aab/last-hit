@@ -3,10 +3,6 @@ import path from 'path';
 import Environment from '../config/env';
 import { FlowFile, Story, Flow } from '../types';
 
-const output = fs.createWriteStream(path.join(process.cwd(), 'stdout.log'));
-const errorOutput = fs.createWriteStream(path.join(process.cwd(), 'stderr.log'));
-const logger = new console.Console({ stdout: output, stderr: errorOutput });
-
 export const inElectron = !!process.versions.electron;
 
 export const getTempFolder = (fallbackFolder?: string): string | undefined => {
@@ -27,7 +23,15 @@ export const getProcessId = (): string => `${process.pid}`;
 /**
  * rewrite log files, note only be called in CI
  */
-export const getLogger = (): Console => logger;
+let logger: Console;
+export const getLogger = (): Console => {
+	if (!logger) {
+		const output = fs.createWriteStream(path.join(process.cwd(), 'stdout.log'));
+		const errorOutput = fs.createWriteStream(path.join(process.cwd(), 'stderr.log'));
+		logger = new console.Console({ stdout: output, stderr: errorOutput });
+	}
+	return logger;
+};
 
 export const shorternUrl = (url: string): string => {
 	try {
