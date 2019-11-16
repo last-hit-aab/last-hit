@@ -35,42 +35,42 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-require("colors");
-var console_1 = __importDefault(require("console"));
-var config_1 = require("./lib/config");
-var handler_1 = require("./lib/handler");
-var utils_1 = require("./lib/utils");
-var processId = utils_1.getProcessId();
-console_1.default.info(("Process[" + processId + "] started.").bold.green);
-(function () { return __awaiter(void 0, void 0, void 0, function () {
-    var env, flows, _a;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0:
-                _b.trys.push([0, 6, , 7]);
-                return [4 /*yield*/, config_1.loadConfig()];
-            case 1:
-                env = _b.sent();
-                flows = utils_1.findFlows(env);
-                if (!env.isOnParallel()) return [3 /*break*/, 3];
-                return [4 /*yield*/, handler_1.doOnMultipleProcesses(flows, env)];
-            case 2:
-                _b.sent();
-                return [3 /*break*/, 5];
-            case 3: return [4 /*yield*/, handler_1.doOnSingleProcess(flows, env)];
-            case 4:
-                _b.sent();
-                _b.label = 5;
-            case 5: return [3 /*break*/, 7];
-            case 6:
-                _a = _b.sent();
-                return [2 /*return*/, Promise.reject()];
-            case 7: return [2 /*return*/];
-        }
-    });
-}); })().catch(function () { return process.exit(1); });
-//# sourceMappingURL=index.js.map
+var destory = function (replayers, logger) {
+    logger.info('destory all puppeteer browsers.');
+    Object.keys(replayers).forEach(function (key) { return __awaiter(void 0, void 0, void 0, function () {
+        var browser, _a, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
+                    logger.info("destory puppeteer browser[" + key + "]");
+                    browser = replayers[key].getBrowser();
+                    delete replayers[key];
+                    _c.label = 1;
+                case 1:
+                    _c.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, browser.disconnect()];
+                case 2:
+                    _c.sent();
+                    return [3 /*break*/, 4];
+                case 3:
+                    _a = _c.sent();
+                    return [3 /*break*/, 4];
+                case 4:
+                    _c.trys.push([4, 6, , 7]);
+                    return [4 /*yield*/, browser.close()];
+                case 5:
+                    _c.sent();
+                    return [3 /*break*/, 7];
+                case 6:
+                    _b = _c.sent();
+                    return [3 /*break*/, 7];
+                case 7: return [2 /*return*/];
+            }
+        });
+    }); });
+};
+exports.default = (function (replayers, logger) {
+    return function () { return destory(replayers, logger); };
+});
+//# sourceMappingURL=replayer-destoryor.js.map

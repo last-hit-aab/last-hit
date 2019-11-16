@@ -1,6 +1,6 @@
 import { BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import puppeteer, { Browser } from 'puppeteer';
-import { Replayer } from '../replayer/types';
+import { ReplayerHelper } from '../replayer/types';
 import { Device } from '../types';
 import BrowserHelper from './browser-helper';
 import PageHelper from './page-helper';
@@ -89,9 +89,9 @@ class NodesMap {
 }
 
 class Recorder {
-	private replayer: Replayer;
+	private replayer: ReplayerHelper;
 	private browsers: BrowsersCache = {};
-	initialize(replayer: Replayer) {
+	initialize(replayer: ReplayerHelper) {
 		this.replayer = replayer;
 		this.launch();
 	}
@@ -101,7 +101,7 @@ class Recorder {
 	private generateKeyByString(storyName, flowName) {
 		return `[${flowName}@${storyName}]`;
 	}
-	private getReplayer(): Replayer {
+	private getReplayer(): ReplayerHelper {
 		return this.replayer;
 	}
 	private getBrowsers(): BrowsersCache {

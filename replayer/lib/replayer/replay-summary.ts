@@ -1,10 +1,12 @@
+import Environment from '../config/env';
+import { Summary, Step } from '../types';
+
 class ReplaySummary {
-	/**
-	 * @param {Object} options
-	 * @param {string} options.storyName
-	 * @param {Flow} options.flow
-	 * @param {Environment} options.env
-	 */
+	private storyName: string;
+	private flowName: string;
+	private env: Environment;
+	private summary: Summary;
+
 	constructor(options) {
 		const { storyName, flow, env } = options;
 		this.storyName = storyName;
@@ -30,18 +32,19 @@ class ReplaySummary {
 	getSummary() {
 		return this.summary;
 	}
-	async compareScreenshot(step) {
+	compareScreenshot(step: Step): void {
 		this.summary.screenCompareList.push({
 			stepUuid: step.stepUuid,
 			stepIndex: step.stepIndex,
 			target: step.target,
 			path: step.path,
 			csspath: step.csspath,
+			custompath: step.custompath,
 			human: step.human,
 			type: step.type
 		});
 	}
-	async handleError(step, error) {
+	async handleError(step: Step, error: Error): Promise<boolean> {
 		if (step.type == 'ajax') {
 			// ignore
 		} else {
@@ -49,7 +52,7 @@ class ReplaySummary {
 		}
 		return Promise.resolve(true);
 	}
-	async handle(step) {
+	async handle(step: Step): Promise<boolean> {
 		if (step.type == 'ajax') {
 			// ignore
 			this.summary.numberOfSuccess += 1;
@@ -59,19 +62,19 @@ class ReplaySummary {
 		}
 		return Promise.resolve(true);
 	}
-	async handleAjaxSuccess(url, usedTime) {
+	async handleAjaxSuccess(url: string, usedTime: number): Promise<void> {
 		this.summary.numberOfAjax++;
 		if (usedTime >= this.getEnvironment().getSlowAjaxTime()) {
 			this.summary.slowAjaxRequest.push({ url, time: usedTime });
 		}
 	}
-	async handleAjaxFail(url, usedTime) {
+	async handleAjaxFail(url: string, usedTime: number): Promise<void> {
 		this.summary.numberOfAjax++;
 		if (usedTime >= this.getEnvironment().getSlowAjaxTime()) {
 			this.summary.slowAjaxRequest.push({ url, time: usedTime });
 		}
 	}
-	async print() {
+	print() {
 		console.table(
 			[this.summary],
 			[
@@ -89,4 +92,4 @@ class ReplaySummary {
 	}
 }
 
-module.exports = ReplaySummary;
+export default ReplaySummary;

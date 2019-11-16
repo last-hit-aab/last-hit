@@ -35,42 +35,59 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-require("colors");
-var console_1 = __importDefault(require("console"));
-var config_1 = require("./lib/config");
-var handler_1 = require("./lib/handler");
-var utils_1 = require("./lib/utils");
-var processId = utils_1.getProcessId();
-console_1.default.info(("Process[" + processId + "] started.").bold.green);
-(function () { return __awaiter(void 0, void 0, void 0, function () {
-    var env, flows, _a;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0:
-                _b.trys.push([0, 6, , 7]);
-                return [4 /*yield*/, config_1.loadConfig()];
-            case 1:
-                env = _b.sent();
-                flows = utils_1.findFlows(env);
-                if (!env.isOnParallel()) return [3 /*break*/, 3];
-                return [4 /*yield*/, handler_1.doOnMultipleProcesses(flows, env)];
-            case 2:
-                _b.sent();
-                return [3 /*break*/, 5];
-            case 3: return [4 /*yield*/, handler_1.doOnSingleProcess(flows, env)];
-            case 4:
-                _b.sent();
-                _b.label = 5;
-            case 5: return [3 /*break*/, 7];
-            case 6:
-                _a = _b.sent();
-                return [2 /*return*/, Promise.reject()];
-            case 7: return [2 /*return*/];
-        }
-    });
-}); })().catch(function () { return process.exit(1); });
-//# sourceMappingURL=index.js.map
+/**
+ * for each step execution
+ * return true means already done or ignored
+ * return false means not handled
+ */
+var Select2 = /** @class */ (function () {
+    function Select2() {
+    }
+    Select2.prototype.mousedown = function (options) {
+        return __awaiter(this, void 0, void 0, function () {
+            var elementClass;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, options.getTagName()];
+                    case 1:
+                        if (!((_a.sent()) === 'SPAN')) return [3 /*break*/, 4];
+                        return [4 /*yield*/, options.getClassNames()];
+                    case 2:
+                        elementClass = _a.sent();
+                        if (!(elementClass.search('select2-') !== -1)) return [3 /*break*/, 4];
+                        options.getLogger().log("found select2 for this mousedown, need execute mousedown");
+                        return [4 /*yield*/, options.getElement().click()];
+                    case 3:
+                        _a.sent();
+                        return [2 /*return*/, true];
+                    case 4: return [2 /*return*/, false];
+                }
+            });
+        });
+    };
+    Select2.prototype.click = function (options) {
+        return __awaiter(this, void 0, void 0, function () {
+            var elementClass;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, options.getTagName()];
+                    case 1:
+                        if (!((_a.sent()) === 'SPAN')) return [3 /*break*/, 3];
+                        return [4 /*yield*/, options.getClassNames()];
+                    case 2:
+                        elementClass = _a.sent();
+                        if (elementClass.search('select2-') !== -1) {
+                            options.getLogger().log("found select2 for this click, need skip click");
+                            return [2 /*return*/, true];
+                        }
+                        _a.label = 3;
+                    case 3: return [2 /*return*/, false];
+                }
+            });
+        });
+    };
+    return Select2;
+}());
+exports.default = Select2;
+//# sourceMappingURL=select2.js.map

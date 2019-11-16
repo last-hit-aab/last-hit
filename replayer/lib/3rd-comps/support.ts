@@ -1,29 +1,38 @@
-/**
- * This callback is displayed as a global member.
- * @callback ElementRetriever
- * @param {ElementHandle} element
- * @returns {string}
- */
+import Select2 from './select2';
+import { Page, ElementHandle } from 'puppeteer';
+import { Step } from '../types';
 
-const Select2 = require('./select2');
+export type ElementRetriever = (element: ElementHandle) => Promise<string>;
+export type ElementAttributeValueRetriever = (
+	element: ElementHandle,
+	attributeName: string
+) => Promise<string>;
+export type ThirdStepSupportOptions = {
+	page: Page;
+	element: ElementHandle;
+	tagNameRetrieve: ElementRetriever;
+	elementTypeRetrieve: ElementRetriever;
+	classNamesRetrieve: ElementRetriever;
+	attrValueRetrieve: ElementAttributeValueRetriever;
+	steps: Array<Step>;
+	currentStepIndex: number;
+	logger: Console;
+};
 
 const thirdParties = [new Select2()];
 
 class ThirdStepSupport {
-	/**
-	 *
-	 * @param {Object} options
-	 * @param {Page} options.page
-	 * @param {ElementHandle} options.element
-	 * @param {ElementRetriever} options.tagNameRetrieve
-	 * @param {ElementRetriever} options.elementTypeRetrieve
-	 * @param {ElementRetriever} options.classNamesRetrieve
-	 * @param {ElementRetriever} options.attrValueRetrieve
-	 * @param {Step[]} options.steps
-	 * @param {number} options.currentStepIndex
-	 * @param {Console} options.logger
-	 */
-	constructor(options) {
+	private page: Page;
+	private element: ElementHandle;
+	private tagNameRetrieve: ElementRetriever;
+	private elementTypeRetrieve: ElementRetriever;
+	private classNamesRetrieve: ElementRetriever;
+	private attrValueRetrieve: ElementAttributeValueRetriever;
+	private steps: Array<Step>;
+	private currentStepIndex: number;
+	private logger: Console;
+
+	constructor(options: ThirdStepSupportOptions) {
 		this.page = options.page;
 		this.element = options.element;
 		this.tagNameRetrieve = options.tagNameRetrieve;
@@ -34,74 +43,44 @@ class ThirdStepSupport {
 		this.currentStepIndex = options.currentStepIndex;
 		this.logger = options.logger;
 	}
-	/**
-	 * get page
-	 * @returns {Page} puppeteer page
-	 */
-	getPage() {
+	getPage(): Page {
 		return this.page;
 	}
-	/**
-	 * get element
-	 * @returns {ElementHandle} puppeteer element handle
-	 */
-	getElement() {
+	getElement(): ElementHandle {
 		return this.element;
 	}
-	/**
-	 * get tag name
-	 * @returns {string}
-	 */
-	async getTagName() {
+	async getTagName(): Promise<string> {
 		return await this.tagNameRetrieve(this.element);
 	}
-	/**
-	 * get element type
-	 * @returns {string}
-	 */
-	async getElementType() {
+	async getElementType(): Promise<string> {
 		return await this.elementTypeRetrieve(this.element);
 	}
-	/**
-	 * get class names
-	 * @returns {string}
-	 */
-	async getClassNames() {
+	async getClassNames(): Promise<string> {
 		return await this.classNamesRetrieve(this.element);
 	}
-	/**
-	 * get attribute value
-	 * @param {string} attrName
-	 * @returns {string}
-	 */
-	async getAttrValue(attrName) {
+	async getAttrValue(attrName: string): Promise<string> {
 		return await this.attrValueRetrieve(this.element, attrName);
 	}
-	getSteps() {
+	getSteps(): Array<Step> {
 		return this.steps;
 	}
-	getCurrentStep() {
+	getCurrentStep(): Step {
 		return this.steps[this.getCurrentStepIndex()];
 	}
-	getCurrentStepIndex() {
+	getCurrentStepIndex(): number {
 		return this.currentStepIndex;
 	}
-	getLogger() {
+	getLogger(): Console {
 		return this.logger;
 	}
-
 	// step execution
-	async mousedown() {
+	async mousedown(): Promise<boolean> {
 		return await this.do('mousedown');
 	}
-	async click() {
+	async click(): Promise<boolean> {
 		return await this.do('click');
 	}
-
-	/**
-	 * @param {string} methodName
-	 */
-	async do(methodName) {
+	async do(methodName: string): Promise<boolean> {
 		// starts with a resolved promise
 		// if any third-party support handled step execution, should return a resolved promise with true
 		// otherwise return a resolved promise with false
@@ -118,8 +97,8 @@ class ThirdStepSupport {
 				}
 			}
 			return Promise.resolve(false);
-		}, Promise.resolve());
+		}, Promise.resolve(false));
 	}
 }
 
-module.exports = ThirdStepSupport;
+export default ThirdStepSupport;

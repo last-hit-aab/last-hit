@@ -1,12 +1,12 @@
-import { Browser, Page, Target } from 'puppeteer';
+import { Browser, Target } from 'puppeteer';
 import uuidv4 from 'uuid/v4';
+import { Device } from '../types';
 import PageHelper from './page-helper';
 import AllPagesCache from './pages-cache';
 import {
 	createPageWindowEventRecorder,
 	PageWindowEventRecorder
 } from './window-event-recorder-creator';
-import { Device } from '../types';
 
 export default class BrowserHelper {
 	private browser: Browser;

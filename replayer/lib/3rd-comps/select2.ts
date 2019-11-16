@@ -1,13 +1,12 @@
+import ThirdStepSupport from './support';
+
 /**
  * for each step execution
  * return true means already done or ignored
  * return false means not handled
  */
-module.exports = class Select2 {
-	/**
-	 * @param {ThirdStepSupportOptions} options
-	 */
-	async mousedown(options) {
+export default class Select2 {
+	async mousedown(options: ThirdStepSupport): Promise<boolean> {
 		//check select2 for mousedown
 		if ((await options.getTagName()) === 'SPAN') {
 			const elementClass = await options.getClassNames();
@@ -20,10 +19,7 @@ module.exports = class Select2 {
 
 		return false;
 	}
-	/**
-	 * @param {ThirdStepSupportOptions} options
-	 */
-	async click(options) {
+	async click(options: ThirdStepSupport): Promise<boolean> {
 		//check select2 for mousedown
 		if ((await options.getTagName()) === 'SPAN') {
 			const elementClass = await options.getClassNames();
@@ -34,4 +30,4 @@ module.exports = class Select2 {
 		}
 		return false;
 	}
-};
+}

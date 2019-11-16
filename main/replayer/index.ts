@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron';
 import { logger } from '../logger';
-import replayer from '../../replayer/lib/replay';
+import { createReplayer } from '../../replayer/lib/replayer';
 
-export default replayer({ emitter: ipcMain, logger });
+export default createReplayer({ emitter: ipcMain as any, logger: logger as any });
