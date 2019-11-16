@@ -20,6 +20,6 @@ jobs:
       - run: |
           cd replayer 
           yarn install
-          npm publish --access public
+          yarn run deploy
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
