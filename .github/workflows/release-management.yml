@@ -1,16 +1,19 @@
-name: Release-Management
+name: 'Publish-Draft-Release'
 
 on:
   push:
-    # branches to consider in the event; optional, defaults to all
     branches:
       - master
+    paths:
+      - package.json
 
 jobs:
-  update_draft_release:
+  publish_draft_release_on_version_bump:
     runs-on: ubuntu-latest
     steps:
-      # Drafts your next Release notes as Pull Requests are merged into "master"
-      - uses: toolmantim/release-drafter@v5.2.0
+      - uses: actions/checkout@v1
+      - uses: JamesMGreene/node-draft-releaser@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # with:
+        #   allow_unmatched_draft_tag: 'false'  # default value = 'true'
