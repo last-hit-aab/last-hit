@@ -20,6 +20,7 @@ jobs:
       - run: |
           cd replayer 
           yarn install
+          npm config set //registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN
           npm run deploy
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
