@@ -54,20 +54,20 @@ class Node {
 		});
 		nodesMap.put(this);
 	}
-	hasAttribute(name) {
+	hasAttribute(name: string): boolean {
 		return typeof this.attributes[name] !== 'undefined';
 	}
-	getAttribute(name) {
+	getAttribute(name: string): string {
 		return this.attributes[name] || '';
 	}
 }
 class NodesMap {
-	private attrIdMap = new Map();
-	private nodeIdMap = new Map();
-	shouldIgnore(id): boolean {
+	private attrIdMap = new Map<string, Array<Node>>();
+	private nodeIdMap = new Map<number, Node>();
+	shouldIgnore(id: string): boolean {
 		return PageHelper.shouldIgnore(id);
 	}
-	put(node): void {
+	put(node: Node): void {
 		const attrIdValue = node.getAttribute('id');
 		if (attrIdValue) {
 			let data = this.attrIdMap.get(attrIdValue);
@@ -79,10 +79,10 @@ class NodesMap {
 		}
 		this.nodeIdMap.set(node.nodeId, node);
 	}
-	get(nodeId) {
+	get(nodeId: number): Node {
 		return this.nodeIdMap.get(nodeId);
 	}
-	isIdAttrUnique(attrIdValue) {
+	isIdAttrUnique(attrIdValue: string): boolean {
 		const data = this.attrIdMap.get(attrIdValue);
 		return data && data.length === 1;
 	}
@@ -162,7 +162,7 @@ class Recorder {
 		}
 		return segs.length ? '/' + segs.join('/') : null;
 	}
-	private handleLaunch() {
+	private handleLaunch(): void {
 		ipcMain.on(
 			'launch-puppeteer',
 			async (
