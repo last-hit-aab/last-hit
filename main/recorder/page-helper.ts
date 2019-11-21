@@ -894,13 +894,13 @@ export default class PageHelper {
 			const response = request.response();
 			const resourceType = request.resourceType();
 
-			console.log("request-url",request.url())
-			console.log("resourceType",resourceType)
+			// console.log("request-url",request.url())
+			// console.log("resourceType",resourceType)
 
 			if (PageHelper.isDynamicResource(resourceType)) {
 				// dynamic resources
 
-				console.log("resourceType",resourceType)
+				// console.log("resourceType",resourceType)
 				const sendEvent = (body?: string) => {
 					try {
 						browserHelper.recordPageWindowEvent({
