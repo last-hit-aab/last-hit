@@ -18,11 +18,11 @@ const installListenersOnPage = async (page: Page) => {
 				return;
 			}
 			const WeixinJSBridgeData = {};
-			let imageData = null;
+			let imageData: string | null = null;
 			const transformPNG2JPEG = (base64Image: string): Promise<string> => {
 				return new Promise(resolve => {
 					const canvas = document.createElement('canvas');
-					const ctx = canvas.getContext('2d');
+					const ctx = canvas.getContext('2d')!;
 
 					const image = new Image();
 					image.crossOrigin = 'anonymous';
@@ -56,10 +56,10 @@ const installListenersOnPage = async (page: Page) => {
 							input.setAttribute('type', 'file');
 							input.style.visibility = 'hidden';
 							input.onchange = evt => {
-								const file = input.files[0];
+								const file = input.files![0];
 								const reader = new FileReader();
 								reader.onload = evt => {
-									const base64Image = evt.target.result;
+									const base64Image = evt.target!.result;
 									if (
 										typeof base64Image === 'string' &&
 										base64Image.startsWith('data:image/png;')
@@ -70,7 +70,7 @@ const installListenersOnPage = async (page: Page) => {
 											func({ localIds: [0], errMsg: 'chooseImage:ok' });
 										});
 									} else {
-										imageData = base64Image;
+										imageData = base64Image as string;
 										func({ localIds: [0], errMsg: 'chooseImage:ok' });
 									}
 								};
@@ -205,7 +205,7 @@ export const controlPage = async (replayer: Replayer, page: Page, device: Device
 			.find(
 				step =>
 					step.type === 'page-created' &&
-					(step.forStepUuid === currentStep.stepUuid || newUrl === shorternUrl(step.url))
+					(step.forStepUuid === currentStep.stepUuid || newUrl === shorternUrl(step.url!))
 			);
 		if (pageCreateStep == null) {
 			replayer
@@ -291,20 +291,20 @@ export const controlPage = async (replayer: Replayer, page: Page, device: Device
 			// do nothing when on record
 			return;
 		}
-		replayer.putRequest(replayer.findUuid(page), request);
+		replayer.putRequest(replayer.findUuid(page)!, request);
 	});
 	page.on('requestfinished', request => {
 		if (replayer.isOnRecord()) {
 			// do nothing when on record
 			return;
 		}
-		replayer.offsetRequest(replayer.findUuid(page), request, true);
+		replayer.offsetRequest(replayer.findUuid(page)!, request, true);
 	});
 	page.on('requestfailed', request => {
 		if (replayer.isOnRecord()) {
 			// do nothing when on record
 			return;
 		}
-		replayer.offsetRequest(replayer.findUuid(page), request, false);
+		replayer.offsetRequest(replayer.findUuid(page)!, request, false);
 	});
 };

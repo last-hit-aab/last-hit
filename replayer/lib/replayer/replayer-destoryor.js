@@ -39,33 +39,31 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var destory = function (replayers, logger) {
     logger.info('destory all puppeteer browsers.');
     Object.keys(replayers).forEach(function (key) { return __awaiter(void 0, void 0, void 0, function () {
-        var browser, _a, _b;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
+        var browser, _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
                     logger.info("destory puppeteer browser[" + key + "]");
                     browser = replayers[key].getBrowser();
                     delete replayers[key];
-                    _c.label = 1;
+                    if (!browser) return [3 /*break*/, 4];
+                    try {
+                        browser.disconnect();
+                    }
+                    catch (_c) {
+                        // ignore
+                    }
+                    _b.label = 1;
                 case 1:
-                    _c.trys.push([1, 3, , 4]);
-                    return [4 /*yield*/, browser.disconnect()];
+                    _b.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, browser.close()];
                 case 2:
-                    _c.sent();
+                    _b.sent();
                     return [3 /*break*/, 4];
                 case 3:
-                    _a = _c.sent();
+                    _a = _b.sent();
                     return [3 /*break*/, 4];
-                case 4:
-                    _c.trys.push([4, 6, , 7]);
-                    return [4 /*yield*/, browser.close()];
-                case 5:
-                    _c.sent();
-                    return [3 /*break*/, 7];
-                case 6:
-                    _b = _c.sent();
-                    return [3 /*break*/, 7];
-                case 7: return [2 /*return*/];
+                case 4: return [2 /*return*/];
             }
         });
     }); });

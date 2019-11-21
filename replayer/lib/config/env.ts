@@ -15,7 +15,7 @@ class Environment {
 	private slowAjaxTime?: number;
 	private includes?: IncludingFilters;
 	private parallel?: number;
-	private child?: boolean;
+	private child: boolean;
 
 	private wrappers: Wrapper[];
 
@@ -23,9 +23,6 @@ class Environment {
 
 	constructor(options: EnvironmentOptions) {
 		this.constructed = false;
-		if (!options) {
-			return;
-		}
 
 		this.constructed = true;
 		this.originalOptions = options;
@@ -40,6 +37,9 @@ class Environment {
 			this.urlReplaceTos = (options.urlReplaceTo || '').split('&&');
 			this.urlReplaceTos.length = this.urlReplaceRegexps.length;
 			this.urlReplaceTos = this.urlReplaceTos.map(to => (to ? to : ''));
+		} else {
+			this.urlReplaceRegexps = [];
+			this.urlReplaceTos = [];
 		}
 
 		this.sleepAfterChange = options.sleepAfterChange;
@@ -104,7 +104,7 @@ class Environment {
 		return false;
 	}
 	getParallel(): number {
-		return this.parallel;
+		return this.parallel || 1;
 	}
 	isOnParallel(): boolean {
 		return this.getParallel() !== 1;

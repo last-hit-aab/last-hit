@@ -16,7 +16,7 @@ class CI {
 			await pages.reduce(async (promise: Promise<void>, page: Page): Promise<void> => {
 				await promise;
 				try {
-					let jsCoverage = [];
+					let jsCoverage: Array<CoverageEntry> = [];
 					// let cssCoverage = [];
 					try {
 						jsCoverage = await page.coverage.stopJSCoverage();

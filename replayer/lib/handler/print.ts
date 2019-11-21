@@ -31,7 +31,7 @@ const binarySearch = (target: CoverageEntryRange, array: Array<CoverageEntryRang
 };
 
 export const print = (env: Environment): void => {
-	const reports = [];
+	const reports: Array<Report> = [];
 	const coverageMap = {};
 	const allCoverageData: Coverages = [];
 	const workspace = env.getWorkspace();
@@ -85,7 +85,9 @@ export const print = (env: Environment): void => {
 				'Ignored Errors': (item.ignoreErrorList || []).length,
 				'Ajax calls': item.numberOfAjax,
 				'Slow ajax calls': (item.slowAjaxRequest || []).length,
-				'Spent (ms)': Math.round((item.spent || '').split(' ')[1].split('ms')[0]),
+				'Spent (ms)': Math.round(
+					((item.spent || '').split(' ')[1].split('ms')[0] as unknown) as number
+				),
 				'Pass Rate(%)': ((item.numberOfSuccess / item.numberOfStep) * 100)
 					.toFixed(2)
 					.toString()

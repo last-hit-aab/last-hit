@@ -3,7 +3,7 @@ import jsonfile from 'jsonfile';
 import path from 'path';
 import stream from 'stream';
 import Environment from '../config/env';
-import { Flow, FlowFile, FlowResult, Story } from '../types';
+import { Flow, FlowFile, FlowResult, Story, Step } from '../types';
 import { getLogger, getProcessId, generateKeyByObject } from '../utils';
 import { ReplayEmitter, createReplayer } from '../replayer';
 import { CallbackEvent } from '../replayer/replay-emitter';
@@ -18,7 +18,7 @@ const findAndMergeForceDependencyFlows = (flow: Flow, env: Environment): Flow =>
 	const forceDependencyFlow = {
 		name: flow.name,
 		description: `Merged force dependency flows`,
-		steps: []
+		steps: [] as Array<Step>
 	};
 
 	let currentFlow = flow;
@@ -39,10 +39,17 @@ const findAndMergeForceDependencyFlows = (flow: Flow, env: Environment): Flow =>
 		forceDependencyFlow.steps.splice(
 			0,
 			0,
-			...steps.map(step => ({
-				...step,
-				origin: { story: storyName, flow: dependsFlow.name, stepIndex: step.stepIndex }
-			}))
+			...steps.map(
+				step =>
+					({
+						...step,
+						origin: {
+							story: storyName,
+							flow: dependsFlow.name,
+							stepIndex: step.stepIndex
+						}
+					} as Step)
+			)
 		);
 		currentFlow = dependsFlow;
 	}
@@ -50,7 +57,7 @@ const findAndMergeForceDependencyFlows = (flow: Flow, env: Environment): Flow =>
 	forceDependencyFlow.steps = forceDependencyFlow.steps.filter((step, index) => {
 		return index === 0 || (step.type !== 'start' && step.type !== 'end');
 	});
-	forceDependencyFlow.steps.push({ type: 'end' });
+	forceDependencyFlow.steps.push({ type: 'end' } as Step);
 	forceDependencyFlow.steps.forEach((step, index) => (step.stepIndex = index));
 
 	return forceDependencyFlow;
@@ -156,7 +163,7 @@ const handleReplayStepEnd = (
 					// abolish anyway
 					emitter.send(`continue-replay-step-${key}`, { command: 'abolish' });
 				})();
-			} else if (flow.steps[index].type === 'end' || index >= flow.steps.length - 1) {
+			} else if (flow.steps![index].type === 'end' || index >= flow.steps!.length - 1) {
 				// the end or last step is finished
 				(async () => {
 					console.info(
@@ -221,23 +228,23 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 		}
 		const forceDependsFlow = findAndMergeForceDependencyFlows(flow, env);
 		// remove end step
-		forceDependsFlow.steps.length = forceDependsFlow.steps.length - 1;
+		forceDependsFlow.steps!.length = forceDependsFlow.steps!.length - 1;
 		flow.steps
 			.filter((step, index) => index !== 0)
 			.forEach(step =>
-				forceDependsFlow.steps.push({
+				forceDependsFlow.steps!.push({
 					...step,
 					origin: {
 						story: storyName,
 						flow: flow.name,
 						stepIndex: step.stepIndex
 					}
-				})
+				} as Step)
 			);
 		flow = forceDependsFlow;
 	}
 
-	const startStep = flow.steps[0];
+	const startStep = flow.steps![0];
 	if (startStep.type !== 'start') {
 		console.info(
 			(`Process[${processId}] Flow ${flowKey} has no start step, ignored.` as any).red

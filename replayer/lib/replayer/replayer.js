@@ -144,6 +144,7 @@ var launchBrowser = function (replayer) { return __awaiter(void 0, void 0, void 
 }); };
 var Replayer = /** @class */ (function () {
     function Replayer(options) {
+        this.device = null;
         this.browser = null;
         /** key is uuid, value is page */
         this.pages = {};
@@ -1242,7 +1243,9 @@ var Replayer = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, element.evaluate(function (node) { return node.offsetWidth > 0 && node.offsetHeight > 0; })];
+                    case 0: return [4 /*yield*/, element.evaluate(function (node) {
+                            return node.offsetWidth > 0 && node.offsetHeight > 0;
+                        })];
                     case 1: return [2 /*return*/, _a.sent()];
                 }
             });

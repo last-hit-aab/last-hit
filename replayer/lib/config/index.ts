@@ -36,8 +36,8 @@ const readConfigFile = (workspace: string): Config => {
 	config.workspace = workspace;
 
 	// story or flow is appointed via cli, has highest priority
-	const storyName = args.story as string | null;
-	const flowName = args.flow as string | null;
+	const storyName = args.story as string | undefined;
+	const flowName = args.flow as string | undefined;
 	if (storyName) {
 		config.includes = [{ story: storyName, flow: flowName }];
 	}
