@@ -807,11 +807,11 @@ export default class PageHelper {
 				const uuid = uuidv4();
 				allPages.add(uuid, newPage);
 				await PageHelper.control(browserHelper, newPage);
-				const base64 = await PageHelper.captureScreenshot(newPage);
+				// const base64 = await PageHelper.captureScreenshot(newPage);
 				browserHelper.recordPageWindowEvent({
 					type: 'page-created',
 					url: newPage.url(),
-					image: base64,
+					// image: base64,
 					uuid
 				});
 			}
@@ -893,8 +893,14 @@ export default class PageHelper {
 			const url = request.url();
 			const response = request.response();
 			const resourceType = request.resourceType();
+
+			console.log("request-url",request.url())
+			console.log("resourceType",resourceType)
+
 			if (PageHelper.isDynamicResource(resourceType)) {
 				// dynamic resources
+
+				console.log("resourceType",resourceType)
 				const sendEvent = (body?: string) => {
 					try {
 						browserHelper.recordPageWindowEvent({
