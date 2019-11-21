@@ -42,4 +42,25 @@ export const GlobalStyles = createGlobalStyle`
 	label.bp3-label.margin-bottom-0 {
 		margin-bottom: 0;
 	}
+
+	/** overlay */
+	div.bp3-overlay {
+		> div.bp3-card {
+			min-height: 200px;
+			max-height: calc(100vh - 200px);
+			top: 50%;
+			transform: translateY(-50%);
+			display: flex;
+			flex-direction: column;
+			> div.overlay-placeholder {
+				flex-grow: 1;
+			}
+		}
+		&.small {
+			> div.bp3-card {
+				width: 600px;
+				left: calc(50vw - 300px);
+			}
+		}
+	}
 `;

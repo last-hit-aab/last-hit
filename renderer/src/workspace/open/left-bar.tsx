@@ -1,6 +1,8 @@
 import { Button } from '@blueprintjs/core';
 import React from 'react';
 import styled from 'styled-components';
+import UIContext from '../../common/context';
+import { EventTypes } from '../../events';
 
 const Container = styled.div`
 	display: flex;
@@ -18,10 +20,20 @@ const Segment = styled.div`
 `;
 
 export default () => {
+	const { emitter } = React.useContext(UIContext);
+	const onToggleNagivatorClicked = () => {
+		emitter.emit(EventTypes.TOGGLE_NAVIGATOR);
+	};
+
 	return (
 		<Container>
 			<Segment title="Navigator">
-				<Button minimal={true} icon="inbox" large={true} />
+				<Button
+					minimal={true}
+					icon="inbox"
+					large={true}
+					onClick={onToggleNagivatorClicked}
+				/>
 			</Segment>
 			<Segment title="Step Search">
 				<Button minimal={true} icon="search" large={true} />

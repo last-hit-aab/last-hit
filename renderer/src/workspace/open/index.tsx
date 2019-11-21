@@ -38,6 +38,11 @@ export default (): JSX.Element => {
 			window.onbeforeunload = null;
 		};
 	});
+	React.useEffect(() => {
+		const { name, workspaceFile } = getActiveWorkspace()!.getSettings();
+		ipcRenderer.send('workspace-opened', { name, workspaceFile });
+		// eslint-disable-next-line
+	}, [0]);
 
 	return (
 		<Container>
