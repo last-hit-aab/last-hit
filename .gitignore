@@ -21,3 +21,5 @@ yarn-error.log
 # ignore compiled js and map files
 main/**/*.js
 main/**/*.js.map
+
+.material
