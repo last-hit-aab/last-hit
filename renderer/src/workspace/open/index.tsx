@@ -5,6 +5,8 @@ import { getActiveWorkspace } from '../../active';
 import { closeCurrentWorkspace } from '../../files';
 import BottomBar from './bottom-bar';
 import MainContent from './main-content';
+import StoryCreateDialog from '../story/create-dialog';
+import StoryRenameDialog from '../story/rename-dialog';
 
 const onBeforeUnload = (evt: BeforeUnloadEvent) => {
 	remote.dialog
@@ -48,6 +50,8 @@ export default (): JSX.Element => {
 		<Container>
 			<MainContent />
 			<BottomBar />
+			<StoryCreateDialog />
+			<StoryRenameDialog />
 		</Container>
 	);
 };

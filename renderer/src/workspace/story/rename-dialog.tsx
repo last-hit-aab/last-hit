@@ -3,38 +3,40 @@ import { remote } from 'electron';
 import React from 'react';
 import UIContext from '../../common/context';
 import { EventTypes } from '../../events';
-import { createStory } from '../../files';
+import { Story } from '../../types';
+import { renameStory } from '../../files';
 
-const TheDialog = (): JSX.Element => {
+const TheDialog = (props: { story: Story }): JSX.Element => {
+	const { story } = props;
 	const { emitter } = React.useContext(UIContext);
 	const close = () => {
-		emitter.emit(EventTypes.CLOSE_STORY_CREATE_DIALOG);
+		emitter.emit(EventTypes.CLOSE_STORY_RENAME_DIALOG);
 	};
 
 	let storyNameInput: HTMLInputElement | null;
-	const onConfirmClicked = async () => {
+	const onConfirmClicked = () => {
 		const name = storyNameInput!.value.trim();
 		if (name.length === 0) {
 			remote.dialog
 				.showMessageBox(remote.getCurrentWindow(), {
 					type: 'error',
 					title: 'Invalid Input',
-					message: 'Please, specify story name.'
+					message: 'Please, specify new story name.'
 				})
 				.finally(() => storyNameInput!.focus());
 			return;
 		}
 
 		try {
-			const story = await createStory({ name });
-			emitter.emit(EventTypes.STORY_CREATED, story);
+			renameStory(story, name);
+			emitter.emit(EventTypes.STORY_RENAMED, story);
 			close();
 		} catch (e) {
 			console.log(e);
 			remote.dialog.showMessageBox(remote.getCurrentWindow(), {
 				type: 'error',
 				title: 'Invalid Input',
-				message: `Failed to create story "${name}".`,
+				message: `Failed to rename story to "${name}".`,
 				detail: typeof e === 'string' ? e : e.message
 			});
 		}
@@ -52,8 +54,8 @@ const TheDialog = (): JSX.Element => {
 			className={`${Classes.OVERLAY_CONTAINER} small`}
 			autoFocus={true}>
 			<div className={`${Classes.CARD} ${Classes.ELEVATION_2}`}>
-				<h3 className="bp3-heading">Story create</h3>
-				<FormGroup label="Please, specify story name.">
+				<h3 className="bp3-heading">Story rename</h3>
+				<FormGroup label={`Please, specify new story name instead of "${story.name}".`}>
 					<InputGroup
 						fill={true}
 						onKeyPress={handleKeyPress}
@@ -75,21 +77,21 @@ const TheDialog = (): JSX.Element => {
 export default (): JSX.Element => {
 	const { emitter } = React.useContext(UIContext);
 
-	const [opened, setOpened] = React.useState(false);
+	const [story, setStory] = React.useState(null as Story | null);
 	React.useEffect(() => {
-		const openMe = (): void => setOpened(true);
-		const closeMe = (): void => setOpened(false);
-		emitter.on(EventTypes.OPEN_STORY_CREATE_DIALOG, openMe);
-		emitter.on(EventTypes.CLOSE_STORY_CREATE_DIALOG, closeMe);
+		const openMe = (story: Story): void => setStory(story);
+		const closeMe = (): void => setStory(null);
+		emitter.on(EventTypes.OPEN_STORY_RENAME_DIALOG, (story: Story) => openMe(story));
+		emitter.on(EventTypes.CLOSE_STORY_RENAME_DIALOG, closeMe);
 
 		return () => {
-			emitter.off(EventTypes.OPEN_STORY_CREATE_DIALOG, openMe);
-			emitter.off(EventTypes.CLOSE_STORY_CREATE_DIALOG, closeMe);
+			emitter.off(EventTypes.OPEN_STORY_RENAME_DIALOG, openMe);
+			emitter.off(EventTypes.CLOSE_STORY_RENAME_DIALOG, closeMe);
 		};
 	});
 
-	if (opened) {
-		return <TheDialog />;
+	if (story != null) {
+		return <TheDialog story={story} />;
 	} else {
 		return <React.Fragment />;
 	}

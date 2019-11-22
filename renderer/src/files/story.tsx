@@ -3,6 +3,7 @@ import jsonfile from 'jsonfile';
 import path from 'path';
 import { getActiveWorkspace } from '../active';
 import { Story, WorkspaceSettings } from '../types';
+import fse from 'fs-extra';
 
 export const asStoryFileName = (name: string): string => {
 	return `${name}.story.json`;
@@ -55,4 +56,29 @@ export const createStory = async (options: {
 	structure.stories.sort((a, b) => a.name.localeCompare(b.name));
 
 	return Promise.resolve(story);
+};
+
+/**
+ * always on active workspace
+ */
+export const renameStory = (story: Story, newname: string) => {
+	const workspace = getActiveWorkspace()!;
+	const settings = workspace.getSettings();
+	const structure = workspace.getStructure();
+	const workspaceFile = settings.workspaceFile;
+	const folder = path.parse(workspaceFile).dir;
+
+	const storyFolder = getStoryFolder(settings, story);
+	if (isStoryFileExists(settings, story)) {
+		fse.renameSync(
+			getStoryFilePath(settings, story),
+			path.join(storyFolder, asStoryFileName(newname))
+		);
+	}
+	if (isStoryFolderExists(settings, story)) {
+		fse.renameSync(storyFolder, path.join(folder, newname));
+	}
+
+	story.name = newname;
+	structure.stories.sort((a: Story, b: Story) => a.name.localeCompare(b.name));
 };
