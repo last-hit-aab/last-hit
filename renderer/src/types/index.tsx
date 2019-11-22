@@ -1,3 +1,17 @@
+export type Device = {
+	name: string;
+	userAgent: string;
+	wechat?: boolean;
+	viewport: {
+		width: number;
+		height: number;
+		deviceScaleFactor: number;
+		isMobile: boolean;
+		hasTouch: boolean;
+		isLandscape: boolean;
+	};
+};
+
 export type Workspace = {
 	name: string;
 	path: string;
@@ -66,6 +80,72 @@ export type Step = {
 	/** sleep for given time(in ms) after step executed */
 	sleep?: number;
 };
+export type StartStep = Step & { type: StepType.START; url: string; device: Device };
+export type AjaxStep = Step & {
+	type: StepType.AJAX;
+	request: {
+		url: string;
+		method: 'GET' | 'POST' | 'DELETE' | 'PUT' | 'PATCH' | 'OPTION';
+		headers: { [key in string]: string };
+		body: any;
+		resourceType: string;
+	};
+	response: {
+		statusCode: number;
+		statusMessage: string;
+		headers: { [key in string]: string };
+		body: string;
+	};
+};
+export type ResourceLoadStep = Step & {
+	type: StepType.RESOURCE_LOAD;
+	request: {
+		url: string;
+		method: 'GET' | 'POST' | 'DELETE' | 'PUT' | 'PATCH' | 'OPTION';
+		resourceType: string;
+	};
+	response: {
+		statusCode: number;
+		statusMessage: string;
+	};
+};
+export type LoadStep = Step & { type: StepType.LOAD; target: string };
+export type UnloadStep = Step & { type: StepType.UNLOAD; target: string };
+export type PageClosedStep = Step & { type: StepType.PAGE_CLOSED; url: string };
+export type PageCreatedStep = Step & {
+	type: StepType.PAGE_CREATED;
+	url: string;
+	/** for install uuid of popup, manually input */
+	forStepUuid: string;
+};
+export type PageErrorStep = Step & { type: StepType.PAGE_ERROR; url: string };
+export type PageSwitchStep = Step & { type: StepType.PAGE_SWITCHED; url: string };
+export type DialogOpenStep = Step & {
+	type: StepType.DIALOG_OPEN;
+	url: string;
+	dialog: 'alert' | 'prompt' | 'confirm' | 'beforeunload';
+	message?: string;
+};
+export type DialogCloseStep = Step & {
+	type: StepType.DIALOG_CLOSE;
+	url: string;
+	dialog: 'alert' | 'prompt' | 'confirm' | 'beforeunload';
+	message?: string;
+};
+export type EndStep = Step & { type: StepType.END };
+export type DomEventStep = Step & { target: string };
+export type ClickStep = DomEventStep & { type: StepType.CLICK };
+export type MouseDownStep = DomEventStep & { type: StepType.MOUSE_DOWN };
+export type ScrollStep = DomEventStep & {
+	type: StepType.SCROLL;
+	scrollTop: number;
+	scrollLeft: number;
+};
+export type TextChangeEvent = DomEventStep & { type: StepType.CHANGE };
+export type FocusStep = DomEventStep & { type: StepType.FOCUS };
+export type ChangeStep = DomEventStep & { type: StepType.CHANGE; value: string };
+export type DomChangeStep = Step & { type: StepType.DOM_CHANGE };
+export type AnimationStep = Step & { type: StepType.ANIMATION };
 
 export type Flow = {
 	name: string;
@@ -85,4 +165,17 @@ export type Story = {
 };
 export type WorkspaceStructure = {
 	stories: Story[];
+};
+
+export enum FlowUIStatusEnum {
+	ON_RECORD = 'on-record',
+	ON_REPLAY = 'on-replay',
+	IDLE = 'idle',
+	NOT_OPEN = 'not-open'
+}
+
+export type FlowUIStatus = {
+	story: Story;
+	flow: Flow;
+	status: FlowUIStatusEnum;
 };

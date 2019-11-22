@@ -9,7 +9,7 @@ export const asStoryFileName = (name: string): string => {
 	return `${name}.story.json`;
 };
 
-const getStoryFolder = (settings: WorkspaceSettings, story: Story): string => {
+export const getStoryFolder = (settings: WorkspaceSettings, story: Story): string => {
 	return path.join(path.parse(settings.workspaceFile).dir, story.name);
 };
 
@@ -22,7 +22,7 @@ export const isStoryFileExists = (settings: WorkspaceSettings, story: Story): bo
 	return fs.existsSync(storyFilePath) && fs.statSync(storyFilePath).isFile();
 };
 
-const isStoryFolderExists = (settings: WorkspaceSettings, story: Story): boolean => {
+export const isStoryFolderExists = (settings: WorkspaceSettings, story: Story): boolean => {
 	const storyFolder = getStoryFolder(settings, story);
 	return fs.existsSync(storyFolder) && fs.statSync(storyFolder).isDirectory();
 };
@@ -81,4 +81,22 @@ export const renameStory = (story: Story, newname: string) => {
 
 	story.name = newname;
 	structure.stories.sort((a: Story, b: Story) => a.name.localeCompare(b.name));
+};
+
+/**
+ * always on active workspace
+ */
+export const deleteStory = (story: Story) => {
+	const workspace = getActiveWorkspace()!;
+	const settings = workspace.getSettings();
+	const structure = workspace.getStructure();
+
+	if (isStoryFolderExists(settings, story)) {
+		fse.removeSync(getStoryFolder(settings, story));
+	}
+
+	const index = structure.stories.indexOf(story);
+	if (index !== -1) {
+		structure.stories.splice(index, 1);
+	}
 };

@@ -29,7 +29,7 @@ const NoContentContainer = styled.div`
 export default () => {
 	const { emitter } = React.useContext(UIContext);
 	const onCreateStoryClicked = (): void => {
-		emitter.emit(EventTypes.OPEN_STORY_CREATE_DIALOG);
+		emitter.emit(EventTypes.ASK_CREATE_STORY);
 	};
 	
 	return (

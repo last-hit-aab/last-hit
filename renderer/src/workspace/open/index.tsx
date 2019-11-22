@@ -3,10 +3,21 @@ import React from 'react';
 import styled from 'styled-components';
 import { getActiveWorkspace } from '../../active';
 import { closeCurrentWorkspace } from '../../files';
-import BottomBar from './bottom-bar';
-import MainContent from './main-content';
+import FlowCreateDialog from '../flow/create-dialog';
+import FlowDelete from '../flow/delete';
+import FlowRecordDialog from '../flow/record-dialog';
+import FlowRenameDialog from '../flow/rename-dialog';
+import FlowReplayDialog from '../flow/replay-dialog';
+import ReplaySummaryDrawer from '../flow/replay-summary-drawer';
+import FlowSettingsDialog from '../flow/settings-dialog';
+import StepSearchDrawer from '../step/step-search-drawer';
+import StepScreenshotDialog from '../step/thumbnail-dialog';
 import StoryCreateDialog from '../story/create-dialog';
+import StoryDelete from '../story/delete';
 import StoryRenameDialog from '../story/rename-dialog';
+import BottomBar from './bottom-bar';
+import EnvDialog from './env-dialog';
+import MainContent from './main-content';
 
 const onBeforeUnload = (evt: BeforeUnloadEvent) => {
 	remote.dialog
@@ -52,6 +63,17 @@ export default (): JSX.Element => {
 			<BottomBar />
 			<StoryCreateDialog />
 			<StoryRenameDialog />
+			<StoryDelete />
+			<FlowCreateDialog />
+			<FlowRenameDialog />
+			<FlowDelete />
+			<FlowSettingsDialog />
+			<FlowReplayDialog />
+			<FlowRecordDialog />
+			<StepScreenshotDialog />
+			<ReplaySummaryDrawer />
+			<StepSearchDrawer />
+			<EnvDialog />
 		</Container>
 	);
 };

@@ -4,6 +4,7 @@
 	"homepage": "./",
 	"dependencies": {
 		"@blueprintjs/core": "^3.17.2",
+		"@blueprintjs/select": "^3.11.2",
 		"@fortawesome/fontawesome-svg-core": "^1.2.25",
 		"@fortawesome/free-brands-svg-icons": "^5.11.2",
 		"@fortawesome/free-regular-svg-icons": "^5.11.2",

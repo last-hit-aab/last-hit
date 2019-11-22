@@ -1,18 +1,17 @@
-import { ContextMenu, ITreeNode, Menu, MenuItem, Tree } from '@blueprintjs/core';
+import { ContextMenu, ITreeProps, Menu, MenuItem, Tree } from '@blueprintjs/core';
 import React from 'react';
 import styled from 'styled-components';
 import UIContext from '../../../common/context';
 import { EventTypes } from '../../../events';
 import { Flow, Story } from '../../../types';
+import { selectNode, TreeNode, TreeNodeData } from './utils';
 
 const ScrolledTree = styled(Tree)`
 	overflow: auto;
 	flex-grow: 1;
 `;
 
-export default (props: {
-	contents: Array<ITreeNode<Story | { story: Story; flow: Flow }>>;
-}): JSX.Element => {
+export default (props: { contents: Array<TreeNode> }): JSX.Element => {
 	const { contents } = props;
 	const { emitter } = React.useContext(UIContext);
 
@@ -20,52 +19,63 @@ export default (props: {
 	const [ignored, forceUpdate] = React.useReducer(x => x + 1, 0);
 
 	const onCreateStoryClicked = (): void => {
-		emitter.emit(EventTypes.OPEN_STORY_CREATE_DIALOG);
+		emitter.emit(EventTypes.ASK_CREATE_STORY);
 	};
 	const onRenameStoryClicked = (story: Story): void => {
-		emitter.emit(EventTypes.OPEN_STORY_RENAME_DIALOG, story);
+		emitter.emit(EventTypes.ASK_RENAME_STORY, story);
 	};
-	const onDeleteStoryClicked = (): void => {};
-	const onCreateFlowClicked = (): void => {};
-	const onRenameFlowClicked = (): void => {};
-	const onDeleteFlowClicked = (): void => {};
+	const onDeleteStoryClicked = (story: Story): void => {
+		emitter.emit(EventTypes.ASK_DELETE_STORY, story);
+	};
+	const onCreateFlowClicked = (story: Story): void => {
+		emitter.emit(EventTypes.ASK_CREATE_FLOW, story);
+	};
+	const onRenameFlowClicked = (story: Story, flow: Flow): void => {
+		emitter.emit(EventTypes.ASK_RENAME_FLOW, story, flow);
+	};
+	const onDeleteFlowClicked = (story: Story, flow: Flow): void => {
+		emitter.emit(EventTypes.ASK_DELETE_FLOW, story, flow);
+	};
 
-	const onNodeCollapse = (node: ITreeNode<any>): void => {
+	const onNodeCollapse = (node: TreeNode): void => {
 		node.isExpanded = false;
-		node.icon = 'folder-close';
+		(node.childNodes || []).forEach(flowNode => (flowNode.isSelected = false));
 		forceUpdate(ignored);
 	};
-	const onNodeExpand = (node: ITreeNode<any>): void => {
+	const onNodeExpand = (node: TreeNode): void => {
 		node.isExpanded = true;
-		node.icon = 'folder-open';
 		forceUpdate(ignored);
 	};
 	const createStoryContextMenu = (story: Story): JSX.Element => {
 		return (
 			<Menu>
 				<MenuItem text="New Story" onClick={onCreateStoryClicked} />
-				<MenuItem text="New Flow" onClick={onCreateFlowClicked} />
+				<MenuItem text="New Flow" onClick={() => onCreateFlowClicked(story)} />
 				<Menu.Divider />
 				<MenuItem text="Rename" onClick={() => onRenameStoryClicked(story)} />
-				<MenuItem text="Delete" onClick={onDeleteStoryClicked} />
+				<MenuItem text="Delete" onClick={() => onDeleteStoryClicked(story)} />
 			</Menu>
 		);
 	};
 	const createFlowContextMenu = (data: { story: Story; flow: Flow }): JSX.Element => {
+		const { story, flow } = data;
 		return (
 			<Menu>
-				<MenuItem text="New Flow" onClick={onCreateFlowClicked} />
+				<MenuItem text="New Flow" onClick={() => onCreateFlowClicked(story)} />
 				<Menu.Divider />
-				<MenuItem text="Rename" onClick={onRenameFlowClicked} />
-				<MenuItem text="Delete" onClick={onDeleteFlowClicked} />
+				<MenuItem text="Rename" onClick={() => onRenameFlowClicked(story, flow)} />
+				<MenuItem text="Delete" onClick={() => onDeleteFlowClicked(story, flow)} />
 			</Menu>
 		);
 	};
 	const onNodeContextMenu = (
-		node: ITreeNode<any>,
+		node: TreeNode,
 		nodePath: number[],
 		e: React.MouseEvent<HTMLElement>
 	): void => {
+		e.preventDefault();
+		selectNode(contents, node);
+		forceUpdate(ignored);
 		if (node.hasCaret) {
 			// is story
 			// mouse position is available on event
@@ -81,13 +91,21 @@ export default (props: {
 			});
 		}
 	};
+	const onNodeDoubleClick = (node: TreeNode): void => {
+		if (!node.hasCaret) {
+			selectNode(contents, node);
+			forceUpdate(ignored);
+			const { story, flow } = node.nodeData as { story: Story; flow: Flow };
+			emitter.emit(EventTypes.ASK_OPEN_FLOW, story, flow);
+		}
+	};
 
-	return (
-		<ScrolledTree
-			contents={contents}
-			onNodeCollapse={onNodeCollapse}
-			onNodeExpand={onNodeExpand}
-			onNodeContextMenu={onNodeContextMenu}
-		/>
-	);
+	const treeProps: ITreeProps<TreeNodeData> = {
+		contents,
+		onNodeCollapse,
+		onNodeExpand,
+		onNodeContextMenu,
+		onNodeDoubleClick
+	};
+	return <ScrolledTree {...(treeProps as any)} />;
 };

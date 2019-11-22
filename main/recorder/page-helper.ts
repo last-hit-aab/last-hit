@@ -106,7 +106,7 @@ export default class PageHelper {
 			const idShouldIgnore = (id: string): boolean =>
 				ignoredIdRegexps.some(regexp => regexp.test(id));
 			const idSelector = id => `#${CSS.escape(id)}`;
-			const nodeNameInCorrectCase = (elm: Element): string => {
+			const nodeNameInCorrectCase = (elm: Node & Element): string => {
 				// IMPORTANT shadow root is not concerned now, by last-hit-b 2019/10/24.
 				// const shadowRootType = this.shadowRootType();
 				// if (shadowRootType) {
@@ -156,7 +156,7 @@ export default class PageHelper {
 				if (!siblings) {
 					return 0;
 				} // Root node - no siblings.
-				let hasSameNamedElements;
+				let hasSameNamedElements: boolean;
 				for (let i = 0; i < siblings.length; ++i) {
 					if (areNodesSimilar(elm, siblings[i]) && siblings[i] !== elm) {
 						hasSameNamedElements = true;
@@ -351,7 +351,7 @@ export default class PageHelper {
 
 				return new StepPath(result, false);
 			};
-			const createCssPathFromElement = (elm, optimized) => {
+			const createCssPathFromElement = (elm: Element, optimized: boolean): string => {
 				if (elm.nodeType !== Node.ELEMENT_NODE) {
 					return '';
 				}
@@ -368,7 +368,7 @@ export default class PageHelper {
 					if (step.optimized) {
 						break;
 					}
-					contextNode = contextNode.parentNode;
+					contextNode = contextNode.parentNode as Element;
 				}
 
 				steps.reverse();
@@ -476,8 +476,8 @@ export default class PageHelper {
 				};
 			};
 
-			let scrollTimeoutHandle;
-			const eventHandler = e => {
+			let scrollTimeoutHandle: NodeJS.Timeout;
+			const eventHandler = (e: any) => {
 				if (!e) {
 					return;
 				}

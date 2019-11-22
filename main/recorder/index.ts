@@ -1,24 +1,26 @@
 import { BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
-import puppeteer, { Browser } from 'puppeteer';
+import puppeteer, { Browser, Page } from 'puppeteer';
 import { ReplayerHelper } from '../replayer/types';
 import { Device } from '../types';
 import BrowserHelper from './browser-helper';
 import PageHelper from './page-helper';
 import AllPagesCache from './pages-cache';
 import { BrowsersCache, CDPNode, CDPNodePseudoType } from './types';
+import cssesc from 'cssesc';
 
-class Node {
+class MyNode {
 	nodeId: number;
 	backendNodeId: number;
 	nodeType: number;
 	pseudoType?: CDPNodePseudoType;
 	localName: string;
+	nodeName: string;
 	attributes: { [key in string]: string } = {};
-	children: Node[];
-	parentNode?: Node;
-	previousSibling?: Node;
-	nextSibling?: Node;
-	pseudoElements: Node[];
+	children: MyNode[];
+	parentNode?: MyNode;
+	previousSibling?: MyNode;
+	nextSibling?: MyNode;
+	pseudoElements: MyNode[];
 
 	constructor(node: CDPNode, nodesMap: NodesMap) {
 		this.nodeId = node.nodeId;
@@ -26,6 +28,7 @@ class Node {
 		this.nodeType = node.nodeType;
 		this.pseudoType = node.pseudoType;
 		this.localName = node.localName;
+		this.nodeName = node.nodeName;
 
 		if (node.attributes && node.attributes.length > 0) {
 			for (
@@ -37,7 +40,7 @@ class Node {
 			}
 		}
 		this.children = (node.children || []).map(child => {
-			const childNode = new Node(child, nodesMap);
+			const childNode = new MyNode(child, nodesMap);
 			childNode.parentNode = this;
 			return childNode;
 		});
@@ -48,7 +51,7 @@ class Node {
 			prev.nextSibling = next;
 		}
 		this.pseudoElements = (node.pseudoElements || []).map(pseudo => {
-			const pseudoNode = new Node(pseudo, nodesMap);
+			const pseudoNode = new MyNode(pseudo, nodesMap);
 			pseudoNode.parentNode = this;
 			return pseudoNode;
 		});
@@ -62,12 +65,12 @@ class Node {
 	}
 }
 class NodesMap {
-	private attrIdMap = new Map<string, Array<Node>>();
-	private nodeIdMap = new Map<number, Node>();
+	private attrIdMap = new Map<string, Array<MyNode>>();
+	private nodeIdMap = new Map<number, MyNode>();
 	shouldIgnore(id: string): boolean {
 		return PageHelper.shouldIgnore(id);
 	}
-	put(node: Node): void {
+	put(node: MyNode): void {
 		const attrIdValue = node.getAttribute('id');
 		if (attrIdValue) {
 			let data = this.attrIdMap.get(attrIdValue);
@@ -79,12 +82,34 @@ class NodesMap {
 		}
 		this.nodeIdMap.set(node.nodeId, node);
 	}
-	get(nodeId: number): Node {
+	get(nodeId: number): MyNode {
 		return this.nodeIdMap.get(nodeId);
 	}
 	isIdAttrUnique(attrIdValue: string): boolean {
 		const data = this.attrIdMap.get(attrIdValue);
 		return data && data.length === 1;
+	}
+}
+
+const Node = {
+	ELEMENT_NODE: 1,
+	ATTRIBUTE_NODE: 2,
+	TEXT_NODE: 3,
+	CDATA_SECTION_NODE: 4,
+	PROCESSING_INSTRUCTION_NODE: 7,
+	COMMENT_NODE: 8,
+	DOCUMENT_NODE: 9
+};
+
+class StepPath {
+	private value: string;
+	optimized: boolean;
+	constructor(value: string, optimized: boolean = false) {
+		this.value = value;
+		this.optimized = optimized;
+	}
+	toString() {
+		return this.value;
 	}
 }
 
@@ -134,33 +159,267 @@ class Recorder {
 			}
 		}
 	}
-	private createXPathFromNode(node: Node, nodesMap: NodesMap): string | null {
-		let segs = [];
-		for (; node && node.nodeType == 1; node = node.parentNode) {
-			const attrIdValue = node.getAttribute('id');
-			if (node.hasAttribute('id') && !nodesMap.shouldIgnore(attrIdValue)) {
-				if (nodesMap.isIdAttrUnique(attrIdValue)) {
-					segs.unshift(`//*[@id="${attrIdValue}"]`);
-					return segs.join('/');
-				} else {
-					segs.unshift(`${node.localName.toLowerCase()}[@id="${attrIdValue}"]`);
+	private areNodesSimilar(left: MyNode, right: MyNode): boolean {
+		if (left === right) {
+			return true;
+		}
+
+		if (left.nodeType === Node.ELEMENT_NODE && right.nodeType === Node.ELEMENT_NODE) {
+			return left.localName === right.localName;
+		}
+
+		if (left.nodeType === right.nodeType) {
+			return true;
+		}
+
+		// XPath treats CDATA as text nodes.
+		const leftType = left.nodeType === Node.CDATA_SECTION_NODE ? Node.TEXT_NODE : left.nodeType;
+		const rightType =
+			right.nodeType === Node.CDATA_SECTION_NODE ? Node.TEXT_NODE : right.nodeType;
+		return leftType === rightType;
+	}
+	private getNodeIndexForXPath(element: MyNode): number {
+		const siblings = element.parentNode ? element.parentNode.children : null;
+		if (!siblings) {
+			return 0;
+		} // Root node - no siblings.
+		let hasSameNamedElements: boolean;
+		for (let i = 0; i < siblings.length; ++i) {
+			if (this.areNodesSimilar(element, siblings[i]) && siblings[i] !== element) {
+				hasSameNamedElements = true;
+				break;
+			}
+		}
+		if (!hasSameNamedElements) {
+			return 0;
+		}
+		let ownIndex = 1; // XPath indices start with 1.
+		for (let i = 0; i < siblings.length; ++i) {
+			if (this.areNodesSimilar(element, siblings[i])) {
+				if (siblings[i] === element) {
+					return ownIndex;
 				}
-			} else {
-				let index = 1;
-				let sib;
-				for (index = 1, sib = node.previousSibling; sib; sib = sib.previousSibling) {
-					if (sib.localName == node.localName) {
-						index++;
-					}
+				++ownIndex;
+			}
+		}
+		return -1; // An error occurred: |node| not found in parent's children.
+	}
+	private createXPathStep(element: MyNode, nodesMap: NodesMap, optimized: boolean): StepPath {
+		let ownValue: string;
+		const ownIndex = this.getNodeIndexForXPath(element);
+		if (ownIndex === -1) {
+			return null;
+		} // Error.
+
+		switch (element.nodeType) {
+			case Node.ELEMENT_NODE:
+				const id = element.getAttribute('id');
+				if (optimized && id && !nodesMap.shouldIgnore(id)) {
+					return new StepPath('//*[@id="' + id + '"]', true);
 				}
-				if (index > 1) {
-					segs.unshift(`${node.localName.toLowerCase()}[${index}]`);
-				} else {
-					segs.unshift(node.localName.toLowerCase());
+				ownValue = element.localName;
+				break;
+			case Node.ATTRIBUTE_NODE:
+				ownValue = '@' + element.nodeName;
+				break;
+			case Node.TEXT_NODE:
+			case Node.CDATA_SECTION_NODE:
+				ownValue = 'text()';
+				break;
+			case Node.PROCESSING_INSTRUCTION_NODE:
+				ownValue = 'processing-instruction()';
+				break;
+			case Node.COMMENT_NODE:
+				ownValue = 'comment()';
+				break;
+			case Node.DOCUMENT_NODE:
+				ownValue = '';
+				break;
+			default:
+				ownValue = '';
+				break;
+		}
+
+		if (ownIndex > 0) {
+			ownValue += '[' + ownIndex + ']';
+		}
+
+		return new StepPath(ownValue, element.nodeType === Node.DOCUMENT_NODE);
+	}
+	private createXPathFromNode(node: MyNode, nodesMap: NodesMap): string | null {
+		if (node.nodeType === Node.DOCUMENT_NODE) {
+			return '/';
+		}
+
+		const steps = [];
+		let contextNode = node;
+		while (contextNode) {
+			const step = this.createXPathStep(contextNode, nodesMap, true);
+			if (!step) {
+				break;
+			} // Error - bail out early.
+			steps.push(step);
+			if (step.optimized) {
+				break;
+			}
+			contextNode = contextNode.parentNode;
+		}
+
+		steps.reverse();
+		return (steps.length && steps[0].optimized ? '' : '/') + steps.join('/');
+	}
+	private idSelector(id: string) {
+		return `#${cssesc(id)}`;
+	}
+	private nodeNameInCorrectCase(elm: MyNode): string {
+		// IMPORTANT shadow root is not concerned now, by last-hit-b 2019/10/24.
+		// const shadowRootType = this.shadowRootType();
+		// if (shadowRootType) {
+		// 	return '#shadow-root (' + shadowRootType + ')';
+		// }
+
+		// If there is no local name, it's case sensitive
+		if (!elm.localName) {
+			return elm.nodeName;
+		}
+
+		// If the names are different lengths, there is a prefix and it's case sensitive
+		if (elm.localName.length !== elm.nodeName.length) {
+			return elm.nodeName;
+		}
+
+		// Return the localname, which will be case insensitive if its an html node
+		return elm.localName;
+	}
+	private prefixedElementClassNames(elm: MyNode): string[] {
+		const classNames = elm.getAttribute('class');
+		if (!classNames) {
+			return [];
+		}
+
+		return classNames
+			.split(/\s+/g)
+			.filter(Boolean)
+			.map(name => {
+				// The prefix is required to store "__proto__" in a object-based map.
+				return '$' + name;
+			});
+	}
+	private createCssPathStep(
+		elm: MyNode,
+		nodesMap: NodesMap,
+		optimized: boolean,
+		isTargetNode: boolean
+	): StepPath {
+		if (elm.nodeType !== Node.ELEMENT_NODE) {
+			return null;
+		}
+
+		const id = elm.getAttribute('id');
+		if (optimized) {
+			if (id && !nodesMap.shouldIgnore(id)) {
+				return new StepPath(this.idSelector(id), true);
+			}
+			const nodeNameLower = elm.nodeName.toLowerCase();
+			if (nodeNameLower === 'body' || nodeNameLower === 'head' || nodeNameLower === 'html') {
+				return new StepPath(this.nodeNameInCorrectCase(elm), true);
+			}
+		}
+		const nodeName = this.nodeNameInCorrectCase(elm);
+
+		if (id && !nodesMap.shouldIgnore(id)) {
+			return new StepPath(nodeName + this.idSelector(id), true);
+		}
+		const parent = elm.parentNode;
+		if (!parent || parent.nodeType === Node.DOCUMENT_NODE) {
+			return new StepPath(nodeName, true);
+		}
+
+		const prefixedOwnClassNamesArray = this.prefixedElementClassNames(elm);
+		let needsClassNames = false;
+		let needsNthChild = false;
+		let ownIndex = -1;
+		let elementIndex = -1;
+		const siblings = parent.children;
+		for (let i = 0; (ownIndex === -1 || !needsNthChild) && i < siblings.length; ++i) {
+			const sibling = siblings[i];
+			if (sibling.nodeType !== Node.ELEMENT_NODE) {
+				continue;
+			}
+			elementIndex += 1;
+			if (sibling === elm) {
+				ownIndex = elementIndex;
+				continue;
+			}
+			if (needsNthChild) {
+				continue;
+			}
+			if (this.nodeNameInCorrectCase(sibling) !== nodeName) {
+				continue;
+			}
+
+			needsClassNames = true;
+			const ownClassNames = new Set(prefixedOwnClassNamesArray);
+			if (!ownClassNames.size) {
+				needsNthChild = true;
+				continue;
+			}
+			const siblingClassNamesArray = this.prefixedElementClassNames(sibling);
+			for (let j = 0; j < siblingClassNamesArray.length; ++j) {
+				const siblingClass = siblingClassNamesArray[j];
+				if (!ownClassNames.has(siblingClass)) {
+					continue;
+				}
+				ownClassNames.delete(siblingClass);
+				if (!ownClassNames.size) {
+					needsNthChild = true;
+					break;
 				}
 			}
 		}
-		return segs.length ? '/' + segs.join('/') : null;
+
+		let result = nodeName;
+		if (
+			isTargetNode &&
+			nodeName.toLowerCase() === 'input' &&
+			elm.getAttribute('type') &&
+			(!id || nodesMap.shouldIgnore(id)) &&
+			!elm.getAttribute('class')
+		) {
+			result += '[type=' + cssesc(elm.getAttribute('type')) + ']';
+		}
+		if (needsNthChild) {
+			result += ':nth-child(' + (ownIndex + 1) + ')';
+		} else if (needsClassNames) {
+			for (const prefixedName of prefixedOwnClassNamesArray) {
+				result += '.' + cssesc(prefixedName.slice(1));
+			}
+		}
+
+		return new StepPath(result, false);
+	}
+	private createCssPathFromNode(node: MyNode, nodesMap: NodesMap): string {
+		if (node.nodeType !== Node.ELEMENT_NODE) {
+			return '';
+		}
+
+		const steps = [];
+		let contextNode = node;
+		while (contextNode) {
+			const step = this.createCssPathStep(contextNode, nodesMap, true, contextNode === node);
+			if (!step) {
+				// Error - bail out early.
+				break;
+			}
+			steps.push(step);
+			if (step.optimized) {
+				break;
+			}
+			contextNode = contextNode.parentNode;
+		}
+
+		steps.reverse();
+		return steps.join(' > ');
 	}
 	private handleLaunch(): void {
 		ipcMain.on(
@@ -310,7 +569,7 @@ class Recorder {
 								depth: -1
 							})) as { root: CDPNode };
 							const nodesMap = new NodesMap();
-							new Node(root, nodesMap);
+							new MyNode(root, nodesMap);
 							const {
 								nodeIds: [nodeId]
 							} = (await client.send('DOM.pushNodesByBackendIdsToFrontend', {
@@ -321,11 +580,12 @@ class Recorder {
 								node = node.parentNode;
 							}
 							const xpath = this.createXPathFromNode(node, nodesMap);
+							const csspath = this.createCssPathFromNode(node, nodesMap);
 							const windows = BrowserWindow.getAllWindows();
 							windows[0].show();
 							windows[0].focus();
 							windows[0].focusOnWebView();
-							event.reply(`dom-on-page-picked`, { path: xpath });
+							event.reply(`dom-on-page-picked`, { path: { xpath, csspath } });
 						}
 						await client.send('Overlay.setInspectMode', {
 							mode: 'none',

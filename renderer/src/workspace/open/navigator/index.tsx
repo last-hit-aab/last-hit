@@ -1,3 +1,4 @@
+import { Colors } from '@blueprintjs/core';
 import React from 'react';
 import styled from 'styled-components';
 import UIContext from '../../../common/context';
@@ -13,8 +14,10 @@ const Container = styled.div`
 	display: flex;
 	flex-direction: column;
 	width: 300px;
+	overflow: hidden;
+	border-right: 1px solid ${() => Colors.DARK_GRAY5};
 	transition: width 300ms ease-in-out;
-	&[data-hidden=true] {
+	&[data-hidden='true'] {
 		width: 0;
 	}
 `;
@@ -27,11 +30,15 @@ export default () => {
 	const [showMe, setShowMe] = React.useState(true);
 
 	React.useEffect(() => {
-		const toggleMe = () => setShowMe(!showMe);
-		emitter.on(EventTypes.TOGGLE_NAVIGATOR, toggleMe);
+		const toggleMe = () => {
+			const show = !showMe;
+			setShowMe(show);
+			emitter.emit(EventTypes.NAVIGATOR_TOGGLED, show);
+		};
+		emitter.on(EventTypes.ASK_TOGGLE_NAVIGATOR, toggleMe);
 
 		return () => {
-			emitter.off(EventTypes.TOGGLE_NAVIGATOR, toggleMe);
+			emitter.off(EventTypes.ASK_TOGGLE_NAVIGATOR, toggleMe);
 		};
 	});
 

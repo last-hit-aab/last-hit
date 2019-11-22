@@ -1,4 +1,4 @@
-import { Button } from '@blueprintjs/core';
+import { Button, Colors } from '@blueprintjs/core';
 import React from 'react';
 import styled from 'styled-components';
 import UIContext from '../../common/context';
@@ -7,6 +7,7 @@ import { EventTypes } from '../../events';
 const Container = styled.div`
 	display: flex;
 	flex-direction: column;
+	border-right: 1px solid ${() => Colors.DARK_GRAY5};
 `;
 const Placeholder = styled.div`
 	flex-grow: 1;
@@ -21,8 +22,14 @@ const Segment = styled.div`
 
 export default () => {
 	const { emitter } = React.useContext(UIContext);
-	const onToggleNagivatorClicked = () => {
-		emitter.emit(EventTypes.TOGGLE_NAVIGATOR);
+	const onToggleNagivatorClicked = (): void => {
+		emitter.emit(EventTypes.ASK_TOGGLE_NAVIGATOR);
+	};
+	const onStepSearchClicked = (): void => {
+		emitter.emit(EventTypes.ASK_STEP_SEARCH);
+	};
+	const onEnvClicked = (): void => {
+		emitter.emit(EventTypes.ASK_OPEN_ENV);
 	};
 
 	return (
@@ -36,53 +43,12 @@ export default () => {
 				/>
 			</Segment>
 			<Segment title="Step Search">
-				<Button minimal={true} icon="search" large={true} />
+				<Button minimal={true} icon="search" large={true} onClick={onStepSearchClicked} />
 			</Segment>
 			<Segment title="Environments">
-				<Button minimal={true} icon="heat-grid" large={true} />
+				<Button minimal={true} icon="heat-grid" large={true} onClick={onEnvClicked} />
 			</Segment>
 			<Placeholder />
 		</Container>
 	);
 };
-
-/* <Grid item className={classes.verticalIconBar} container direction="column">
-<IconButton
-	color="inherit"
-	aria-label="outline toogle"
-	title={collapsed ? 'Expand Outline' : 'Collapse Outline'}
-	onClick={onToggle}
->
-	{collapsed ? <KeyboardArrowRightRoundedIcon /> : <KeyboardArrowLeftRoundedIcon />}
-</IconButton>
-<Divider />
-<IconButton color="inherit" aria-label="outline story add" title="New Story" onClick={createStory}>
-	<StoryAddIcon />
-</IconButton>
-<Divider />
-<IconButton
-	color="inherit"
-	aria-label="outline search"
-	title="Step Search"
-	onClick={() => setState({ ...state, searchOpen: true })}
->
-	<FontAwesomeIcon icon={faSearch} />
-</IconButton>
-<IconButton
-	color="inherit"
-	aria-label="outline environments"
-	title="Environments"
-	onClick={() => setState({ ...state, envsOpen: true })}
->
-	<DevicesOtherIcon />
-</IconButton>
-<Grid item className={classes.verticalIconBarPlaceholder} />
-<SearchDialog
-	open={state.searchOpen}
-	close={() => {
-		setState({ ...state, searchOpen: false });
-		forceUpdateAll();
-	}}
-/>
-<EnvsDialog open={state.envsOpen} close={() => setState({ ...state, envsOpen: false })} />
-</Grid> */

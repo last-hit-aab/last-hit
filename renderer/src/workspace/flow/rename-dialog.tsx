@@ -3,53 +3,49 @@ import { remote } from 'electron';
 import React from 'react';
 import UIContext from '../../common/context';
 import { EventTypes } from '../../events';
-import { renameStory } from '../../files';
-import { Story } from '../../types';
-import { isFlowsAllOnIdle } from '../flow/utils';
+import { renameFlow } from '../../files';
+import { Flow, Story } from '../../types';
+import { isFlowsAllOnIdle } from './utils';
 
-const TheDialog = (props: { story: Story }): JSX.Element => {
-	const { story } = props;
-
+const TheDialog = (props: { story: Story; flow: Flow }): JSX.Element => {
+	const { story, flow } = props;
 	const { emitter } = React.useContext(UIContext);
 	const close = () => {
-		emitter.emit(EventTypes.CLOSE_STORY_RENAME_DIALOG);
+		emitter.emit(EventTypes.CLOSE_FLOW_RENAME_DIALOG);
 	};
 
-	let storyNameInput: HTMLInputElement | null;
+	let flowNameInput: HTMLInputElement | null;
 	const onConfirmClicked = async () => {
-		const name = storyNameInput!.value.trim();
+		const name = flowNameInput!.value.trim();
 		if (name.length === 0) {
 			remote.dialog
 				.showMessageBox(remote.getCurrentWindow(), {
 					type: 'error',
 					title: 'Invalid Input',
-					message: 'Please, specify new story name.'
+					message: 'Please, specify new flow name.'
 				})
-				.finally(() => storyNameInput!.focus());
+				.finally(() => flowNameInput!.focus());
 			return;
 		}
 
-		const canRename = await isFlowsAllOnIdle(
-			emitter,
-			(story.flows || []).map(flow => ({ story, flow }))
-		);
+		const canRename = await isFlowsAllOnIdle(emitter, [{ story, flow }]);
 		if (!canRename) {
 			remote.dialog.showMessageBox(remote.getCurrentWindow(), {
 				type: 'error',
 				title: 'Flows on operating.',
-				message: `Cannot rename story "${story.name}" when some of flows under current story are on operating, need to cancel operating manually first.`
+				message: `Cannot rename flow "${flow.name} @ ${story.name}" when some of flows under current flow are on operating, need to cancel operating manually first.`
 			});
 		} else {
 			try {
-				renameStory(story, name);
-				emitter.emit(EventTypes.STORY_RENAMED, story);
+				renameFlow(story, flow, name);
+				emitter.emit(EventTypes.FLOW_RENAMED, story, flow);
 				close();
 			} catch (e) {
 				console.error(e);
 				remote.dialog.showMessageBox(remote.getCurrentWindow(), {
 					type: 'error',
 					title: 'Invalid Input',
-					message: `Failed to rename story "${story.name}" to "${name}".`,
+					message: `Failed to rename flow "${flow.name}" to "${name}".`,
 					detail: typeof e === 'string' ? e : e.message
 				});
 			}
@@ -68,12 +64,13 @@ const TheDialog = (props: { story: Story }): JSX.Element => {
 			className={`${Classes.OVERLAY_CONTAINER} small`}
 			autoFocus={true}>
 			<div className={`${Classes.CARD} ${Classes.ELEVATION_2}`}>
-				<h3 className="bp3-heading">Story rename</h3>
-				<FormGroup label={`Please, specify new story name instead of "${story.name}".`}>
+				<h3 className="bp3-heading">Flow rename</h3>
+				<FormGroup
+					label={`Please, specify new flow name instead of "${flow.name} @ ${story.name}".`}>
 					<InputGroup
 						fill={true}
 						onKeyPress={handleKeyPress}
-						inputRef={ref => (storyNameInput = ref)}
+						inputRef={ref => (flowNameInput = ref)}
 					/>
 				</FormGroup>
 				<div className="overlay-placeholder" />
@@ -91,23 +88,23 @@ const TheDialog = (props: { story: Story }): JSX.Element => {
 export default (): JSX.Element => {
 	const { emitter } = React.useContext(UIContext);
 
-	const [story, setStory] = React.useState(null as Story | null);
+	const [flow, setFlow] = React.useState(null as null | { story: Story; flow: Flow });
 	React.useEffect(() => {
-		const openMe = (story: Story): void => setStory(story);
-		const closeMe = (): void => setStory(null);
+		const openMe = (story: Story, flow: Flow): void => setFlow({ story, flow });
+		const closeMe = (): void => setFlow(null);
 		emitter
-			.on(EventTypes.ASK_RENAME_STORY, (story: Story) => openMe(story))
-			.on(EventTypes.CLOSE_STORY_RENAME_DIALOG, closeMe);
+			.on(EventTypes.ASK_RENAME_FLOW, openMe)
+			.on(EventTypes.CLOSE_FLOW_RENAME_DIALOG, closeMe);
 
 		return () => {
 			emitter
-				.off(EventTypes.ASK_RENAME_STORY, openMe)
-				.off(EventTypes.CLOSE_STORY_RENAME_DIALOG, closeMe);
+				.off(EventTypes.ASK_RENAME_FLOW, openMe)
+				.off(EventTypes.CLOSE_FLOW_RENAME_DIALOG, closeMe);
 		};
 	});
 
-	if (story != null) {
-		return <TheDialog story={story} />;
+	if (flow != null) {
+		return <TheDialog {...flow} />;
 	} else {
 		return <React.Fragment />;
 	}

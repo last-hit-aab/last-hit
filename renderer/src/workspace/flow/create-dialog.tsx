@@ -3,17 +3,19 @@ import { remote } from 'electron';
 import React from 'react';
 import UIContext from '../../common/context';
 import { EventTypes } from '../../events';
-import { createStory } from '../../files';
+import { createFlow } from '../../files';
+import { Story } from '../../types';
 
-const TheDialog = (): JSX.Element => {
+const TheDialog = (props: { story: Story }): JSX.Element => {
+	const { story } = props;
 	const { emitter } = React.useContext(UIContext);
 	const close = () => {
-		emitter.emit(EventTypes.CLOSE_STORY_CREATE_DIALOG);
+		emitter.emit(EventTypes.CLOSE_FLOW_CREATE_DIALOG);
 	};
 
-	let storyNameInput: HTMLInputElement | null;
+	let flowNameInput: HTMLInputElement | null;
 	const onConfirmClicked = async () => {
-		const name = storyNameInput!.value.trim();
+		const name = flowNameInput!.value.trim();
 		if (name.length === 0) {
 			remote.dialog
 				.showMessageBox(remote.getCurrentWindow(), {
@@ -21,20 +23,20 @@ const TheDialog = (): JSX.Element => {
 					title: 'Invalid Input',
 					message: 'Please, specify story name.'
 				})
-				.finally(() => storyNameInput!.focus());
+				.finally(() => flowNameInput!.focus());
 			return;
 		}
 
 		try {
-			const story = await createStory({ name });
-			emitter.emit(EventTypes.STORY_CREATED, story);
+			const flow = await createFlow(story, { name });
+			emitter.emit(EventTypes.FLOW_CREATED, story, flow);
 			close();
 		} catch (e) {
 			console.error(e);
 			remote.dialog.showMessageBox(remote.getCurrentWindow(), {
 				type: 'error',
 				title: 'Invalid Input',
-				message: `Failed to create story "${name}".`,
+				message: `Failed to create flow "${name}".`,
 				detail: typeof e === 'string' ? e : e.message
 			});
 		}
@@ -52,12 +54,12 @@ const TheDialog = (): JSX.Element => {
 			className={`${Classes.OVERLAY_CONTAINER} small`}
 			autoFocus={true}>
 			<div className={`${Classes.CARD} ${Classes.ELEVATION_2}`}>
-				<h3 className="bp3-heading">Story create</h3>
-				<FormGroup label="Please, specify story name.">
+				<h3 className="bp3-heading">Flow create</h3>
+				<FormGroup label={`Please, specify flow name, on story "${story.name}".`}>
 					<InputGroup
 						fill={true}
 						onKeyPress={handleKeyPress}
-						inputRef={ref => (storyNameInput = ref)}
+						inputRef={ref => (flowNameInput = ref)}
 					/>
 				</FormGroup>
 				<div className="overlay-placeholder" />
@@ -75,23 +77,23 @@ const TheDialog = (): JSX.Element => {
 export default (): JSX.Element => {
 	const { emitter } = React.useContext(UIContext);
 
-	const [opened, setOpened] = React.useState(false);
+	const [story, setStory] = React.useState(null as Story | null);
 	React.useEffect(() => {
-		const openMe = (): void => setOpened(true);
-		const closeMe = (): void => setOpened(false);
+		const openMe = (story: Story): void => setStory(story);
+		const closeMe = (): void => setStory(null);
 		emitter
-			.on(EventTypes.ASK_CREATE_STORY, openMe)
-			.on(EventTypes.CLOSE_STORY_CREATE_DIALOG, closeMe);
+			.on(EventTypes.ASK_CREATE_FLOW, openMe)
+			.on(EventTypes.CLOSE_FLOW_CREATE_DIALOG, closeMe);
 
 		return () => {
 			emitter
-				.off(EventTypes.ASK_CREATE_STORY, openMe)
-				.off(EventTypes.CLOSE_STORY_CREATE_DIALOG, closeMe);
+				.off(EventTypes.ASK_CREATE_FLOW, openMe)
+				.off(EventTypes.CLOSE_FLOW_CREATE_DIALOG, closeMe);
 		};
 	});
 
-	if (opened) {
-		return <TheDialog />;
+	if (story != null) {
+		return <TheDialog story={story} />;
 	} else {
 		return <React.Fragment />;
 	}

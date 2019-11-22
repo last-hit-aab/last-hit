@@ -2,7 +2,7 @@ import { remote } from 'electron';
 import fs from 'fs';
 import jsonfile from 'jsonfile';
 import path from 'path';
-import { activeWorkspace, deactiveWorkspace } from '../active';
+import { activeWorkspace, deactiveWorkspace, getActiveWorkspace } from '../active';
 import history from '../common/history';
 import IDESettings, { WorkspaceFileExt } from '../common/ide-settings';
 import paths from '../common/paths';
@@ -141,4 +141,13 @@ export const closeCurrentWorkspace = (): void => {
 	current.maximizable = false;
 	current.setSize(780, 480, true);
 	current.center();
+};
+
+/**
+ * always on active workspace
+ */
+export const saveWorkspace = (): void => {
+	const settings = getActiveWorkspace()!.getSettings();
+	const { workspaceFile: file, ...rest } = settings;
+	jsonfile.writeFileSync(file, rest, { spaces: '\t', encoding: 'UTF-8' });
 };

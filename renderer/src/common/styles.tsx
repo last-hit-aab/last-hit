@@ -7,6 +7,9 @@ export default {
 		horizontal: 16,
 		body: 16
 	},
+	margin: {
+		body: 16
+	},
 	gap: 10
 };
 
@@ -23,6 +26,7 @@ export const GlobalStyles = createGlobalStyle`
 	*::-webkit-scrollbar {
 		background-color: transparent;
 		width: 8px;
+		height: 4px;
 	}
 	*::-webkit-scrollbar-thumb {
 		background-color: ${() => Colors.DARK_GRAY5};
@@ -56,11 +60,34 @@ export const GlobalStyles = createGlobalStyle`
 				flex-grow: 1;
 			}
 		}
+		&.thumbnail {
+			> div.bp3-card {
+				min-height: 90vh;
+				max-height: 90vh;
+				top: 5vh;
+				transform: none;
+				width: 80vw;
+				left: 10vw;
+			}
+		}
+		&.medium {
+			> div.bp3-card {
+				width: 70vw;
+				left: 15vw;
+			}
+		}
 		&.small {
 			> div.bp3-card {
 				width: 600px;
 				left: calc(50vw - 300px);
 			}
 		}
+	}
+
+	.bp3-select-popover .bp3-menu {
+		max-width: 400px;
+		max-height: 200px;
+		overflow: auto;
+		padding: 0;
 	}
 `;
