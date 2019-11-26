@@ -1,110 +1,89 @@
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import Grid from '@material-ui/core/Grid';
-import IconButton from '@material-ui/core/IconButton';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
-import ListItemText from '@material-ui/core/ListItemText';
-import { makeStyles } from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
+import { Button, Label } from '@blueprintjs/core';
 import React from 'react';
-import { getTheme, Workspace, Workspaces } from '../global-settings';
-import { openWorkspaceByFolder } from '../workspace-settings';
+import styled from 'styled-components';
+import uuidv4 from 'uuid/v4';
+import IDESettings from '../common/ide-settings';
+import { openWorkspaceByFolder } from '../files';
+import { Workspace } from '../types';
 
-const myTheme = getTheme();
-const useStyles = makeStyles({
-	root: {
-		backgroundColor: myTheme.splashOutlineBackgroundColor
-	},
-	list: {
-		paddingTop: 0,
-		paddingBottom: 0,
-		'& .MuiListItem-container': {
-			'& .MuiListItemSecondaryAction-root': {
-				visibility: 'hidden',
-				opacity: 0,
-				transition: 'opacity 300ms ease-in-out',
-				'& > button': {
-					color: myTheme.splashOperationColor,
-					fontSize: '1rem',
-					'&:hover': {
-						backgroundColor: 'unset'
-					}
-				}
-			},
-			'&:hover': {
-				backgroundColor: myTheme.splashOutlineHoverBackgroundColor,
-				'& .MuiListItemSecondaryAction-root': {
-					visibility: 'visible',
-					opacity: 1
-				}
-			}
-		}
-	},
-	item: {
-		color: myTheme.splashOperationColor,
-		paddingTop: 0,
-		paddingBottom: 0,
-		'& > .MuiListItemText-root': {
-			'& > span:first-child': {
-				whiteSpace: 'nowrap',
-				overflowX: 'hidden',
-				textOverflow: 'ellipsis'
-			},
-			'& > span:last-child': {
-				display: 'block',
-				whiteSpace: 'nowrap',
-				overflowX: 'hidden',
-				fontSize: '0.8rem',
-				opacity: 0.5,
-				textOverflow: 'ellipsis',
-				width: '100%'
-			}
+const {
+	padding: { vertical, horizontal }
+} = IDESettings.getStyles();
+
+const List = styled.div`
+	display: flex;
+	flex-direction: column;
+	overflow-x: hidden;
+	overflow-y: auto;
+`;
+
+const ListItem = styled.div`
+	flex-shrink: 0;
+	display: grid;
+	grid-template-columns: '1fr auto';
+	grid-template-rows: 'auto auto';
+	overflow: hidden;
+	padding: ${() => `${vertical}px 0 ${vertical}px ${horizontal}px`};
+	cursor: pointer;
+	transition: all 200ms ease-in-out;
+	&:hover {
+		box-shadow: inset 0 0 100px 100px rgba(255, 255, 255, 0.1);
+		& > button {
+			visibility: visible;
+			opacity: 1;
 		}
 	}
-});
+	& > label {
+		cursor: pointer;
+	}
+`;
+const RemoveButton = styled(Button)`
+	visibility: hidden;
+	opacity: 0;
+	transition: all 300ms ease-in-out;
+	grid-column: 2;
+	grid-row: 1 / span 2;
+	width: 32px;
+	height: 32px;
+`;
 
-export default (props: { workspaces: Workspaces }): JSX.Element => {
-	const { workspaces } = props;
-	const classes = useStyles();
-
+export default (): JSX.Element => {
+	const [ignored, forceUpdate] = React.useReducer(x => x + 1, 0);
 	const onWorkspaceOpenClicked = (workspace: Workspace): void => {
 		openWorkspaceByFolder(workspace.path);
 	};
 	const onRemoveWorkspaceClicked = (workspace: Workspace): void => {
-		workspaces.removeWorkspace(workspace);
+		IDESettings.removeWorkspace(workspace);
+		forceUpdate(ignored);
 	};
 
-	if (!workspaces.hasWorkspace()) {
-		return <React.Fragment />;
+	if (!IDESettings.hasWorkspace()) {
+		return <List />;
 	} else {
 		return (
-			<Grid item xs={5} className={classes.root}>
-				<List component="nav" className={classes.list}>
-					{workspaces.getWorkspaces().map((workspace, index) => {
-						return (
-							<ListItem
-								button
-								className={classes.item}
-								key={`${workspace.name}-${index}`}
-								title={workspace.path}
-								onClick={() => onWorkspaceOpenClicked(workspace)}
-							>
-								<ListItemText
-									primary={workspace.name}
-									secondary={<Typography component="span">{workspace.path}</Typography>}
-								/>
-								<ListItemSecondaryAction onClick={() => onRemoveWorkspaceClicked(workspace)}>
-									<IconButton edge="end" aria-label="delete">
-										<FontAwesomeIcon icon={faTimes} />
-									</IconButton>
-								</ListItemSecondaryAction>
-							</ListItem>
-						);
-					})}
-				</List>
-			</Grid>
+			<List>
+				{IDESettings.getWorkspaces().map(workspace => {
+					return (
+						<ListItem
+							key={uuidv4()}
+							onClick={() => onWorkspaceOpenClicked(workspace)}
+							title={workspace.path}>
+							<Label className="bp3-text-large margin-bottom-0">
+								{workspace.name}
+							</Label>
+							<Label className="bp3-text-small bp3-text-muted bp3-text-overflow-ellipsis margin-bottom-0">
+								{workspace.path}
+							</Label>
+							<RemoveButton
+								className="round"
+								icon="cross"
+								minimal={true}
+								onClick={() => onRemoveWorkspaceClicked(workspace)}
+							/>
+						</ListItem>
+					);
+				})}
+			</List>
 		);
 	}
 };

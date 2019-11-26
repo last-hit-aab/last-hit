@@ -7,9 +7,6 @@ var os_1 = __importDefault(require("os"));
 var Environment = /** @class */ (function () {
     function Environment(options) {
         this.constructed = false;
-        if (!options) {
-            return;
-        }
         this.constructed = true;
         this.originalOptions = options;
         this.name = options.name;
@@ -21,6 +18,10 @@ var Environment = /** @class */ (function () {
             this.urlReplaceTos = (options.urlReplaceTo || '').split('&&');
             this.urlReplaceTos.length = this.urlReplaceRegexps.length;
             this.urlReplaceTos = this.urlReplaceTos.map(function (to) { return (to ? to : ''); });
+        }
+        else {
+            this.urlReplaceRegexps = [];
+            this.urlReplaceTos = [];
         }
         this.sleepAfterChange = options.sleepAfterChange;
         this.slowAjaxTime = options.slowAjaxTime;
@@ -82,7 +83,7 @@ var Environment = /** @class */ (function () {
         return false;
     };
     Environment.prototype.getParallel = function () {
-        return this.parallel;
+        return this.parallel || 1;
     };
     Environment.prototype.isOnParallel = function () {
         return this.getParallel() !== 1;

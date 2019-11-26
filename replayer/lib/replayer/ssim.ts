@@ -3,7 +3,7 @@ import ssim from 'image-ssim';
 import fs from 'fs';
 
 const loadImage = (file1: string, file2: string, done: (images: ssim.IImage[]) => void) => {
-	let images = [];
+	const images: Array<ssim.IImage> = [];
 	const onLoad = (img: ssim.IImage): void => {
 		images.push(img);
 		if (images.length === 2) {
@@ -13,7 +13,7 @@ const loadImage = (file1: string, file2: string, done: (images: ssim.IImage[]) =
 	const load = (filePath: string, done: (image: ssim.IImage) => void) => {
 		fs.createReadStream(filePath)
 			.pipe(new PNG())
-			.on('parsed', function() {
+			.on('parsed', function(this: any) {
 				done({
 					data: this.data,
 					width: this.width,

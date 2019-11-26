@@ -36,7 +36,7 @@ const launchBrowser = async (replayer: Replayer) => {
 	const {
 		viewport: { width, height }
 	} = device!;
-	const browserArgs = [];
+	const browserArgs: Array<string> = [];
 	browserArgs.push(`--window-size=${width},${height + 150}`);
 	browserArgs.push('--disable-infobars');
 	browserArgs.push('--ignore-certificate-errors');
@@ -61,9 +61,9 @@ const launchBrowser = async (replayer: Replayer) => {
 	// set back to replayer
 	replayer.setBrowser(browser);
 	replayer.putPage(uuid, page, true);
-	replayer.setDevice(device);
+	replayer.setDevice(device!);
 	// add control into page
-	await controlPage(replayer, page, device, uuid);
+	await controlPage(replayer, page, device!, uuid);
 	// open url, timeout to 2 mins
 	await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
 
@@ -88,9 +88,9 @@ class Replayer {
 	private storyName: string;
 	private flow: Flow;
 
-	private device: Device;
+	private device: Device | null = null;
 
-	private browser: Browser = null;
+	private browser: Browser | null = null;
 	/** key is uuid, value is page */
 	private pages: { [key in string]: Page } = {};
 	private currentIndex: number = 0;
@@ -123,7 +123,7 @@ class Replayer {
 	}
 	switchToRecord(): Browser {
 		this.onRecord = true;
-		return this.browser;
+		return this.browser!;
 	}
 	isOnRecord(): boolean {
 		return this.onRecord;
@@ -173,13 +173,13 @@ class Replayer {
 	setBrowser(browser: Browser): void {
 		this.browser = browser;
 	}
-	getDevice(): Device {
+	getDevice(): Device | null {
 		return this.device;
 	}
 	setDevice(device: Device): void {
 		this.device = device;
 	}
-	findUuid(page: Page): string {
+	findUuid(page: Page): string | undefined {
 		return Object.keys(this.pages).find(id => this.pages[id] === page);
 	}
 	getPage(uuid: string): Page | null {
@@ -238,7 +238,7 @@ class Replayer {
 			delete this.requests[uuidOrPage];
 			return page;
 		} else {
-			const uuid = this.findUuid(uuidOrPage);
+			const uuid = this.findUuid(uuidOrPage)!;
 			delete this.pages[uuid];
 			delete this.requests[uuid];
 			return uuidOrPage;
@@ -257,7 +257,7 @@ class Replayer {
 		}
 	}
 	private async isRemoteFinsihed(page: Page): Promise<void> {
-		const uuid = this.findUuid(page);
+		const uuid = this.findUuid(page)!;
 		const requests = this.requests[uuid];
 		// return requests.waitForAllDone();
 
@@ -380,7 +380,7 @@ class Replayer {
 			await this.sleepAfterStep(step);
 
 			if (step.image && page != null && !page.isClosed()) {
-				const screenshotPath = path.join(getTempFolder(process.cwd()), 'screen-record');
+				const screenshotPath = path.join(getTempFolder(process.cwd())!, 'screen-record');
 				if (!fs.existsSync(screenshotPath)) {
 					fs.mkdirSync(screenshotPath, { recursive: true });
 				}
@@ -442,13 +442,13 @@ class Replayer {
 		}
 
 		if (isFileUpload) {
-			const value = step.value;
+			const value = step.value!;
 			let segments = value.split('\\');
 			segments = segments[segments.length - 1].split('/');
 			const filename = segments[segments.length - 1];
-			const dir = path.join(getTempFolder(process.cwd()), 'upload-temp', uuidv4());
+			const dir = path.join(getTempFolder(process.cwd())!, 'upload-temp', uuidv4());
 			const filepath = path.join(dir, filename);
-			const byteString = atob(step.file.split(',')[1]);
+			const byteString = atob(step.file!.split(',')[1]);
 
 			// write the bytes of the string to an ArrayBuffer
 			const ab = new ArrayBuffer(byteString.length);
@@ -465,17 +465,17 @@ class Replayer {
 			// file upload
 			const [fileChooser] = await Promise.all([
 				page.waitForFileChooser(),
-				element.evaluate((node: HTMLElement) => node.click())
+				element.evaluate((node: Element) => (node as HTMLElement).click())
 			]);
 			await fileChooser.accept([filepath]);
 		} else {
 			// change is change only, cannot use type
-			await this.setValueToElement(element, step.value);
+			await this.setValueToElement(element, step.value!);
 
 			const env = this.getEnvironment();
 			if (env.getSleepAfterChange()) {
 				const wait = util.promisify(setTimeout);
-				await wait(env.getSleepAfterChange());
+				await wait(env.getSleepAfterChange()!);
 			}
 		}
 	}
@@ -532,7 +532,7 @@ class Replayer {
 		if (visible) {
 			await element.click();
 		} else {
-			await element.evaluate((node: HTMLElement) => node.click());
+			await element.evaluate((node: Element) => (node as HTMLElement).click());
 		}
 	}
 	private async executeFocusStep(step: Step): Promise<void> {
@@ -541,8 +541,8 @@ class Replayer {
 		this.getLogger().log(`Execute focus, step path is ${xpath}.`);
 
 		const element = await this.findElement(step, page);
-		await element.evaluate((node: HTMLElement) => {
-			node.focus && node.focus();
+		await element.evaluate((node: Element) => {
+			(node as any).focus && (node as HTMLElement).focus();
 			const event = document.createEvent('HTMLEvents');
 			event.initEvent('focus', true, true);
 			node.dispatchEvent(event);
@@ -607,7 +607,7 @@ class Replayer {
 	}
 	private async executeAnimationStep(step: Step): Promise<void> {
 		const wait = util.promisify(setTimeout);
-		await wait(step.duration);
+		await wait(step.duration!);
 	}
 	private async executeScrollStep(step: Step): Promise<void> {
 		const page = await this.getPageOrThrow(step.uuid);
@@ -663,13 +663,13 @@ class Replayer {
 				);
 			} else {
 				this.getLogger().debug(`To creat pop up page, and add page uuid is ${step.uuid}.`);
-				const newPage = await this.browser.newPage();
+				const newPage = await this.browser!.newPage();
 				if (this.putPage(step.uuid, newPage, false)) {
 					try {
-						await controlPage(this, newPage, this.device, step.uuid);
+						await controlPage(this, newPage, this.device!, step.uuid);
 						await Promise.all([
 							newPage.waitForNavigation(), // The promise resolves after navigation has finished
-							newPage.goto(step.url, { waitUntil: 'domcontentloaded' }) // Go to the url will indirectly cause a navigation
+							newPage.goto(step.url!, { waitUntil: 'domcontentloaded' }) // Go to the url will indirectly cause a navigation
 						]);
 					} catch {
 						// maybe force closed by popup
@@ -685,7 +685,7 @@ class Replayer {
 			// if query string or hash is different, treat as not changed
 			// since sometimes they have random token
 			const url = shorternUrl(page.url());
-			const newUrl = shorternUrl(step.url);
+			const newUrl = shorternUrl(step.url!);
 			if (newUrl !== url) {
 				const sleep = util.promisify(setTimeout);
 				await sleep(1000);
@@ -693,7 +693,7 @@ class Replayer {
 				if (newUrl !== url) {
 					await Promise.all([
 						page.waitForNavigation(),
-						page.goto(step.url, { waitUntil: 'domcontentloaded' })
+						page.goto(step.url!, { waitUntil: 'domcontentloaded' })
 					]);
 				}
 			}
@@ -708,13 +708,13 @@ class Replayer {
 				this.getLogger().debug(
 					`To creat switched page, and add page uuid is ${step.uuid}.`
 				);
-				const newPage = await this.browser.newPage();
+				const newPage = await this.browser!.newPage();
 				if (this.putPage(step.uuid, newPage, false)) {
 					try {
-						await controlPage(this, newPage, this.device, step.uuid);
+						await controlPage(this, newPage, this.device!, step.uuid);
 						await Promise.all([
 							newPage.waitForNavigation(),
-							newPage.goto(step.url, { waitUntil: 'domcontentloaded' })
+							newPage.goto(step.url!, { waitUntil: 'domcontentloaded' })
 						]);
 					} catch {
 						// maybe force closed by popup
@@ -814,7 +814,7 @@ class Replayer {
 		return (await element.evaluate(node => node.getAttribute('type'))) || '';
 	}
 	private async getElementChecked(element: ElementHandle): Promise<boolean> {
-		return await element.evaluate((node: HTMLInputElement) => node.checked);
+		return await element.evaluate((node: Element) => (node as HTMLInputElement).checked);
 	}
 	private createElementClassNamesRetriever(): ElementRetriever {
 		let classNames: string;
@@ -836,18 +836,21 @@ class Replayer {
 					values[attrName] = value;
 				}
 			}
-			return values[attrName];
+			return values[attrName]!;
 		};
 	}
 	private async getElementAttrValue(element: ElementHandle, attrName: string): Promise<string> {
-		return await element.evaluate((node, attr) => node.getAttribute(attr), attrName);
+		return await element.evaluate((node, attr) => node.getAttribute(attr)!, attrName);
 	}
 	private async getElementValue(element: ElementHandle): Promise<string> {
-		return await element.evaluate((node: HTMLInputElement | HTMLSelectElement) => node.value);
+		return await element.evaluate(
+			(node: Element) => (node as HTMLInputElement | HTMLSelectElement).value
+		);
 	}
 	private async isElementVisible(element: ElementHandle): Promise<boolean> {
 		return await element.evaluate(
-			(node: HTMLElement) => node.offsetWidth > 0 && node.offsetHeight > 0
+			(node: Element) =>
+				(node as HTMLElement).offsetWidth > 0 && (node as HTMLElement).offsetHeight > 0
 		);
 	}
 	private async setValueToElement(element: ElementHandle, value: string) {
@@ -868,7 +871,7 @@ class Replayer {
 				// 1. force clear input value
 				// 2. invoke type
 				// 3. force trigger change event
-				await element.evaluate((node: HTMLInputElement) => (node.value = ''));
+				await element.evaluate((node: Element) => ((node as HTMLInputElement).value = ''));
 				await element.type(value);
 				await element.evaluate(node => {
 					// node.value = value;
@@ -881,8 +884,8 @@ class Replayer {
 		}
 
 		// other
-		await element.evaluate((node: HTMLInputElement, value) => {
-			node.value = value;
+		await element.evaluate((node: Element, value) => {
+			(node as HTMLInputElement).value = value;
 			// node.value = value;
 			const event = document.createEvent('HTMLEvents');
 			event.initEvent('change', true, true);

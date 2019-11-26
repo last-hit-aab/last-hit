@@ -109,47 +109,4 @@ export const initialize = (): void => {
 		state.stalker = startFileSystemWatch(workspaceFile);
 		console.log(`Workspace[${workspaceFile}] opened.`);
 	});
-	// ① receive the flow on record check from renderer
-	// might be send from any component in renderer which doesn't know flow is on recording or not
-	// NOTE must check flow is open first, otherwise message should be blocked since no listener on renderer
-	ipcMain.on(
-		'flow-on-record-check',
-		(event: IpcMainEvent, arg: { storyName: string; flowName: string }): void => {
-			const { storyName, flowName } = arg;
-			// ③ receive flow on recrod check result from renderer
-			ipcMain.once(
-				`flow-on-record-check-result-${generateKeyByString(storyName, flowName)}`,
-				(event, arg) => {
-					// ④ reply to renderer which send the first request
-					event.reply(
-						`flow-on-record-check-result-${generateKeyByString(storyName, flowName)}`,
-						arg
-					);
-				}
-			);
-			// ② send on record check request to renderer
-			event.reply(`flow-on-record-check-${generateKeyByString(storyName, flowName)}`);
-		}
-	);
-	// ① handle the flow open check from renderer,
-	// message from any component in renderer which doesn't know flow is open or not
-	ipcMain.on(
-		'flow-open-check',
-		(event: IpcMainEvent, arg: { storyName: string; flowName: string }): void => {
-			const { storyName, flowName } = arg;
-			// ③ handle the reply from rendererer
-			ipcMain.once(
-				`flow-open-check-result-${generateKeyByString(storyName, flowName)}`,
-				(event, arg) => {
-					// ④ reply to renderer which send the first request
-					event.reply(
-						`flow-open-check-result-${generateKeyByString(storyName, flowName)}`,
-						arg
-					);
-				}
-			);
-			// ② send to renderer, to check the flow is open or not
-			event.reply('flow-open-check', arg);
-		}
-	);
 };

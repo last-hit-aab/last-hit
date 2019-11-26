@@ -1,0 +1,52 @@
+export enum EventTypes {
+	ASK_TOGGLE_NAVIGATOR = 'ask-toggle-navigator',
+	NAVIGATOR_TOGGLED = 'navigator-toggled',
+
+	ASK_OPEN_ENV = 'ask-open-env',
+	CLOSE_ENV_DIALOG = 'close-env-dialog',
+
+	CLOSE_STORY_CREATE_DIALOG = 'close-story-create-dialog',
+	CLOSE_STORY_RENAME_DIALOG = 'close-story-rename-dialog',
+	CLOSE_FLOW_CREATE_DIALOG = 'close-flow-create-dialog',
+	CLOSE_FLOW_RENAME_DIALOG = 'close-flow-rename-dialog',
+	CLOSE_FLOW_SETTINGS_DIALOG = 'close-flow-settings-dialog',
+	CLOSE_FLOW_REPLAY_DIALOG = 'close-flow-replay-dialog',
+	CLOSE_FLOW_RECORD_DIALOG = 'close-flow-record-dialog',
+	CLOSE_THUMBNAIL_DIALOG = 'close-thumbnail-dialog',
+	CLOSE_REPLAY_SUMMARY_DRAWER = 'close-replay-summary-drawer',
+	CLOSE_STEP_SEARCH_DRAWER = 'close-step-search-drawer',
+
+	ASK_CREATE_STORY = 'ask-create-story',
+	ASK_RENAME_STORY = 'ask-rename-story',
+	ASK_DELETE_STORY = 'ask-delete-story',
+	ASK_CREATE_FLOW = 'ask-create-flow',
+	ASK_RENAME_FLOW = 'ask-rename-flow',
+	ASK_DELETE_FLOW = 'ask-delete-flow',
+	ASK_OPEN_FLOW = 'ask-open-flow',
+	ASK_SAVE_FLOW = 'ask-save-flow',
+	ASK_FLOW_SETTINGS = 'ask-flow-settings',
+	ASK_FLOW_REPLAY = 'ask-flow-replay',
+	ASK_FLOW_RELOAD = 'ask-flow-reload',
+	ASK_FLOW_RECORD = 'ask-flow-record',
+	ASK_REPLAY_SUMMARY_SHOW = 'ask-replay-summary-show',
+
+	STORY_CREATED = 'story-created',
+	STORY_RENAMED = 'story-renamed',
+	STORY_DELETED = 'story-deleted',
+	FLOW_CREATED = 'flow-created',
+	FLOW_RENAMED = 'flow-renamed',
+	FLOW_DELETED = 'flow-deleted',
+
+	FLOW_OPEN_CHECK = 'flow-open-check',
+	FLOW_OPEN_CHECK_RESULT = 'flow-open-check-result',
+	FLOW_STATUS_CHECK = 'flow-status-check',
+	FLOW_STATUS_CHECK_RESULT = 'flow-status-check-result',
+
+	STEP_SELECTED = 'step-selected',
+	STEP_BREAKPOINT_CHANGED = 'step-breakpoint-changed',
+	STEP_DELETED = 'step-deleted',
+	ASK_SHOW_THUMBNAIL = 'ask-show-thumbnail',
+	ASK_STEP_SEARCH = 'ask-step-search',
+	ASK_REMOVE_STEP_SEARCH_ITEM = 'ask-remove-step-search-item',
+	ASK_REPLACE_STEP_SEARCH_ITEM = 'ask_replace-step-search-item'
+}

@@ -85,7 +85,13 @@ var findAndMergeForceDependencyFlows = function (flow, env) {
         var dependsFlow = jsonfile_1.default.readFileSync(dependsFlowFilename);
         var steps = dependsFlow.steps || [];
         (_a = forceDependencyFlow.steps).splice.apply(_a, __spreadArrays([0,
-            0], steps.map(function (step) { return (__assign(__assign({}, step), { origin: { story: storyName, flow: dependsFlow.name, stepIndex: step.stepIndex } })); })));
+            0], steps.map(function (step) {
+            return (__assign(__assign({}, step), { origin: {
+                    story: storyName,
+                    flow: dependsFlow.name,
+                    stepIndex: step.stepIndex
+                } }));
+        })));
         currentFlow = dependsFlow;
     };
     while (currentFlow.settings && currentFlow.settings.forceDepends) {

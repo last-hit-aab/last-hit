@@ -1,5 +1,4 @@
-import { Device } from '../workspace-settings';
-
+import { Device } from '../types';
 /**
  * Copyright 2017 Google Inc. All rights reserved.
  *
