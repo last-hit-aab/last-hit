@@ -1,0 +1,27 @@
+{
+	"name": "last-hit-plugins",
+	"version": "0.7.3",
+	"description": "plugins for last-hit",
+	"main": "index.js",
+	"scripts": {
+		"start": "tsc && node ./index.js",
+		"test": "last-hit-replayer",
+		"deploy": "tsc && npm publish --access public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/last-hit-aab/last-hit.git"
+	},
+	"bugs": {
+		"url": "https://github.com/last-hit-aab/last-hit/issues"
+	},
+	"homepage": "https://www.last-hit.com",
+	"author": "last-hit-team",
+	"license": "UNLICENSED",
+	"private": false,
+	"dependencies": {
+		"@types/jsonfile": "^5.0.0",
+		"jsonfile": "^5.0.0",
+		"vscode-jsonrpc": "^4.0.0"
+	}
+}
