@@ -1,75 +1,75 @@
 {
-	"name": "last-hit",
-	"version": "0.7.1",
-	"description": "last hit on enterprise web",
-	"main": "main/index.js",
-	"scripts": {
-		"build:renderer": "npm run build --prefix renderer",
-		"build": "npm run build:renderer && tsc",
-		"start": "npm run build && electron .",
-		"pack": "npm run build && electron-builder --dir",
-		"pack:windows": "npm run build && electron-builder -w",
-		"pack:osx": "npm run build && electron-builder -m",
-		"pack:all": "npm run build && electron-builder -mw",
-		"coverage": "nyc report --reporter=html",
-		"publish:osx": "npm run build && electron-builder -m --publish onTagOrDraft",
-		"publish:windows": "npm run build && electron-builder -w --publish onTagOrDraft",
-		"publish:linux": "npm run build && electron-builder -l --publish onTagOrDraft"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/last-hit-aab/last-hit.git"
-	},
-	"keywords": [
-		"test",
-		"web",
-		"automation"
-	],
-	"author": "last-hit-team",
-	"license": "UNLICENSED",
-	"bugs": {
-		"url": "https://github.com/last-hit-aab/last-hit/issues"
-	},
-	"homepage": "https://www.last-hit.com",
-	"devDependencies": {
-		"electron": "^7.1.1",
-		"electron-builder": "^22.1.0",
-		"nyc": "^14.1.1"
-	},
-	"dependencies": {
-		"@types/atob": "^2.1.2",
-		"@types/clone": "^0.1.30",
-		"@types/cross-spawn": "^6.0.1",
-		"@types/cssesc": "^3.0.0",
-		"@types/jsonfile": "^5.0.0",
-		"@types/mkdirp": "^0.5.2",
-		"@types/pino": "^5.8.13",
-		"@types/pngjs": "^3.4.0",
-		"@types/puppeteer": "^1.20.2",
-		"@types/uuid": "^3.4.6",
-		"@types/yargs": "^13.0.3",
-		"atob": "^2.1.2",
-		"clone": "^2.1.2",
-		"cross-spawn": "^6.0.5",
-		"cssesc": "^3.0.0",
-		"html-creator": "^0.4.3",
-		"image-ssim": "^0.2.0",
-		"jsonfile": "^5.0.0",
-		"mkdirp": "^0.5.1",
-		"node-resemble-js": "^0.2.0",
-		"pino": "^5.13.4",
-		"pino-pretty": "^3.2.1",
-		"pngjs": "^3.4.0",
-		"puppeteer": "^2.0.0",
-		"puppeteer-to-istanbul": "^1.2.2",
-		"typescript": "^3.7.2",
-		"uuid": "^3.3.3",
-		"watchr": "^4.1.0",
-		"yargs": "^13.3.0"
-	},
-	"build": {
-		"asar": true,
-		"asarUnpack": "node_modules/puppeteer/.local-chromium/**/*",
-		"artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
-	}
+  "name": "last-hit",
+  "version": "0.7.1",
+  "description": "last hit on enterprise web",
+  "main": "main/index.js",
+  "scripts": {
+    "build:renderer": "npm run build --prefix renderer",
+    "build": "npm run build:renderer && tsc",
+    "start": "npm run build && electron .",
+    "pack": "npm run build && electron-builder --dir",
+    "pack:windows": "npm run build && electron-builder -w",
+    "pack:osx": "npm run build && electron-builder -m",
+    "pack:all": "npm run build && electron-builder -mw",
+    "coverage": "nyc report --reporter=html",
+    "publish:osx": "npm run build && electron-builder -m --publish onTagOrDraft",
+    "publish:windows": "npm run build && electron-builder -w --publish onTagOrDraft",
+    "publish:linux": "npm run build && electron-builder -l --publish onTagOrDraft"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/last-hit-aab/last-hit.git"
+  },
+  "keywords": [
+    "test",
+    "web",
+    "automation"
+  ],
+  "author": "last-hit-team",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/last-hit-aab/last-hit/issues"
+  },
+  "homepage": "https://www.last-hit.com",
+  "devDependencies": {
+    "electron": "^7.1.1",
+    "electron-builder": "^22.1.0",
+    "nyc": "^14.1.1"
+  },
+  "dependencies": {
+    "@types/atob": "^2.1.2",
+    "@types/clone": "^0.1.30",
+    "@types/cross-spawn": "^6.0.1",
+    "@types/cssesc": "^3.0.0",
+    "@types/jsonfile": "^5.0.0",
+    "@types/mkdirp": "^0.5.2",
+    "@types/pino": "^5.8.13",
+    "@types/pngjs": "^3.4.0",
+    "@types/puppeteer": "^1.20.2",
+    "@types/uuid": "^3.4.6",
+    "@types/yargs": "^13.0.3",
+    "atob": "^2.1.2",
+    "clone": "^2.1.2",
+    "cross-spawn": "^6.0.5",
+    "cssesc": "^3.0.0",
+    "handlebars": "^4.5.3",
+    "image-ssim": "^0.2.0",
+    "jsonfile": "^5.0.0",
+    "mkdirp": "^0.5.1",
+    "node-resemble-js": "^0.2.0",
+    "pino": "^5.13.4",
+    "pino-pretty": "^3.2.1",
+    "pngjs": "^3.4.0",
+    "puppeteer": "^2.0.0",
+    "puppeteer-to-istanbul": "^1.2.2",
+    "typescript": "^3.7.2",
+    "uuid": "^3.3.3",
+    "watchr": "^4.1.0",
+    "yargs": "^13.3.0"
+  },
+  "build": {
+    "asar": true,
+    "asarUnpack": "node_modules/puppeteer/.local-chromium/**/*",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
+  }
 }

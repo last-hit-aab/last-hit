@@ -1,56 +1,56 @@
 {
-	"name": "last-hit-replayer",
-	"version": "0.7.1",
-	"description": "Replayer for last-hit recorded data.",
-	"main": "index.js",
-	"bin": {
-		"last-hit-replayer": "./bin/entry.js"
-	},
-	"scripts": {
-		"start": "tsc && node ./index.js",
-		"test": "last-hit-replayer",
-		"deploy": "tsc && npm publish --access public"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/last-hit-aab/last-hit.git"
-	},
-	"keywords": [
-		"test",
-		"web",
-		"automation"
-	],
-	"author": "last-hit-team",
-	"license": "UNLICENSED",
-	"bugs": {
-		"url": "https://github.com/last-hit-aab/last-hit/issues"
-	},
-	"homepage": "https://www.last-hit.com",
-	"dependencies": {
-		"@types/atob": "^2.1.2",
-		"@types/clone": "^0.1.30",
-		"@types/cross-spawn": "^6.0.1",
-		"@types/jsonfile": "^5.0.0",
-		"@types/mkdirp": "^0.5.2",
-		"@types/pngjs": "^3.4.0",
-		"@types/puppeteer": "^1.20.2",
-		"@types/uuid": "^3.4.6",
-		"@types/yargs": "^13.0.3",
-		"atob": "^2.1.2",
-		"clone": "^2.1.2",
-		"colors": "^1.4.0",
-		"cross-spawn": "^7.0.1",
-		"html-creator": "^0.4.3",
-		"image-ssim": "^0.2.0",
-		"jsonfile": "^5.0.0",
-		"mkdirp": "^0.5.1",
-		"node-resemble-js": "^0.2.0",
-		"nyc": "^14.1.1",
-		"pngjs": "^3.4.0",
-		"puppeteer": "^2.0.0",
-		"puppeteer-to-istanbul": "^1.2.2",
-		"typescript": "^3.7.2",
-		"uuid": "^3.3.3",
-		"yargs": "^14.0.0"
-	}
+  "name": "last-hit-replayer",
+  "version": "0.7.1",
+  "description": "Replayer for last-hit recorded data.",
+  "main": "index.js",
+  "bin": {
+    "last-hit-replayer": "./bin/entry.js"
+  },
+  "scripts": {
+    "start": "tsc && node ./index.js",
+    "test": "last-hit-replayer",
+    "deploy": "tsc && npm publish --access public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/last-hit-aab/last-hit.git"
+  },
+  "keywords": [
+    "test",
+    "web",
+    "automation"
+  ],
+  "author": "last-hit-team",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/last-hit-aab/last-hit/issues"
+  },
+  "homepage": "https://www.last-hit.com",
+  "dependencies": {
+    "@types/atob": "^2.1.2",
+    "@types/clone": "^0.1.30",
+    "@types/cross-spawn": "^6.0.1",
+    "@types/jsonfile": "^5.0.0",
+    "@types/mkdirp": "^0.5.2",
+    "@types/pngjs": "^3.4.0",
+    "@types/puppeteer": "^1.20.2",
+    "@types/uuid": "^3.4.6",
+    "@types/yargs": "^13.0.3",
+    "atob": "^2.1.2",
+    "clone": "^2.1.2",
+    "colors": "^1.4.0",
+    "cross-spawn": "^7.0.1",
+    "handlebars": "^4.5.3",
+    "image-ssim": "^0.2.0",
+    "jsonfile": "^5.0.0",
+    "mkdirp": "^0.5.1",
+    "node-resemble-js": "^0.2.0",
+    "nyc": "^14.1.1",
+    "pngjs": "^3.4.0",
+    "puppeteer": "^2.0.0",
+    "puppeteer-to-istanbul": "^1.2.2",
+    "typescript": "^3.7.2",
+    "uuid": "^3.3.3",
+    "yargs": "^14.0.0"
+  }
 }
