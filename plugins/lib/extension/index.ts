@@ -4,7 +4,7 @@ import path from 'path';
 import * as rpc from 'vscode-jsonrpc';
 import {
 	createClientSocketTransport,
-	RPC,
+	RPCOperator,
 	RPCHelper,
 	createServerSocketTransport
 } from '../extension-rpc';
@@ -36,23 +36,6 @@ import { URI } from '../utils/uri';
 	};
 })();
 
-// const active = () => {
-// 	const module = URI.file('d:/last-hit-plugin/dist/main.js');
-// 	let r = require(module.fsPath);
-// 	return r.activate.apply();
-// };
-
-// const startExtensionHostProcess = async (): Promise<void> => {
-// 	const extensionService = new ExtensionEntryPoint();
-// 	const extension = extensionService.active();
-// 	let registerExtensionService = new RegisterExtensionService(10086);
-// 	registerExtensionService.registerExtension(extension.id, extension.kind, extension.handler);
-// 	registerExtensionService.registerGenericRequestHandler();
-// 	new RegisterExtensionService(10085).sendRequest('sub.process.start', true);
-// };
-
-// startExtensionHostProcess().catch(err => console.log(err));
-
 class ExtensionEntryPointHelper {
 	private extensionId: ExtensionPointId;
 	private packageFolder: string | undefined;
@@ -83,46 +66,58 @@ class ExtensionEntryPointHelper {
 	}
 	private async startup() {
 		const helper: RPCHelper = await createClientSocketTransport();
-		const { reader, writer, port }: RPC = await helper.onConnected();
-		const connection = rpc.createMessageConnection(reader, writer);
-		connection.onRequest(
-			ExtensionEventTypes.DATA_TRANSMITTED,
-			(event: ExtensionDataTransmittedEvent): void => {
-				const { data, extensionId } = event;
-				if (extensionId !== this.getExtensionId()) {
-					// do nothing, return
-					return;
+		this.port = await helper.onPortOccuried();
+		helper.onConnected().then(({ reader, writer }) => {
+			const connection = rpc.createMessageConnection(reader, writer);
+			connection.listen();
+			connection.onRequest(
+				ExtensionEventTypes.DATA_TRANSMITTED,
+				(event: ExtensionDataTransmittedEvent): void => {
+					const { data, extensionId } = event;
+					if (extensionId !== this.getExtensionId()) {
+						// do nothing, return
+						return;
+					}
+					this.extension.handle(data);
 				}
-				this.extension.handle(data);
-			}
-		);
-		this.port = port;
+			);
+		});
 	}
 	private onStartSuccessful() {
 		const { reader, writer } = createServerSocketTransport(this.getRegistryPort());
 		const connection = rpc.createMessageConnection(reader, writer);
 		connection.listen();
-		connection.sendRequest(ExtensionEventTypes.REGISTERED, {
-			type: ExtensionEventTypes.REGISTERED,
-			extensionId: this.getExtensionId(),
-			port: this.port
-		});
+		connection
+			.sendRequest(ExtensionEventTypes.REGISTERED, {
+				type: ExtensionEventTypes.REGISTERED,
+				extensionId: this.getExtensionId(),
+				port: this.port
+			})
+			.then(null, () => {
+				console.error('Failed to send registration message.');
+			});
 	}
 	private onStartFailed(e: Error) {
 		const { reader, writer } = createServerSocketTransport(this.getRegistryPort());
 		const connection = rpc.createMessageConnection(reader, writer);
 		connection.listen();
-		connection.sendRequest(ExtensionEventTypes.REGISTERED, {
-			type: ExtensionEventTypes.REGISTERED,
-			extensionId: this.getExtensionId(),
-			port: this.port,
-			error: e
-		});
+		connection
+			.sendRequest(ExtensionEventTypes.REGISTERED, {
+				type: ExtensionEventTypes.REGISTERED,
+				extensionId: this.getExtensionId(),
+				port: this.port,
+				error: e
+			})
+			.then(null, () => {
+				console.error('Failed to send registration message.');
+			});
 	}
 	async activate() {
 		try {
 			await this.startup();
-		} catch (e) {}
+		} catch (e) {
+			console.error(e);
+		}
 
 		try {
 			const packageFilename = path.join(this.getPackageFolder(), 'package.json');

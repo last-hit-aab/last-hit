@@ -10,7 +10,7 @@ if (process.env[Consts.ARG_INJECT_NODE_MODULE_LOOKUP_PATH]) {
 }
 
 // Handle Exceptions
-if (!process.env[Consts.ARG_HANDLES_UNCAUGHT_ERRORS]) {
+if (process.env[Consts.ARG_HANDLES_UNCAUGHT_ERRORS]) {
 	(() => {
 		// Handle uncaught exceptions
 		// @ts-ignore
@@ -51,7 +51,8 @@ if (process.env[Consts.ARG_ENTRY_POINT]) {
 	const entrypoint = require(process.env[Consts.ARG_ENTRY_POINT]);
 	const packageFolder = process.env[Consts.ARG_PACKAGE_FOLDER];
 	const registryPort = process.env[Consts.ARG_REGISTRY_PORT];
-	entrypoint.activate({ packageFolder, registryPort });
+	const extensionId = process.env[Consts.ARG_EXTENSION_ID];
+	entrypoint.activate({ extensionId, packageFolder, registryPort });
 }
 
 /*

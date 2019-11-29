@@ -26,12 +26,8 @@ export interface IExtensionWorker {
 class ExtensionWorker implements IExtensionWorker {
 	private emitter: Emitter = new Emitter();
 	private terminating: boolean = false;
-	private childProcess: ChildProcess | null;
+	private childProcess: ChildProcess | null = null;
 
-	constructor() {
-		this.childProcess = null;
-		process.once('exit', () => this.terminate());
-	}
 	public async start(registryPort: number, extension: IExtensionPoint): Promise<void> {
 		if (this.terminating) {
 			// .terminate() was called
@@ -43,7 +39,9 @@ class ExtensionWorker implements IExtensionWorker {
 				// IMPORTANT relative path to "./extension/bootstrap"
 				[Consts.ARG_ENTRY_POINT]: './index.js',
 				[Consts.ARG_REGISTRY_PORT]: registryPort,
-				[Consts.ARG_PACKAGE_FOLDER]: extension.getFolder()
+				[Consts.ARG_PACKAGE_FOLDER]: extension.getFolder(),
+				[Consts.ARG_HANDLES_UNCAUGHT_ERRORS]: true,
+				[Consts.ARG_EXTENSION_ID]: extension.getId()
 			}),
 			// We only detach the extension host on windows. Linux and Mac orphan by default
 			// and detach under Linux and Mac create another process group.
@@ -55,21 +53,18 @@ class ExtensionWorker implements IExtensionWorker {
 		};
 
 		// IMPORTANT relative path to me
-		this.childProcess = fork('./extension/bootstrap', ['--type=extension'], opts);
+		this.childProcess = fork('lib/extension/bootstrap', ['--type=extension'], opts);
 
 		// Lifecycle
 		this.childProcess.on('error', this.onChildProcessError);
 		this.childProcess.on('exit', this.onChildProcessExit);
-		this.childProcess.stdout && this.childProcess.stdout.on('data', this.onChildProcessStdout);
-		this.childProcess.stderr && this.childProcess.stderr.on('data', this.onChildProcessStderr);
-
-		console.log('rpc client finished');
+		this.childProcess.stdout!.on('data', this.onChildProcessStdout);
+		this.childProcess.stderr!.on('data', this.onChildProcessStderr);
 	}
 	private onChildProcessError = (error: Error): void => {
 		this.getEmitter().emit(WorkerEvents.ERROR, error);
 	};
 	private onChildProcessExit = (code: number, signal: string): void => {
-		console.log('sub process existed');
 		if (this.terminating) {
 			this.getEmitter().emit(WorkerEvents.CHILD_PROCESS_EXITED, code, signal, false);
 		} else {
@@ -77,11 +72,23 @@ class ExtensionWorker implements IExtensionWorker {
 		}
 	};
 	private onChildProcessStdout = (data: any): void => {
-		this.getEmitter().emit(WorkerEvents.LOG, data);
+		this.getEmitter().emit(WorkerEvents.LOG, this.asString(data));
 	};
 	private onChildProcessStderr = (data: any): void => {
-		this.getEmitter().emit(WorkerEvents.LOG, data);
+		this.getEmitter().emit(WorkerEvents.ERROR_LOG, this.asString(data));
 	};
+	private asString(data: any) {
+		if (data) {
+			if (data.toString) {
+				data = data.toString();
+			}
+			if (typeof data === 'string' && data.endsWith('\n')) {
+				data = data.substr(0, data.length - 1);
+			}
+		}
+		return data;
+	}
+
 	private getEmitter() {
 		return this.emitter;
 	}
