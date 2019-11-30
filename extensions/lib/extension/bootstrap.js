@@ -13,6 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  *--------------------------------------------------------------------------------------------*/
 var bootstrap = __importStar(require("./bootstrap-utils"));
 var Consts = __importStar(require("./consts"));
+console.log("child process pid[" + process.pid + "]");
 if (process.env[Consts.ARG_INJECT_NODE_MODULE_LOOKUP_PATH]) {
     bootstrap.injectNodeModuleLookupPath(process.env[Consts.ARG_INJECT_NODE_MODULE_LOOKUP_PATH]);
 }
@@ -53,9 +54,8 @@ if (process.env[Consts.ARG_PARENT_PID]) {
 if (process.env[Consts.ARG_ENTRY_POINT]) {
     var entrypoint = require(process.env[Consts.ARG_ENTRY_POINT]);
     var packageFolder = process.env[Consts.ARG_PACKAGE_FOLDER];
-    var registryPort = process.env[Consts.ARG_REGISTRY_PORT];
     var extensionId = process.env[Consts.ARG_EXTENSION_ID];
-    entrypoint.activate({ extensionId: extensionId, packageFolder: packageFolder, registryPort: registryPort });
+    entrypoint.activate({ extensionId: extensionId, packageFolder: packageFolder });
 }
 /*
 function configureCrashReporter() {

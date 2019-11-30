@@ -1,20 +1,20 @@
 import fs from 'fs';
 import jsonfile from 'jsonfile';
+import net from 'net';
 import path from 'path';
-import * as rpc from 'vscode-jsonrpc';
 import {
-	createClientSocketTransport,
-	RPCOperator,
-	RPCHelper,
-	createServerSocketTransport
-} from '../extension-rpc';
-import {
-	ExtensionEntryPoint,
-	ExtensionPointId,
+	ExtensionDataTransmittedEvent,
 	ExtensionEventTypes,
-	ExtensionDataTransmittedEvent
+	ExtensionPointId,
+	ExtensionTypes,
+	IExtensionEntryPoint,
+	IExtensionEntryPointWrapper
 } from '../types';
 import { URI } from '../utils/uri';
+import {
+	IWorkspaceExtensionEntryPoint,
+	WorkspaceExtensionEntryPointWrapper
+} from './wrappers/workspace';
 
 // With Electron 2.x and node.js 8.x the "natives" module
 // can cause a native crash (see https://github.com/nodejs/node/issues/19891 and
@@ -39,21 +39,14 @@ import { URI } from '../utils/uri';
 class ExtensionEntryPointHelper {
 	private extensionId: ExtensionPointId;
 	private packageFolder: string | undefined;
-	private registryPort: number;
 
-	private extension: ExtensionEntryPoint | null = null;
-	private port: number | null = null;
+	private extension: IExtensionEntryPointWrapper<any> | null = null;
 
-	constructor(options: {
-		extensionId: ExtensionPointId;
-		packageFolder: string;
-		registryPort: number;
-	}) {
-		const { extensionId, packageFolder, registryPort } = options;
+	constructor(options: { extensionId: ExtensionPointId; packageFolder: string }) {
+		const { extensionId, packageFolder } = options;
 
 		this.extensionId = extensionId;
 		this.packageFolder = packageFolder;
-		this.registryPort = registryPort;
 	}
 	private getExtensionId(): ExtensionPointId {
 		return this.extensionId;
@@ -61,65 +54,65 @@ class ExtensionEntryPointHelper {
 	private getPackageFolder(): string {
 		return this.packageFolder;
 	}
-	private getRegistryPort(): number {
-		return this.registryPort;
-	}
-	private async startup() {
-		const helper: RPCHelper = await createClientSocketTransport();
-		this.port = await helper.onPortOccuried();
-		helper.onConnected().then(({ reader, writer }) => {
-			const connection = rpc.createMessageConnection(reader, writer);
-			connection.listen();
-			connection.onRequest(
-				ExtensionEventTypes.DATA_TRANSMITTED,
-				(event: ExtensionDataTransmittedEvent): void => {
-					const { data, extensionId } = event;
-					if (extensionId !== this.getExtensionId()) {
-						// do nothing, return
-						return;
-					}
-					this.extension.handle(data);
-				}
-			);
-		});
-	}
+	private onMainProcessMessageReceived = (
+		message: any,
+		sendHandle: net.Socket | net.Server
+	): void => {
+		if (!message) {
+			console.log('Empty message received, ignore.');
+			return;
+		}
+		const data = message as ExtensionDataTransmittedEvent;
+		if (data.extensionId && data.type === ExtensionEventTypes.DATA_TRANSMITTED) {
+			if (data.extensionId !== this.getExtensionId()) {
+				// do nothing, return
+				return;
+			}
+			this.extension.handle(data.data);
+		} else {
+			console.error('Neither extension id nor type declared via message, ignore.');
+			console.error(data);
+		}
+	};
 	private onStartSuccessful() {
-		const { reader, writer } = createServerSocketTransport(this.getRegistryPort());
-		const connection = rpc.createMessageConnection(reader, writer);
-		connection.listen();
-		connection
-			.sendRequest(ExtensionEventTypes.REGISTERED, {
+		process.send(
+			{
 				type: ExtensionEventTypes.REGISTERED,
-				extensionId: this.getExtensionId(),
-				port: this.port
-			})
-			.then(null, () => {
-				console.error('Failed to send registration message.');
-			});
+				extensionId: this.getExtensionId()
+			},
+			undefined,
+			undefined,
+			(error: Error) => {
+				if (error) {
+					console.error('Failed to send registration message.');
+					console.error(error);
+				}
+			}
+		);
 	}
 	private onStartFailed(e: Error) {
-		const { reader, writer } = createServerSocketTransport(this.getRegistryPort());
-		const connection = rpc.createMessageConnection(reader, writer);
-		connection.listen();
-		connection
-			.sendRequest(ExtensionEventTypes.REGISTERED, {
+		process.send(
+			{
 				type: ExtensionEventTypes.REGISTERED,
 				extensionId: this.getExtensionId(),
-				port: this.port,
 				error: e
-			})
-			.then(null, () => {
-				console.error('Failed to send registration message.');
-			});
+			},
+			undefined,
+			undefined,
+			(error: Error) => {
+				if (error) {
+					console.error(`Failed to start extension[${this.getExtensionId()}]`);
+					console.error(e);
+					console.error('Failed to send registration message.');
+					console.error(error);
+				}
+			}
+		);
 	}
 	async activate() {
 		try {
-			await this.startup();
-		} catch (e) {
-			console.error(e);
-		}
+			process.on('message', this.onMainProcessMessageReceived);
 
-		try {
 			const packageFilename = path.join(this.getPackageFolder(), 'package.json');
 			if (!fs.existsSync(packageFilename)) {
 				throw new Error(`Package file[${packageFilename}] not found.`);
@@ -139,20 +132,52 @@ class ExtensionEntryPointHelper {
 				throw new Error(`Main entry file[${mainfile}] is not a file.`);
 			}
 			const module: URI = URI.file(mainfile);
-			const extension: ExtensionEntryPoint = require(module.fsPath);
+			const extension: IExtensionEntryPointWrapper<any> = this.createWrapper(
+				require(module.fsPath)
+			);
 			await extension.activate();
 			this.extension = extension;
 			this.onStartSuccessful();
 		} catch (e) {
 			this.onStartFailed(e);
+			return Promise.reject();
 		}
+	}
+	createWrapper(entrypoint: IExtensionEntryPoint): IExtensionEntryPointWrapper<any> {
+		switch (entrypoint.getType()) {
+			case ExtensionTypes.WORKSPACE:
+				return new WorkspaceExtensionEntryPointWrapper(
+					entrypoint as IWorkspaceExtensionEntryPoint
+				);
+			default:
+				throw new Error(`Extension type[${entrypoint.getType()}] is not supported.`);
+		}
+	}
+	sendMessage(data: any): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			process.send(
+				{
+					extensionId: this.extensionId,
+					type: ExtensionEventTypes.DATA_TRANSMITTED,
+					data
+				} as ExtensionDataTransmittedEvent,
+				undefined,
+				undefined,
+				(error: Error) => {
+					if (error) {
+						reject(error);
+					} else {
+						resolve();
+					}
+				}
+			);
+		});
 	}
 }
 
 export const activate = async (options: {
 	extensionId: ExtensionPointId;
 	packageFolder: string;
-	registryPort: number;
 }): Promise<void> => {
 	new ExtensionEntryPointHelper(options).activate();
 };

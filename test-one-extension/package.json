@@ -1,3 +1,9 @@
 {
-	"main": "index.js"
+	"main": "index.js",
+	"scripts": {
+		"compile": "tsc"
+	},
+	"dependencies": {
+		"typescript": "^3.7.2"
+	}
 }

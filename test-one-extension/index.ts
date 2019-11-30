@@ -4,3 +4,7 @@ export const activate = () => {
 export const handle = (data: any): void => {
 	console.log(data);
 };
+
+export const getType = (): string => {
+	return 'workspace';
+};

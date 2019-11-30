@@ -5,6 +5,8 @@
 import * as bootstrap from './bootstrap-utils';
 import * as Consts from './consts';
 
+console.log(`child process pid[${process.pid}]`);
+
 if (process.env[Consts.ARG_INJECT_NODE_MODULE_LOOKUP_PATH]) {
 	bootstrap.injectNodeModuleLookupPath(process.env[Consts.ARG_INJECT_NODE_MODULE_LOOKUP_PATH]);
 }
@@ -50,9 +52,8 @@ if (process.env[Consts.ARG_PARENT_PID]) {
 if (process.env[Consts.ARG_ENTRY_POINT]) {
 	const entrypoint = require(process.env[Consts.ARG_ENTRY_POINT]);
 	const packageFolder = process.env[Consts.ARG_PACKAGE_FOLDER];
-	const registryPort = process.env[Consts.ARG_REGISTRY_PORT];
 	const extensionId = process.env[Consts.ARG_EXTENSION_ID];
-	entrypoint.activate({ extensionId, packageFolder, registryPort });
+	entrypoint.activate({ extensionId, packageFolder });
 }
 
 /*

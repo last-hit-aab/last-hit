@@ -1,26 +1,41 @@
 import { ChildProcess, fork } from 'child_process';
 import Emitter from 'events';
+import net from 'net';
 import * as Consts from './extension/consts';
-import { IExtensionPoint } from './types';
+import {
+	IExtensionPoint,
+	ExtensionEvent,
+	ExtensionEventTypes,
+	ExtensionDataTransmittedEvent,
+	ExtensionRegisteredEvent,
+	ExtensionPointId
+} from './types';
 import * as objects from './utils/objects';
 import * as platform from './utils/platform';
 
 export const enum WorkerEvents {
-	CHILD_PROCESS_EXITED = 'child-process-exited',
+	EXITED = 'exited',
+	REGISTERED = 'registered',
 	LOG = 'log',
 	ERROR_LOG = 'error-log',
-	ERROR = 'error'
+	ERROR = 'error',
+	DATA = 'data'
 }
 type GenericListener = (...args: any[]) => void;
+export type ChildProcessRegisteredListener = (error?: Error) => void;
 export type ChildProcessExistListener = (code: number, signal: string, unexcepted: boolean) => void;
 export type LogListener = (data: any) => void;
 export type ErrorListener = (error: Error) => void;
+export type DataListener = (data: any) => void;
 export interface IExtensionWorker {
-	once(event: WorkerEvents.CHILD_PROCESS_EXITED, listener: ChildProcessExistListener): this;
+	once(event: WorkerEvents.REGISTERED, listener: ChildProcessRegisteredListener): this;
+	once(event: WorkerEvents.EXITED, listener: ChildProcessExistListener): this;
 	on(event: WorkerEvents.LOG | WorkerEvents.ERROR_LOG, listener: LogListener): this;
 	off(event: WorkerEvents.LOG | WorkerEvents.ERROR_LOG, listener: LogListener): this;
 	on(event: WorkerEvents.ERROR, listener: ErrorListener): this;
 	off(event: WorkerEvents.ERROR, listener: ErrorListener): this;
+	on(event: WorkerEvents.DATA, listener: DataListener): this;
+	off(event: WorkerEvents.DATA, listener: DataListener): this;
 }
 
 class ExtensionWorker implements IExtensionWorker {
@@ -28,7 +43,7 @@ class ExtensionWorker implements IExtensionWorker {
 	private terminating: boolean = false;
 	private childProcess: ChildProcess | null = null;
 
-	public async start(registryPort: number, extension: IExtensionPoint): Promise<void> {
+	public async start(extension: IExtensionPoint): Promise<void> {
 		if (this.terminating) {
 			// .terminate() was called
 			return Promise.reject('Terminating...');
@@ -38,7 +53,6 @@ class ExtensionWorker implements IExtensionWorker {
 			env: objects.mixin(objects.deepClone(process.env), {
 				// IMPORTANT relative path to "./extension/bootstrap"
 				[Consts.ARG_ENTRY_POINT]: './index.js',
-				[Consts.ARG_REGISTRY_PORT]: registryPort,
 				[Consts.ARG_PACKAGE_FOLDER]: extension.getFolder(),
 				[Consts.ARG_HANDLES_UNCAUGHT_ERRORS]: true,
 				[Consts.ARG_EXTENSION_ID]: extension.getId()
@@ -58,6 +72,7 @@ class ExtensionWorker implements IExtensionWorker {
 		// Lifecycle
 		this.childProcess.on('error', this.onChildProcessError);
 		this.childProcess.on('exit', this.onChildProcessExit);
+		this.childProcess.on('message', this.onChildProcessMessageReceived);
 		this.childProcess.stdout!.on('data', this.onChildProcessStdout);
 		this.childProcess.stderr!.on('data', this.onChildProcessStderr);
 	}
@@ -66,9 +81,31 @@ class ExtensionWorker implements IExtensionWorker {
 	};
 	private onChildProcessExit = (code: number, signal: string): void => {
 		if (this.terminating) {
-			this.getEmitter().emit(WorkerEvents.CHILD_PROCESS_EXITED, code, signal, false);
+			this.getEmitter().emit(WorkerEvents.EXITED, code, signal, false);
 		} else {
-			this.getEmitter().emit(WorkerEvents.CHILD_PROCESS_EXITED, code, signal, true);
+			this.getEmitter().emit(WorkerEvents.EXITED, code, signal, true);
+		}
+	};
+	private onChildProcessMessageReceived = (
+		message: any,
+		sendHandle: net.Socket | net.Server
+	): void => {
+		if (!message) {
+			console.log('Empty message received, ignore.');
+			return;
+		}
+		const data = message as ExtensionEvent;
+		switch (true) {
+			case data.extensionId && data.type === ExtensionEventTypes.DATA_TRANSMITTED:
+				this.emitter.emit(WorkerEvents.DATA, (data as ExtensionDataTransmittedEvent).data);
+				break;
+			case data.extensionId && data.type === ExtensionEventTypes.REGISTERED:
+				const event = data as ExtensionRegisteredEvent;
+				this.emitter.emit(WorkerEvents.REGISTERED, event.error);
+				break;
+			default:
+				console.error('Neither extension id nor type declared via message, ignore.');
+				console.error(data);
 		}
 	};
 	private onChildProcessStdout = (data: any): void => {
@@ -100,6 +137,7 @@ class ExtensionWorker implements IExtensionWorker {
 		this.clean();
 	}
 	private clean(): void {
+		this.emitter.removeAllListeners();
 		if (this.childProcess) {
 			this.childProcess.kill();
 			this.childProcess = null;
@@ -116,6 +154,26 @@ class ExtensionWorker implements IExtensionWorker {
 	off(event: WorkerEvents, listener?: GenericListener): this {
 		this.emitter.off(event, listener!);
 		return this;
+	}
+	sendMessage(extensionId: ExtensionPointId, data: any): Promise<void> {
+		return new Promise((resolve, reject) => {
+			this.childProcess.send(
+				{
+					extensionId,
+					type: ExtensionEventTypes.DATA_TRANSMITTED,
+					data
+				} as ExtensionDataTransmittedEvent,
+				undefined,
+				undefined,
+				(error: Error) => {
+					if (error) {
+						reject(error);
+					} else {
+						resolve();
+					}
+				}
+			);
+		});
 	}
 }
 

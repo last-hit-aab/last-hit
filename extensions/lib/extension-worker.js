@@ -49,6 +49,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var child_process_1 = require("child_process");
 var events_1 = __importDefault(require("events"));
 var Consts = __importStar(require("./extension/consts"));
+var types_1 = require("./types");
 var objects = __importStar(require("./utils/objects"));
 var platform = __importStar(require("./utils/platform"));
 var ExtensionWorker = /** @class */ (function () {
@@ -62,10 +63,30 @@ var ExtensionWorker = /** @class */ (function () {
         };
         this.onChildProcessExit = function (code, signal) {
             if (_this.terminating) {
-                _this.getEmitter().emit("child-process-exited" /* CHILD_PROCESS_EXITED */, code, signal, false);
+                _this.getEmitter().emit("exited" /* EXITED */, code, signal, false);
             }
             else {
-                _this.getEmitter().emit("child-process-exited" /* CHILD_PROCESS_EXITED */, code, signal, true);
+                _this.getEmitter().emit("exited" /* EXITED */, code, signal, true);
+            }
+        };
+        this.onChildProcessMessageReceived = function (message, sendHandle) {
+            console.log(message);
+            if (!message) {
+                console.log('Empty message received, ignore.');
+                return;
+            }
+            var data = message;
+            switch (true) {
+                case data.extensionId && data.type === types_1.ExtensionEventTypes.DATA_TRANSMITTED:
+                    _this.emitter.emit("data" /* DATA */, data.data);
+                    break;
+                case data.extensionId && data.type === types_1.ExtensionEventTypes.REGISTERED:
+                    var event_1 = data;
+                    _this.emitter.emit("registered" /* REGISTERED */, event_1.error);
+                    break;
+                default:
+                    console.error('Neither extension id nor type declared via message, ignore.');
+                    console.error(data);
             }
         };
         this.onChildProcessStdout = function (data) {
@@ -75,7 +96,7 @@ var ExtensionWorker = /** @class */ (function () {
             _this.getEmitter().emit("error-log" /* ERROR_LOG */, _this.asString(data));
         };
     }
-    ExtensionWorker.prototype.start = function (registryPort, extension) {
+    ExtensionWorker.prototype.start = function (extension) {
         return __awaiter(this, void 0, void 0, function () {
             var opts;
             var _a;
@@ -88,7 +109,6 @@ var ExtensionWorker = /** @class */ (function () {
                     env: objects.mixin(objects.deepClone(process.env), (_a = {},
                         // IMPORTANT relative path to "./extension/bootstrap"
                         _a[Consts.ARG_ENTRY_POINT] = './index.js',
-                        _a[Consts.ARG_REGISTRY_PORT] = registryPort,
                         _a[Consts.ARG_PACKAGE_FOLDER] = extension.getFolder(),
                         _a[Consts.ARG_HANDLES_UNCAUGHT_ERRORS] = true,
                         _a[Consts.ARG_EXTENSION_ID] = extension.getId(),
@@ -106,6 +126,7 @@ var ExtensionWorker = /** @class */ (function () {
                 // Lifecycle
                 this.childProcess.on('error', this.onChildProcessError);
                 this.childProcess.on('exit', this.onChildProcessExit);
+                this.childProcess.on('message', this.onChildProcessMessageReceived);
                 this.childProcess.stdout.on('data', this.onChildProcessStdout);
                 this.childProcess.stderr.on('data', this.onChildProcessStderr);
                 return [2 /*return*/];
@@ -150,6 +171,23 @@ var ExtensionWorker = /** @class */ (function () {
     ExtensionWorker.prototype.off = function (event, listener) {
         this.emitter.off(event, listener);
         return this;
+    };
+    ExtensionWorker.prototype.sendMessage = function (extensionId, data) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.childProcess.send({
+                extensionId: extensionId,
+                type: types_1.ExtensionEventTypes.DATA_TRANSMITTED,
+                data: data
+            }, undefined, undefined, function (error) {
+                if (error) {
+                    reject(error);
+                }
+                else {
+                    resolve();
+                }
+            });
+        });
     };
     return ExtensionWorker;
 }());

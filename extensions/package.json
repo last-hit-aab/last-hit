@@ -1,8 +1,8 @@
 {
-	"name": "last-hit-plugins",
+	"name": "last-hit-extensions",
 	"version": "0.7.3",
-	"description": "plugins for last-hit",
-	"main": "out/index.js",
+	"description": "extensions for last-hit",
+	"main": "index.js",
 	"scripts": {
 		"compile": "tsc",
 		"test": "npm run compile && node test/test-one.test.js",
@@ -22,8 +22,7 @@
 	"dependencies": {
 		"@types/jsonfile": "^5.0.0",
 		"jsonfile": "^5.0.0",
-		"typescript": "^3.7.2",
-		"vscode-jsonrpc": "^4.0.0"
+		"typescript": "^3.7.2"
 	},
 	"devDependencies": {}
 }

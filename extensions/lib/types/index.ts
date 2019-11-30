@@ -1,3 +1,7 @@
+export enum ExtensionTypes {
+	WORKSPACE = 'workspace'
+}
+
 export type ExtensionPointId = string;
 export interface IExtensionPoint {
 	getId(): ExtensionPointId;
@@ -21,7 +25,6 @@ export interface ExtensionEvent {
 }
 export interface ExtensionRegisteredEvent extends ExtensionEvent {
 	type: ExtensionEventTypes.REGISTERED;
-	port: number;
 	error?: any;
 }
 export type ExtensionRegisteredHandler = (event: ExtensionRegisteredEvent) => void;
@@ -87,7 +90,31 @@ export interface IExtensionRegistry {
 	off(event: ExtensionEventTypes.ERROR, handler: ExtensionErrorHandler): this;
 }
 
-export interface ExtensionEntryPoint {
+export interface IExtensionEntryPoint {
 	activate(): Promise<void>;
+	getType(): ExtensionTypes;
+}
+
+export interface IExtensionEntryPointWrapper<T extends IExtensionEntryPoint>
+	extends IExtensionEntryPoint {
 	handle(data: any): void;
+	getEntrypoint(): T;
+}
+
+export abstract class AbstractExtensionEntryPointWrapper<T extends IExtensionEntryPoint>
+	implements IExtensionEntryPointWrapper<T> {
+	private entrypoint: T;
+	constructor(entrypoint: T) {
+		this.entrypoint = entrypoint;
+	}
+	activate(): Promise<void> {
+		return this.entrypoint.activate();
+	}
+	getType(): ExtensionTypes {
+		return this.entrypoint.getType();
+	}
+	getEntrypoint(): T {
+		return this.entrypoint;
+	}
+	abstract handle(data: any): void;
 }

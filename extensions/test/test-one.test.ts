@@ -35,8 +35,8 @@ const onRegistered = (event: ExtensionRegisteredEvent): void => {
 	// };
 	// ExtensionRegistry.on(ExtensionEventTypes.UNREGISTERED, onUnregistered).shutdownAll();
 	const extensionId = 'id-1';
-	ExtensionRegistry.publishMessage(extensionId, 'hello').finally(() => {
-		ExtensionRegistry.publishMessage(extensionId, 'hello world');
+	ExtensionRegistry.sendMessage(extensionId, 'hello').finally(() => {
+		ExtensionRegistry.sendMessage(extensionId, 'hello world');
 	});
 };
 const onLog = (event: ExtensionLogEvent): void => {

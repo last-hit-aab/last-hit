@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ARG_ENTRY_POINT = 'ENTRY_POINT';
-exports.ARG_REGISTRY_PORT = 'REGISTRY_PORT';
 exports.ARG_PARENT_PID = 'PARENT_PID';
 exports.ARG_HANDLES_UNCAUGHT_ERRORS = 'HANDLES_UNCAUGHT_ERRORS';
 exports.ARG_INJECT_NODE_MODULE_LOOKUP_PATH = 'INJECT_NODE_MODULE_LOOKUP_PATH';
