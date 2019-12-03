@@ -10,7 +10,8 @@
 		"noImplicitAny": false,
 		"suppressImplicitAnyIndexErrors": true,
 		"resolveJsonModule": true,
-		"esModuleInterop": true
+		"esModuleInterop": true,
+		"outDir": "dist"
 	},
 	"exclude": ["node_modules"]
 }

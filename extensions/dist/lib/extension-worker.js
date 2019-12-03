@@ -70,7 +70,6 @@ var ExtensionWorker = /** @class */ (function () {
             }
         };
         this.onChildProcessMessageReceived = function (message, sendHandle) {
-            console.log(message);
             if (!message) {
                 console.log('Empty message received, ignore.');
                 return;
@@ -155,6 +154,7 @@ var ExtensionWorker = /** @class */ (function () {
         this.clean();
     };
     ExtensionWorker.prototype.clean = function () {
+        this.emitter.removeAllListeners();
         if (this.childProcess) {
             this.childProcess.kill();
             this.childProcess = null;

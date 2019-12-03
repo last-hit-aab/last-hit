@@ -13,6 +13,3 @@ error-*.png
 package-lock.json
 stderr.log
 stdout.log
-
-index.js.map
-lib/**/*.js.map

@@ -123,7 +123,7 @@ class Recorder {
 	private getChromiumExecPath(): string {
 		return puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked');
 	}
-	private generateKeyByString(storyName, flowName) {
+	private generateKeyByString(storyName: string, flowName: string) {
 		return `[${flowName}@${storyName}]`;
 	}
 	private getReplayer(): ReplayerHelper {

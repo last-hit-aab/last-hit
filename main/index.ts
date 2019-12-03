@@ -11,7 +11,8 @@ if (process.platform !== 'win32') {
 	app.setAboutPanelOptions({
 		applicationName: 'Last Hit',
 		applicationVersion: packageFile.version,
-		iconPath: path.join(__dirname, '../icons/64x64.png')
+		// one more folder after compile
+		iconPath: path.join(__dirname, '../../icons/64x64.png')
 	});
 }
 
@@ -26,13 +27,14 @@ const createWindow = () => {
 	mainWindow = new BrowserWindow({
 		width: 780,
 		height: 480,
-		icon: path.join(__dirname, '../icons/64x64.png'),
+		// one more folder after compile
+		icon: path.join(__dirname, '../../icons/64x64.png'),
 		show: false,
 		resizable: false,
 		maximizable: false,
 		title: 'Welcome to LastHit',
 		webPreferences: {
-			preload: path.join(__dirname, '../preload/index.js'),
+			preload: path.join(__dirname, './preload/index.js'),
 			plugins: true,
 			nodeIntegration: true,
 			webviewTag: true

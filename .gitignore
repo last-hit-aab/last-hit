@@ -1,7 +1,8 @@
 # mac
 .DS_Store
 
-dist
+/dist
+/runtime
 node_modules
 build
 package-lock
@@ -9,15 +10,5 @@ coverage
 .nyc_output
 log/**
 package-lock.json
-replayer/upload-temp
-replayer/screen_record
-replayer/stderr.log
-replayer/stdout.log
-replayer/report.html
-replayer/error-*.png
 .vscode/settings.json
 yarn-error.log
-
-# ignore compiled js and map files
-main/**/*.js
-main/**/*.js.map

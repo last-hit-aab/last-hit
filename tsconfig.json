@@ -11,6 +11,7 @@
 		"suppressImplicitAnyIndexErrors": true,
 		"resolveJsonModule": true,
 		"esModuleInterop": true,
+		"outDir": "runtime"
 	},
-	"exclude": ["node_modules", "renderer"]
+	"exclude": ["node_modules", "renderer", "replayer", "extensions", "types", "test-one-extension"]
 }

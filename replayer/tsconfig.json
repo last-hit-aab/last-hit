@@ -11,7 +11,8 @@
 		"suppressImplicitAnyIndexErrors": true,
 		"resolveJsonModule": true,
 		"esModuleInterop": true,
-		"strict": true
+		"strict": true,
+		"outDir": "dist"
 	},
 	"exclude": ["node_modules"]
 }

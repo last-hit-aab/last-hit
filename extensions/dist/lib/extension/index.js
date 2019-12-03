@@ -65,7 +65,6 @@ var ExtensionEntryPointHelper = /** @class */ (function () {
         var _this = this;
         this.extension = null;
         this.onMainProcessMessageReceived = function (message, sendHandle) {
-            console.log(message);
             if (!message) {
                 console.log('Empty message received, ignore.');
                 return;
@@ -97,7 +96,7 @@ var ExtensionEntryPointHelper = /** @class */ (function () {
         process.send({
             type: types_1.ExtensionEventTypes.REGISTERED,
             extensionId: this.getExtensionId()
-        }, undefined, { swallowErrors: false }, function (error) {
+        }, undefined, undefined, function (error) {
             if (error) {
                 console.error('Failed to send registration message.');
                 console.error(error);

@@ -111,6 +111,7 @@ var ExtensionRegistry = /** @class */ (function () {
                                             })
                                                 .on("exited" /* EXITED */, function (code, signal, expected) {
                                                 console.log("Extension[id=" + extensionId + ", name=" + definition.getName() + "] terminated[code=" + code + ", signal=" + signal + "].");
+                                                extension.started = false;
                                                 _this.getEmitter().emit(types_1.ExtensionEventTypes.UNREGISTERED, {
                                                     type: types_1.ExtensionEventTypes.UNREGISTERED,
                                                     extensionId: extensionId
