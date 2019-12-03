@@ -1,6 +1,4 @@
-export enum ExtensionTypes {
-	WORKSPACE = 'workspace'
-}
+import { Extensions } from 'last-hit-types';
 
 export type ExtensionPointId = string;
 export interface IExtensionPoint {
@@ -8,6 +6,9 @@ export interface IExtensionPoint {
 	getName(): string;
 	getDescription(): string;
 	getFolder(): string;
+}
+export interface IExtensionEntryPointHelper {
+	sendMessage(data: any): Promise<void>;
 }
 
 export enum ExtensionEventTypes {
@@ -90,31 +91,32 @@ export interface IExtensionRegistry {
 	off(event: ExtensionEventTypes.ERROR, handler: ExtensionErrorHandler): this;
 }
 
-export interface IExtensionEntryPoint {
-	activate(): Promise<void>;
-	getType(): ExtensionTypes;
-}
-
-export interface IExtensionEntryPointWrapper<T extends IExtensionEntryPoint>
-	extends IExtensionEntryPoint {
+export interface IExtensionEntryPointWrapper<T extends Extensions.IExtensionEntryPoint>
+	extends Extensions.IExtensionEntryPoint {
 	handle(data: any): void;
 	getEntrypoint(): T;
 }
 
-export abstract class AbstractExtensionEntryPointWrapper<T extends IExtensionEntryPoint>
+export abstract class AbstractExtensionEntryPointWrapper<T extends Extensions.IExtensionEntryPoint>
 	implements IExtensionEntryPointWrapper<T> {
 	private entrypoint: T;
-	constructor(entrypoint: T) {
+	private helper: IExtensionEntryPointHelper;
+
+	constructor(entrypoint: T, helper: IExtensionEntryPointHelper) {
 		this.entrypoint = entrypoint;
+		this.helper = helper;
 	}
 	activate(): Promise<void> {
 		return this.entrypoint.activate();
 	}
-	getType(): ExtensionTypes {
+	getType(): Extensions.ExtensionTypes {
 		return this.entrypoint.getType();
 	}
 	getEntrypoint(): T {
 		return this.entrypoint;
+	}
+	getHelper() {
+		return this.helper;
 	}
 	abstract handle(data: any): void;
 }

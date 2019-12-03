@@ -1,9 +1,10 @@
 import fs from 'fs';
+import fse from 'fs-extra';
 import jsonfile from 'jsonfile';
+import { Story } from 'last-hit-types';
 import path from 'path';
 import { getActiveWorkspace } from '../active';
-import { Story, WorkspaceSettings } from '../types';
-import fse from 'fs-extra';
+import { WorkspaceSettings } from '../types';
 
 export const asStoryFileName = (name: string): string => {
 	return `${name}.story.json`;

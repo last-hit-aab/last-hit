@@ -1,22 +1,42 @@
 import fs from 'fs';
+import {
+	ChangeStep,
+	Device,
+	Flow,
+	KeydownStep,
+	StartStep,
+	Step,
+	StepType,
+	ClickStep,
+	FocusStep,
+	MousedownStep,
+	AnimationStep,
+	ScrollStep,
+	DialogOpenStep,
+	DialogCloseStep,
+	AjaxStep,
+	PageCreatedStep,
+	PageSwitchStep,
+	PageClosedStep
+} from 'last-hit-types';
 import path from 'path';
-import puppeteer, { Browser, CoverageEntry, Page, Request, ElementHandle } from 'puppeteer';
+import puppeteer, { Browser, CoverageEntry, ElementHandle, Page, Request } from 'puppeteer';
 import util from 'util';
 import uuidv4 from 'uuid/v4';
+import ThirdStepSupport, {
+	ElementAttributeValueRetriever,
+	ElementRetriever
+} from '../3rd-comps/support';
 import Environment from '../config/env';
-import { Device, Flow, Step, Summary } from '../types';
-import { generateKeyByString, getTempFolder, shorternUrl, inElectron } from '../utils';
+import { Summary } from '../types';
+import { generateKeyByString, getTempFolder, inElectron, shorternUrl } from '../utils';
 import ci from './ci-helper';
 import compareScreenshot from './compare-screenshot';
+import { controlPage } from './page-controller';
 import ReplaySummary from './replay-summary';
 import { ReplayerCache } from './replayers-cache';
 import RequestCounter from './request-counter';
 import ssim from './ssim';
-import ThirdStepSupport, {
-	ElementRetriever,
-	ElementAttributeValueRetriever
-} from '../3rd-comps/support';
-import { controlPage } from './page-controller';
 
 export type ReplayerOptions = {
 	storyName: string;
@@ -32,7 +52,7 @@ const getChromiumExecPath = () => {
 
 const launchBrowser = async (replayer: Replayer) => {
 	const step = replayer.getCurrentStep();
-	const { url, device, uuid } = step;
+	const { url, device, uuid } = step as StartStep;
 	const {
 		viewport: { width, height }
 	} = device!;
@@ -333,35 +353,35 @@ class Replayer {
 			const ret = await (async () => {
 				switch (step.type) {
 					case 'change':
-						return await this.executeChangeStep(step);
+						return await this.executeChangeStep(step as ChangeStep);
 					case 'click':
-						return await this.executeClickStep(step);
+						return await this.executeClickStep(step as ClickStep);
 					case 'focus':
-						return await this.executeFocusStep(step);
+						return await this.executeFocusStep(step as FocusStep);
 					case 'keydown':
-						return await this.executeKeydownStep(step);
+						return await this.executeKeydownStep(step as KeydownStep);
 					case 'mousedown':
-						return await this.executeMousedownStep(step);
+						return await this.executeMousedownStep(step as MousedownStep);
 					case 'animation':
-						return await this.executeAnimationStep(step);
+						return await this.executeAnimationStep(step as AnimationStep);
 					case 'ajax':
 						return await (async () => {
-							await this.executeAjaxStep(step);
+							await this.executeAjaxStep(step as AjaxStep);
 							return Promise.resolve({ wait: false });
 						})();
 					case 'scroll':
-						return await this.executeScrollStep(step);
+						return await this.executeScrollStep(step as ScrollStep);
 					case 'dialog-open':
-						return await this.executeDialogOpenStep(step);
+						return await this.executeDialogOpenStep(step as DialogOpenStep);
 					case 'dialog-close':
-						return await this.executeDialogCloseStep(step);
+						return await this.executeDialogCloseStep(step as DialogCloseStep);
 					case 'page-created':
-						return await this.executePageCreatedStep(step);
+						return await this.executePageCreatedStep(step as PageCreatedStep);
 					case 'page-switched':
-						return await this.executePageSwitchedStep(step);
+						return await this.executePageSwitchedStep(step as PageSwitchStep);
 					case 'page-closed':
 						return await (async () => {
-							await this.executePageClosedStep(step);
+							await this.executePageClosedStep(step as PageClosedStep);
 							return Promise.resolve({ wait: false });
 						})();
 					case 'end':
@@ -372,7 +392,7 @@ class Replayer {
 				}
 			})();
 
-			const page = await this.getPage(step.uuid);
+			const page = this.getPage(step.uuid);
 			if ((!ret || ret.wait !== false) && page != null) {
 				// const page = await this.getPageOrThrow(step.uuid);
 				await this.isRemoteFinsihed(page);
@@ -425,7 +445,7 @@ class Replayer {
 			throw e;
 		}
 	}
-	private async executeChangeStep(step: Step): Promise<void> {
+	private async executeChangeStep(step: ChangeStep): Promise<void> {
 		const page = await this.getPageOrThrow(step.uuid);
 		const xpath = this.transformStepPathToXPath(step.path);
 		this.getLogger().log(`Execute change, step path is ${xpath}, step value is ${step.value}.`);
@@ -479,7 +499,7 @@ class Replayer {
 			}
 		}
 	}
-	private async executeClickStep(step: Step): Promise<void> {
+	private async executeClickStep(step: ClickStep): Promise<void> {
 		const page = await this.getPageOrThrow(step.uuid);
 		const xpath = this.transformStepPathToXPath(step.path);
 		this.getLogger().log(`Execute click, step path is ${xpath}.`);
@@ -535,7 +555,7 @@ class Replayer {
 			await element.evaluate((node: Element) => (node as HTMLElement).click());
 		}
 	}
-	private async executeFocusStep(step: Step): Promise<void> {
+	private async executeFocusStep(step: FocusStep): Promise<void> {
 		const page = await this.getPageOrThrow(step.uuid);
 		const xpath = this.transformStepPathToXPath(step.path);
 		this.getLogger().log(`Execute focus, step path is ${xpath}.`);
@@ -548,7 +568,7 @@ class Replayer {
 			node.dispatchEvent(event);
 		});
 	}
-	private async executeKeydownStep(step: Step): Promise<void> {
+	private async executeKeydownStep(step: KeydownStep): Promise<void> {
 		const page = await this.getPageOrThrow(step.uuid);
 		const xpath = this.transformStepPathToXPath(step.path);
 		const value = step.value;
@@ -558,8 +578,8 @@ class Replayer {
 		const currentIndex = this.getCurrentIndex();
 
 		// check the pattern: keydown(key=enter)->change->click(element type=submit)
-		if (steps[currentIndex].type === 'keydown' && steps[currentIndex + 1].type === 'change') {
-			if (steps[currentIndex].target === steps[currentIndex + 1].target) {
+		if (steps[currentIndex + 1].type === 'change') {
+			if (step.target === (steps[currentIndex + 1] as ChangeStep).target) {
 				if (steps[currentIndex + 2].type === 'click') {
 					const element = await this.findElement(steps[currentIndex + 2], page);
 					const elementTagName = await this.getElementTagName(element);
@@ -583,7 +603,7 @@ class Replayer {
 				break;
 		}
 	}
-	private async executeMousedownStep(step: Step): Promise<void> {
+	private async executeMousedownStep(step: MousedownStep): Promise<void> {
 		const page = await this.getPageOrThrow(step.uuid);
 		const xpath = this.transformStepPathToXPath(step.path);
 		this.getLogger().log(`Execute mouse down, step path is ${xpath}`);
@@ -605,11 +625,11 @@ class Replayer {
 			await element.click();
 		}
 	}
-	private async executeAnimationStep(step: Step): Promise<void> {
+	private async executeAnimationStep(step: AnimationStep): Promise<void> {
 		const wait = util.promisify(setTimeout);
 		await wait(step.duration!);
 	}
-	private async executeScrollStep(step: Step): Promise<void> {
+	private async executeScrollStep(step: ScrollStep): Promise<void> {
 		const page = await this.getPageOrThrow(step.uuid);
 
 		const scrollTop = step.scrollTop || 0;
@@ -635,18 +655,18 @@ class Replayer {
 			);
 		}
 	}
-	private async executeDialogOpenStep(step: Step): Promise<void> {
+	private async executeDialogOpenStep(step: DialogOpenStep): Promise<void> {
 		// dialog open is invoked by javascript anyway, ignore it
 		this.getLogger().log(`Execute ${step.dialog} open, step url is ${step.url}.`);
 	}
-	private async executeDialogCloseStep(step: Step): Promise<void> {
+	private async executeDialogCloseStep(step: DialogCloseStep): Promise<void> {
 		// dialog close is invoked manually anyway, should be handled in page popup event, ignore it
 		this.getLogger().log(`Execute ${step.dialog} close, step url is ${step.url}.`);
 	}
-	private async executeAjaxStep(step: Step): Promise<void> {
-		this.getLogger().log(`Execute ajax, step url is ${step.url}.`);
+	private async executeAjaxStep(step: AjaxStep): Promise<void> {
+		this.getLogger().log(`Execute ajax, step url is ${step.request && step.request.url}.`);
 	}
-	private async executePageCreatedStep(step: Step): Promise<void> {
+	private async executePageCreatedStep(step: PageCreatedStep): Promise<void> {
 		this.getLogger().debug(`Execute page created, step url is ${step.url}.`);
 		const page = this.getPage(step.uuid);
 		if (page) {
@@ -678,7 +698,7 @@ class Replayer {
 			}
 		}
 	}
-	private async executePageSwitchedStep(step: Step): Promise<void> {
+	private async executePageSwitchedStep(step: PageSwitchStep): Promise<void> {
 		this.getLogger().debug(`Execute page switched, step url is ${step.url}.`);
 		const page = this.getPage(step.uuid);
 		if (page) {
@@ -723,7 +743,7 @@ class Replayer {
 			}
 		}
 	}
-	private async executePageClosedStep(step: Step): Promise<void> {
+	private async executePageClosedStep(step: PageClosedStep): Promise<void> {
 		this.getLogger().debug(`Execute page closed, step url is ${step.url}.`);
 		const page = this.getPage(step.uuid);
 		if (page) {
@@ -744,7 +764,7 @@ class Replayer {
 		});
 	}
 	private async findElement(step: Step, page: Page): Promise<ElementHandle> {
-		const xpath = this.transformStepPathToXPath(step.path);
+		const xpath = this.transformStepPathToXPath(step.path!);
 		const elements = await page.$x(xpath);
 		if (elements && elements.length > 0) {
 			return elements[0];

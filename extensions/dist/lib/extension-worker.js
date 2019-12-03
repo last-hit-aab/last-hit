@@ -121,7 +121,7 @@ var ExtensionWorker = /** @class */ (function () {
                     silent: true
                 };
                 // IMPORTANT relative path to me
-                this.childProcess = child_process_1.fork('lib/extension/bootstrap', ['--type=extension'], opts);
+                this.childProcess = child_process_1.fork('dist/lib/extension/bootstrap', ['--type=extension'], opts);
                 // Lifecycle
                 this.childProcess.on('error', this.onChildProcessError);
                 this.childProcess.on('exit', this.onChildProcessExit);

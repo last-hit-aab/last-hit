@@ -1,5 +1,5 @@
 import { ITreeNode } from '@blueprintjs/core';
-import { Flow, Story } from '../../../types';
+import { Flow, Story } from 'last-hit-types';
 
 export type TreeNodeData = Story | { story: Story; flow: Flow };
 export type TreeNode = ITreeNode<TreeNodeData>;

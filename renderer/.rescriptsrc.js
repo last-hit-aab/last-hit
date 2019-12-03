@@ -11,4 +11,5 @@ const changeTarget = config => {
 	return config;
 };
 
-module.exports = config => [addProgress, changeTarget].reduce((config, func) => func(config), config);
+module.exports = config =>
+	[addProgress, changeTarget].reduce((config, func) => func(config), config);

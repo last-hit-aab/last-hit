@@ -1,5 +1,5 @@
+import { Device, PageCreatedStep, DialogCloseStep } from 'last-hit-types';
 import { Page } from 'puppeteer';
-import { Device } from '../types';
 import { shorternUrl } from '../utils';
 import ci from './ci-helper';
 import Replayer from './replayer';
@@ -202,11 +202,13 @@ export const controlPage = async (replayer: Replayer, page: Page, device: Device
 		// IMPORTANT do not compare url here, since might have random token. only path compare is necessary
 		const pageCreateStep = steps
 			.filter((step, index) => index >= currentIndex)
-			.find(
-				step =>
+			.find(step => {
+				return (
 					step.type === 'page-created' &&
-					(step.forStepUuid === currentStep.stepUuid || newUrl === shorternUrl(step.url!))
-			);
+					((step as PageCreatedStep).forStepUuid === currentStep.stepUuid ||
+						newUrl === shorternUrl((step as PageCreatedStep).url!))
+				);
+			});
 		if (pageCreateStep == null) {
 			replayer
 				.getLogger()
@@ -235,15 +237,16 @@ export const controlPage = async (replayer: Replayer, page: Page, device: Device
 			const steps = replayer.getSteps();
 			const uuid = replayer.findUuid(page);
 			// find the first dialog close step, it must be confirm step
-			const dialogCloseStep = steps
+			const step = steps
 				.filter((step, index) => index > currentIndex)
 				.filter(step => step.type === 'dialog-close')
 				.find(step => step.uuid === uuid);
-			if (dialogCloseStep == null) {
+			if (step == null) {
 				throw new Error(
 					`Cannot find dialog close step for current dialog "${dialogType}" open, flow is broken for replay.`
 				);
 			}
+			const dialogCloseStep = step as DialogCloseStep;
 			if (dialogCloseStep.dialog !== dialogType) {
 				throw new Error(
 					`Cannot match dialog type, should be "${dialogType}", but is "${dialogCloseStep.dialog}", flow is broken for replay.`

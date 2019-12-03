@@ -67,7 +67,7 @@ class ExtensionWorker implements IExtensionWorker {
 		};
 
 		// IMPORTANT relative path to me
-		this.childProcess = fork('lib/extension/bootstrap', ['--type=extension'], opts);
+		this.childProcess = fork('dist/lib/extension/bootstrap', ['--type=extension'], opts);
 
 		// Lifecycle
 		this.childProcess.on('error', this.onChildProcessError);

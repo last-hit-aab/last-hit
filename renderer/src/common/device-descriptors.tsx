@@ -1,4 +1,4 @@
-import { Device } from '../types';
+import { Device } from 'last-hit-types';
 /**
  * Copyright 2017 Google Inc. All rights reserved.
  *

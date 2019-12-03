@@ -1,10 +1,10 @@
 import { Button, ButtonGroup } from '@blueprintjs/core';
+import { remote } from 'electron';
+import { Flow, StartStep, Story } from 'last-hit-types';
 import React from 'react';
 import styled from 'styled-components';
-import { Flow, Story, StartStep } from '../../types';
 import UIContext from '../../common/context';
 import { EventTypes } from '../../events';
-import { remote } from 'electron';
 
 const Container = styled.div`
 	display: flex;

@@ -1,12 +1,13 @@
 import { remote } from 'electron';
 import fs from 'fs';
 import jsonfile from 'jsonfile';
+import { Flow, Story } from 'last-hit-types';
 import path from 'path';
 import { activeWorkspace, deactiveWorkspace, getActiveWorkspace } from '../active';
 import history from '../common/history';
 import IDESettings, { WorkspaceFileExt } from '../common/ide-settings';
 import paths from '../common/paths';
-import { Flow, Story, WorkspaceSettings, WorkspaceStructure } from '../types';
+import { WorkspaceSettings, WorkspaceStructure } from '../types';
 import { asFlowName, isFlowFile } from './flow';
 import { asStoryFileName, isStoryFileExists } from './story';
 

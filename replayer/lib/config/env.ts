@@ -1,5 +1,6 @@
-import { Step, EnvironmentOptions, IncludingFilters, IncludingFilter } from '../types';
+import { Step } from 'last-hit-types';
 import os from 'os';
+import { EnvironmentOptions, IncludingFilter, IncludingFilters } from '../types';
 
 type Wrapper = (step: Step) => Step;
 
@@ -60,10 +61,10 @@ class Environment {
 	}
 	private wrapUrl(step: Step): Step {
 		const regexps = this.getUrlReplaceRegexps();
-		if (step.url && regexps) {
-			step.url = regexps.reduce((url, regexp, index) => {
+		if ((step as any).url && regexps) {
+			(step as any).url = regexps.reduce((url, regexp, index) => {
 				return url.replace(regexp, this.getUrlReplaceTos()[index] || '');
-			}, step.url);
+			}, (step as any).url);
 		}
 		return step;
 	}

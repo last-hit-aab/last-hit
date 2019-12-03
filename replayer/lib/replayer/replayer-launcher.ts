@@ -1,9 +1,9 @@
+import { Flow, Step } from 'last-hit-types';
+import Environment from '../config/env';
 import { generateKeyByString } from '../utils';
 import ReplayEmitter, { CallbackEvent } from './replay-emitter';
 import Replayer from './replayer';
 import { ReplayerCache } from './replayers-cache';
-import { Flow, Step } from '../types';
-import Environment from '../config/env';
 
 export type ReplayerHandle = { current?: Replayer };
 export type ReplayerLauncher = () => ReplayerHandle;

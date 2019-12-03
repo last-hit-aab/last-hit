@@ -9,13 +9,13 @@ import {
 	Tabs
 } from '@blueprintjs/core';
 import { remote } from 'electron';
+import { Flow, Story } from 'last-hit-types';
 import React from 'react';
 import styled from 'styled-components';
 import UIContext from '../../../common/context';
 import IDESettings from '../../../common/ide-settings';
 import { EventTypes } from '../../../events';
 import { asFlowKey, saveFlow } from '../../../files';
-import { Flow, Story } from '../../../types';
 import FlowEditPanel from '../../flow/edit-panel';
 import { getFlowIcon, getUIStatusOfFlows, isFlowsAllOnIdle, isIdle } from '../../flow/utils';
 

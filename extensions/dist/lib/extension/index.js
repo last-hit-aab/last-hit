@@ -163,8 +163,8 @@ var ExtensionEntryPointHelper = /** @class */ (function () {
     };
     ExtensionEntryPointHelper.prototype.createWrapper = function (entrypoint) {
         switch (entrypoint.getType()) {
-            case types_1.ExtensionTypes.WORKSPACE:
-                return new workspace_1.WorkspaceExtensionEntryPointWrapper(entrypoint);
+            case 'workspace':
+                return new workspace_1.WorkspaceExtensionEntryPointWrapper(entrypoint, this);
             default:
                 throw new Error("Extension type[" + entrypoint.getType() + "] is not supported.");
         }

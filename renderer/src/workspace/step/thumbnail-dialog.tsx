@@ -1,11 +1,11 @@
 import { Button, Classes, Overlay } from '@blueprintjs/core';
+import { Flow, Step, Story } from 'last-hit-types';
+import path from 'path';
 import React from 'react';
 import styled from 'styled-components';
 import UIContext from '../../common/context';
 import IDESettings from '../../common/ide-settings';
 import { EventTypes } from '../../events';
-import { Flow, Step, Story } from '../../types';
-import path from 'path';
 
 const { gap } = IDESettings.getStyles();
 

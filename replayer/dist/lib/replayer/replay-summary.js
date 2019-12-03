@@ -54,7 +54,7 @@ var ReplaySummary = /** @class */ (function () {
             numberOfAjax: 0,
             slowAjaxRequest: [],
             screenCompareList: [],
-            errorStack: ""
+            errorStack: ''
         };
     }
     ReplaySummary.prototype.getEnvironment = function () {
@@ -78,7 +78,7 @@ var ReplaySummary = /** @class */ (function () {
     ReplaySummary.prototype.handleError = function (step, error) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                if (step.type == "ajax") {
+                if (step.type == 'ajax') {
                     // ignore
                 }
                 else {
@@ -92,7 +92,7 @@ var ReplaySummary = /** @class */ (function () {
     ReplaySummary.prototype.handle = function (step) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                if (step.type == "ajax") {
+                if (step.type == 'ajax') {
                     // ignore
                     this.summary.numberOfSuccess += 1;
                 }
@@ -128,15 +128,15 @@ var ReplaySummary = /** @class */ (function () {
     };
     ReplaySummary.prototype.print = function () {
         console.table([this.summary], [
-            "storyName",
-            "flowName",
-            "numberOfStep",
-            "numberOfUIBehavior",
-            "numberOfSuccess",
-            "numberOfFailed",
-            "ignoreErrorList",
-            "numberOfAjax",
-            "slowAjaxRequest"
+            'storyName',
+            'flowName',
+            'numberOfStep',
+            'numberOfUIBehavior',
+            'numberOfSuccess',
+            'numberOfFailed',
+            'ignoreErrorList',
+            'numberOfAjax',
+            'slowAjaxRequest'
         ]);
     };
     return ReplaySummary;

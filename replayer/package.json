@@ -45,6 +45,7 @@
 		"handlebars": "^4.5.3",
 		"image-ssim": "^0.2.0",
 		"jsonfile": "^5.0.0",
+		"last-hit-types": "0.7.3",
 		"mkdirp": "^0.5.1",
 		"node-resemble-js": "^0.2.0",
 		"nyc": "^14.1.1",

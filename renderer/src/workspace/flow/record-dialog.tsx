@@ -1,5 +1,6 @@
 import { Button, Classes, Overlay } from '@blueprintjs/core';
-import { ipcRenderer, remote, IpcRendererEvent, clipboard } from 'electron';
+import { clipboard, ipcRenderer, IpcRendererEvent, remote } from 'electron';
+import { Flow, StartStep, StepType, Story } from 'last-hit-types';
 import React from 'react';
 import styled from 'styled-components';
 import uuidv4 from 'uuid/v4';
@@ -7,7 +8,6 @@ import UIContext from '../../common/context';
 import Devices from '../../common/device-descriptors';
 import { EventTypes } from '../../events';
 import { asFlowKey } from '../../files';
-import { Flow, StartStep, StepType, Story } from '../../types';
 import { getStepTypeText } from '../step/utils';
 
 const Placeholder = styled.div`
@@ -33,12 +33,9 @@ const TheDialog = (props: {
 		ipcRenderer.on(`message-captured-${flowKey}`, (evt, arg) => {
 			// add the tail anyway
 			flow.steps = flow.steps || [];
-			switch (arg.type) {
-				case StepType.END:
-					if (
-						flow.steps.length > 0 &&
-						flow.steps[flow.steps.length - 1].type === StepType.END
-					) {
+			switch (arg.type as StepType) {
+				case 'end':
+					if (flow.steps.length > 0 && flow.steps[flow.steps.length - 1].type === 'end') {
 						// end step already exists
 						// may be stop record triggered, and choose the stop and close
 						// then puppeteer will disconnect browser manually
@@ -59,7 +56,7 @@ const TheDialog = (props: {
 						}, 300);
 					}
 					break;
-				case StepType.PAGE_CLOSED:
+				case 'page-closed':
 					flow.steps.push(arg);
 					if (arg.allClosed) {
 						// all related pages were closed, disconnect browser and stop recording
@@ -76,7 +73,7 @@ const TheDialog = (props: {
 						}, 300);
 					}
 					break;
-				case StepType.PAGE_SWITCHED:
+				case 'page-switched':
 					const { url } = arg;
 					if (url === 'about:blank' && flow.steps!.length === 1) {
 						// ignore the first about:blank
@@ -115,7 +112,7 @@ const TheDialog = (props: {
 				device: step.device || Devices[0],
 				uuid: uuidv4()
 			};
-			flow.steps = [{ type: StepType.START, stepIndex: 0, stepUuid: uuidv4(), ...options }];
+			flow.steps = [{ type: 'start', stepIndex: 0, stepUuid: uuidv4(), ...options }];
 			emitter.emit(EventTypes.ASK_SAVE_FLOW, story, flow);
 			forceUpdate(ignored);
 			ipcRenderer.send('launch-puppeteer', {
@@ -150,7 +147,7 @@ const TheDialog = (props: {
 		ipcRenderer.send('capture-screen', { flowKey, uuid: step.uuid });
 	};
 	const stopRecording = (): void => {
-		flow.steps!.push(JSON.parse(JSON.stringify({ type: StepType.END })));
+		flow.steps!.push(JSON.parse(JSON.stringify({ type: 'end' })));
 		emitter.emit(EventTypes.ASK_SAVE_FLOW, story, flow);
 	};
 	const onStopClicked = (): void => {

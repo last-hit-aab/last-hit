@@ -2,7 +2,7 @@
 	"name": "last-hit-types",
 	"version": "0.7.3",
 	"description": "types declaration of last-hit packages",
-	"main": "",
+	"main": "index.js",
 	"types": "index",
 	"scripts": {
 		"deploy": "npm publish --access public"

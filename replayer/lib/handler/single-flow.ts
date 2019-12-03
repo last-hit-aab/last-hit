@@ -1,12 +1,13 @@
 import fs from 'fs';
 import jsonfile from 'jsonfile';
+import { Flow, Step, Story, StartStep } from 'last-hit-types';
 import path from 'path';
 import stream from 'stream';
 import Environment from '../config/env';
-import { Flow, FlowFile, FlowResult, Story, Step } from '../types';
-import { getLogger, getProcessId, generateKeyByObject } from '../utils';
-import { ReplayEmitter, createReplayer } from '../replayer';
+import { createReplayer, ReplayEmitter } from '../replayer';
 import { CallbackEvent } from '../replayer/replay-emitter';
+import { FlowFile, FlowResult } from '../types';
+import { generateKeyByObject, getLogger, getProcessId } from '../utils';
 
 const processId = getProcessId();
 const logger = getLogger();
@@ -244,7 +245,7 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 		flow = forceDependsFlow;
 	}
 
-	const startStep = flow.steps![0];
+	const startStep = flow.steps![0] as StartStep;
 	if (startStep.type !== 'start') {
 		console.info(
 			(`Process[${processId}] Flow ${flowKey} has no start step, ignored.` as any).red
@@ -268,7 +269,7 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 	}
 
 	const promise = new Promise<FlowResult>(resolve => {
-		handleReplayStepEnd(emitter, { name: storyName }, flow, () => {
+		handleReplayStepEnd(emitter, { name: storyName } as Story, flow, () => {
 			const summary = replayer.current.getSummaryData();
 			timeLogger.timeEnd(flowKey);
 			resolve({

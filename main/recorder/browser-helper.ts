@@ -1,6 +1,6 @@
+import { Device } from 'last-hit-types';
 import { Browser, Target } from 'puppeteer';
 import uuidv4 from 'uuid/v4';
-import { Device } from '../types';
 import PageHelper from './page-helper';
 import AllPagesCache from './pages-cache';
 import {

@@ -1,12 +1,12 @@
 import { Button, Classes, Overlay } from '@blueprintjs/core';
 import { ipcRenderer, remote } from 'electron';
+import { Flow, Story } from 'last-hit-types';
 import React from 'react';
 import styled from 'styled-components';
 import { getActiveWorkspace } from '../../active';
 import UIContext, { asFlowKeyByName } from '../../common/context';
 import { EventTypes } from '../../events';
 import { asFlowKey, findAndMergeForceDependencyFlows } from '../../files';
-import { Flow, StepType, Story } from '../../types';
 import { getStepTypeText } from '../step/utils';
 import { loopCheck } from './utils';
 
@@ -201,10 +201,7 @@ const TheDialog = (props: {
 						command: 'disconnect'
 					});
 				})();
-			} else if (
-				flow.steps![index].type === StepType.END ||
-				index >= flow.steps!.length - 1
-			) {
+			} else if (flow.steps![index].type === 'end' || index >= flow.steps!.length - 1) {
 				// the end or last step is finished
 				if (!forRecordForceDependency) {
 					doEndReplay(flowKey);

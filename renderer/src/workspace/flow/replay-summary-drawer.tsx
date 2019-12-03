@@ -10,13 +10,13 @@ import {
 } from '@blueprintjs/core';
 import { remote } from 'electron';
 import fs from 'fs';
+import { Flow, Step, Story } from 'last-hit-types';
 import path from 'path';
 import React from 'react';
 import styled from 'styled-components';
 import UIContext from '../../common/context';
 import IDESettings from '../../common/ide-settings';
 import { EventTypes } from '../../events';
-import { Flow, Step, Story } from '../../types';
 
 enum TabIds {
 	SUMMARY = 'summary',

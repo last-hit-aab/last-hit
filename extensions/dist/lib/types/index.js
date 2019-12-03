@@ -1,9 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var ExtensionTypes;
-(function (ExtensionTypes) {
-    ExtensionTypes["WORKSPACE"] = "workspace";
-})(ExtensionTypes = exports.ExtensionTypes || (exports.ExtensionTypes = {}));
 var ExtensionEventTypes;
 (function (ExtensionEventTypes) {
     ExtensionEventTypes["REGISTERED"] = "registered";
@@ -14,8 +10,9 @@ var ExtensionEventTypes;
     ExtensionEventTypes["ERROR"] = "error";
 })(ExtensionEventTypes = exports.ExtensionEventTypes || (exports.ExtensionEventTypes = {}));
 var AbstractExtensionEntryPointWrapper = /** @class */ (function () {
-    function AbstractExtensionEntryPointWrapper(entrypoint) {
+    function AbstractExtensionEntryPointWrapper(entrypoint, helper) {
         this.entrypoint = entrypoint;
+        this.helper = helper;
     }
     AbstractExtensionEntryPointWrapper.prototype.activate = function () {
         return this.entrypoint.activate();
@@ -25,6 +22,9 @@ var AbstractExtensionEntryPointWrapper = /** @class */ (function () {
     };
     AbstractExtensionEntryPointWrapper.prototype.getEntrypoint = function () {
         return this.entrypoint;
+    };
+    AbstractExtensionEntryPointWrapper.prototype.getHelper = function () {
+        return this.helper;
     };
     return AbstractExtensionEntryPointWrapper;
 }());

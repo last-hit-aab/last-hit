@@ -275,8 +275,9 @@ exports.controlPage = function (replayer, page, device, uuid) { return __awaiter
                                 pageCreateStep = steps
                                     .filter(function (step, index) { return index >= currentIndex; })
                                     .find(function (step) {
-                                    return step.type === 'page-created' &&
-                                        (step.forStepUuid === currentStep.stepUuid || newUrl === utils_1.shorternUrl(step.url));
+                                    return (step.type === 'page-created' &&
+                                        (step.forStepUuid === currentStep.stepUuid ||
+                                            newUrl === utils_1.shorternUrl(step.url)));
                                 });
                                 if (pageCreateStep == null) {
                                     replayer
@@ -293,7 +294,7 @@ exports.controlPage = function (replayer, page, device, uuid) { return __awaiter
                     });
                 }); });
                 page.on('dialog', function (dialog) { return __awaiter(void 0, void 0, void 0, function () {
-                    var dialogType, currentIndex_1, steps, uuid_1, dialogCloseStep, returnValue, currentIndex_2, steps, uuid_2, nextStep;
+                    var dialogType, currentIndex_1, steps, uuid_1, step, dialogCloseStep, returnValue, currentIndex_2, steps, uuid_2, nextStep;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
@@ -314,13 +315,14 @@ exports.controlPage = function (replayer, page, device, uuid) { return __awaiter
                                     currentIndex_1 = replayer.getCurrentIndex();
                                     steps = replayer.getSteps();
                                     uuid_1 = replayer.findUuid(page);
-                                    dialogCloseStep = steps
+                                    step = steps
                                         .filter(function (step, index) { return index > currentIndex_1; })
                                         .filter(function (step) { return step.type === 'dialog-close'; })
                                         .find(function (step) { return step.uuid === uuid_1; });
-                                    if (dialogCloseStep == null) {
+                                    if (step == null) {
                                         throw new Error("Cannot find dialog close step for current dialog \"" + dialogType + "\" open, flow is broken for replay.");
                                     }
+                                    dialogCloseStep = step;
                                     if (dialogCloseStep.dialog !== dialogType) {
                                         throw new Error("Cannot match dialog type, should be \"" + dialogType + "\", but is \"" + dialogCloseStep.dialog + "\", flow is broken for replay.");
                                     }

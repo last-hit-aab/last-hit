@@ -1,6 +1,6 @@
+import { Device } from 'last-hit-types';
 import { CDPSession, Page, ResourceType } from 'puppeteer';
 import uuidv4 from 'uuid/v4';
-import { Device } from '../types';
 import BrowserHelper from './browser-helper';
 
 const staticResourceTypes: ResourceType[] = [

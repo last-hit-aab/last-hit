@@ -1,7 +1,8 @@
 import { EventEmitter } from 'events';
+import { Flow, Step, Story } from 'last-hit-types';
 import React from 'react';
 import { EventTypes } from '../events';
-import { Flow, FlowUIStatusEnum, Step, Story } from '../types';
+import { FlowUIStatusEnum } from '../types';
 
 export type FlowKey = { storyName: string; flowName: string };
 type GenericListener = (...args: any[]) => void;

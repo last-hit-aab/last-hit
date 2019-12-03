@@ -1,9 +1,9 @@
 import { Button, Colors, ITreeNode, ITreeProps, Tree } from '@blueprintjs/core';
+import { Flow, Step, Story } from 'last-hit-types';
 import React from 'react';
 import styled from 'styled-components';
 import UIContext from '../../common/context';
 import { EventTypes } from '../../events';
-import { Flow, Step, StepType, Story } from '../../types';
 import { getStepIcon, getStepText } from '../step/utils';
 
 export type TreeNode = ITreeNode<Step>;
@@ -79,9 +79,9 @@ const canMoveUp = (node: TreeNode, allNodes: Array<TreeNode>): boolean => {
 	if (index === 0) {
 		return false;
 	} else if (index === 1) {
-		return allNodes[0].nodeData!.type !== StepType.START;
+		return allNodes[0].nodeData!.type !== 'start';
 	} else {
-		return node.nodeData!.type !== StepType.END;
+		return node.nodeData!.type !== 'end';
 	}
 };
 const canMoveDown = (node: TreeNode, allNodes: Array<TreeNode>): boolean => {
@@ -90,9 +90,9 @@ const canMoveDown = (node: TreeNode, allNodes: Array<TreeNode>): boolean => {
 	if (index === lastIndex) {
 		return false;
 	} else if (index === lastIndex - 1) {
-		return allNodes[lastIndex].nodeData!.type !== StepType.END;
+		return allNodes[lastIndex].nodeData!.type !== 'end';
 	} else {
-		return node.nodeData!.type !== StepType.START;
+		return node.nodeData!.type !== 'start';
 	}
 };
 
@@ -180,7 +180,7 @@ const buildContents = (
 			} as TreeNode;
 		})
 		.reduce((all, node) => {
-			if (node.nodeData!.type === StepType.AJAX) {
+			if (node.nodeData!.type === 'ajax') {
 				const parent = all[all.length - 1];
 				if (!parent.childNodes) {
 					parent.childNodes = [];

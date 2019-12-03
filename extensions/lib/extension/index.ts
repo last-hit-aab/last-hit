@@ -1,20 +1,17 @@
 import fs from 'fs';
 import jsonfile from 'jsonfile';
+import { Extensions, WorkspaceExtensions } from 'last-hit-types';
 import net from 'net';
 import path from 'path';
 import {
 	ExtensionDataTransmittedEvent,
 	ExtensionEventTypes,
 	ExtensionPointId,
-	ExtensionTypes,
-	IExtensionEntryPoint,
+	IExtensionEntryPointHelper,
 	IExtensionEntryPointWrapper
 } from '../types';
 import { URI } from '../utils/uri';
-import {
-	IWorkspaceExtensionEntryPoint,
-	WorkspaceExtensionEntryPointWrapper
-} from './wrappers/workspace';
+import { WorkspaceExtensionEntryPointWrapper } from './wrappers/workspace';
 
 // With Electron 2.x and node.js 8.x the "natives" module
 // can cause a native crash (see https://github.com/nodejs/node/issues/19891 and
@@ -36,7 +33,7 @@ import {
 	};
 })();
 
-class ExtensionEntryPointHelper {
+class ExtensionEntryPointHelper implements IExtensionEntryPointHelper {
 	private extensionId: ExtensionPointId;
 	private packageFolder: string | undefined;
 
@@ -143,11 +140,12 @@ class ExtensionEntryPointHelper {
 			return Promise.reject();
 		}
 	}
-	createWrapper(entrypoint: IExtensionEntryPoint): IExtensionEntryPointWrapper<any> {
+	createWrapper(entrypoint: Extensions.IExtensionEntryPoint): IExtensionEntryPointWrapper<any> {
 		switch (entrypoint.getType()) {
-			case ExtensionTypes.WORKSPACE:
+			case 'workspace':
 				return new WorkspaceExtensionEntryPointWrapper(
-					entrypoint as IWorkspaceExtensionEntryPoint
+					entrypoint as WorkspaceExtensions.IWorkspaceExtensionEntryPoint,
+					this
 				);
 			default:
 				throw new Error(`Extension type[${entrypoint.getType()}] is not supported.`);

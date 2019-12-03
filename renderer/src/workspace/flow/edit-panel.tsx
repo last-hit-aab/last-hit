@@ -1,8 +1,9 @@
+import { Flow, StartStep, Step, Story } from 'last-hit-types';
 import React from 'react';
 import styled from 'styled-components';
 import UIContext from '../../common/context';
 import { EventTypes } from '../../events';
-import { Flow, FlowUIStatusEnum, StartStep, Step, StepType, Story } from '../../types';
+import { FlowUIStatusEnum } from '../../types';
 import EditPanelActionBar from './edit-panel-action-bar';
 import EditPanelDetailPanel from './edit-panel-detail-panel';
 import EditPanelNavigator from './edit-panel-navigator';
@@ -71,7 +72,7 @@ export default (props: { story: Story; flow: Flow }): JSX.Element => {
 
 	const steps = flow.steps;
 	if (!steps || steps.length === 0) {
-		flow.steps = [{ type: StepType.START } as StartStep];
+		flow.steps = [{ type: 'start' } as StartStep];
 	}
 	const [editStep, setEditStep] = React.useState({ step: flow.steps![0] });
 	const [flowStatus, setFlowStatus] = React.useState(FlowUIStatusEnum.IDLE);

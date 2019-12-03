@@ -1,9 +1,9 @@
 import { ContextMenu, ITreeProps, Menu, MenuItem, Tree } from '@blueprintjs/core';
+import { Flow, Story } from 'last-hit-types';
 import React from 'react';
 import styled from 'styled-components';
 import UIContext from '../../../common/context';
 import { EventTypes } from '../../../events';
-import { Flow, Story } from '../../../types';
 import { selectNode, TreeNode, TreeNodeData } from './utils';
 
 const ScrolledTree = styled(Tree)`

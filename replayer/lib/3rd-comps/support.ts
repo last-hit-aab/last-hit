@@ -1,6 +1,6 @@
+import { Step } from 'last-hit-types';
+import { ElementHandle, Page } from 'puppeteer';
 import Select2 from './select2';
-import { Page, ElementHandle } from 'puppeteer';
-import { Step } from '../types';
 
 export type ElementRetriever = (element: ElementHandle) => Promise<string>;
 export type ElementAttributeValueRetriever = (

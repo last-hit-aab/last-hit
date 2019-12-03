@@ -1,5 +1,5 @@
+import { Device } from 'last-hit-types';
 import { Browser } from 'puppeteer';
-import { Device } from '../types';
 
 export interface Replayer {
 	getBrowser: () => Browser;

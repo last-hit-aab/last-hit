@@ -1,7 +1,8 @@
 import fs from 'fs';
+import { Flow, Story } from 'last-hit-types';
 import path from 'path';
 import Environment from '../config/env';
-import { FlowFile, Story, Flow } from '../types';
+import { FlowFile } from '../types';
 
 export const inElectron = !!process.versions.electron;
 

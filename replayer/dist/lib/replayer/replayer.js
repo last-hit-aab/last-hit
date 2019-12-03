@@ -62,29 +62,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs_1 = __importDefault(require("fs"));
+var last_hit_types_1 = require("last-hit-types");
 var path_1 = __importDefault(require("path"));
 var puppeteer_1 = __importDefault(require("puppeteer"));
 var util_1 = __importDefault(require("util"));
 var v4_1 = __importDefault(require("uuid/v4"));
+var support_1 = __importDefault(require("../3rd-comps/support"));
 var utils_1 = require("../utils");
 var ci_helper_1 = __importDefault(require("./ci-helper"));
 var compare_screenshot_1 = __importDefault(require("./compare-screenshot"));
+var page_controller_1 = require("./page-controller");
 var replay_summary_1 = __importDefault(require("./replay-summary"));
 var request_counter_1 = __importDefault(require("./request-counter"));
 var ssim_1 = __importDefault(require("./ssim"));
-var support_1 = __importDefault(require("../3rd-comps/support"));
-var page_controller_1 = require("./page-controller");
 var getChromiumExecPath = function () {
     return puppeteer_1.default.executablePath().replace('app.asar', 'app.asar.unpacked');
 };
 var launchBrowser = function (replayer) { return __awaiter(void 0, void 0, void 0, function () {
-    var step, url, device, uuid, _a, width, height, browserArgs, browser, pages, page;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
+    var step, _a, url, device, uuid, _b, width, height, browserArgs, browser, pages, page;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
                 step = replayer.getCurrentStep();
-                url = step.url, device = step.device, uuid = step.uuid;
-                _a = device.viewport, width = _a.width, height = _a.height;
+                _a = step, url = _a.url, device = _a.device, uuid = _a.uuid;
+                _b = device.viewport, width = _b.width, height = _b.height;
                 browserArgs = [];
                 browserArgs.push("--window-size=" + width + "," + (height + 150));
                 browserArgs.push('--disable-infobars');
@@ -99,17 +100,17 @@ var launchBrowser = function (replayer) { return __awaiter(void 0, void 0, void 
                         slowMo: 20
                     })];
             case 1:
-                browser = _b.sent();
+                browser = _c.sent();
                 return [4 /*yield*/, browser.pages()];
             case 2:
-                pages = _b.sent();
+                pages = _c.sent();
                 if (!(pages != null && pages.length > 0)) return [3 /*break*/, 3];
                 page = pages[0];
                 return [3 /*break*/, 5];
             case 3: return [4 /*yield*/, browser.newPage()];
             case 4:
-                page = _b.sent();
-                _b.label = 5;
+                page = _c.sent();
+                _c.label = 5;
             case 5:
                 // set back to replayer
                 replayer.setBrowser(browser);
@@ -119,12 +120,12 @@ var launchBrowser = function (replayer) { return __awaiter(void 0, void 0, void 
                 return [4 /*yield*/, page_controller_1.controlPage(replayer, page, device, uuid)];
             case 6:
                 // add control into page
-                _b.sent();
+                _c.sent();
                 // open url, timeout to 2 mins
                 return [4 /*yield*/, page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 })];
             case 7:
                 // open url, timeout to 2 mins
-                _b.sent();
+                _c.sent();
                 // RESEARCH waste too much time, remove
                 // try {
                 // 	await page.waitForNavigation();
@@ -443,7 +444,7 @@ var Replayer = /** @class */ (function () {
                         }
                         _a.label = 1;
                     case 1:
-                        _a.trys.push([1, 10, , 14]);
+                        _a.trys.push([1, 9, , 13]);
                         return [4 /*yield*/, (function () { return __awaiter(_this, void 0, void 0, function () {
                                 var _a;
                                 var _this = this;
@@ -521,20 +522,18 @@ var Replayer = /** @class */ (function () {
                             }); })()];
                     case 2:
                         ret = _a.sent();
-                        return [4 /*yield*/, this.getPage(step.uuid)];
-                    case 3:
-                        page = _a.sent();
-                        if (!((!ret || ret.wait !== false) && page != null)) return [3 /*break*/, 5];
+                        page = this.getPage(step.uuid);
+                        if (!((!ret || ret.wait !== false) && page != null)) return [3 /*break*/, 4];
                         // const page = await this.getPageOrThrow(step.uuid);
                         return [4 /*yield*/, this.isRemoteFinsihed(page)];
-                    case 4:
+                    case 3:
                         // const page = await this.getPageOrThrow(step.uuid);
                         _a.sent();
-                        _a.label = 5;
-                    case 5: return [4 /*yield*/, this.sleepAfterStep(step)];
-                    case 6:
+                        _a.label = 4;
+                    case 4: return [4 /*yield*/, this.sleepAfterStep(step)];
+                    case 5:
                         _a.sent();
-                        if (!(step.image && page != null && !page.isClosed())) return [3 /*break*/, 9];
+                        if (!(step.image && page != null && !page.isClosed())) return [3 /*break*/, 8];
                         screenshotPath = path_1.default.join(utils_1.getTempFolder(process.cwd()), 'screen-record');
                         if (!fs_1.default.existsSync(screenshotPath)) {
                             fs_1.default.mkdirSync(screenshotPath, { recursive: true });
@@ -544,14 +543,14 @@ var Replayer = /** @class */ (function () {
                             fs_1.default.mkdirSync(flowPath, { recursive: true });
                         }
                         return [4 /*yield*/, page.screenshot({ encoding: 'base64' })];
-                    case 7:
+                    case 6:
                         replayImage = _a.sent();
                         replayImageFilename = path_1.default.join(flowPath, step.stepUuid + '_replay.png');
                         fs_1.default.writeFileSync(replayImageFilename, Buffer.from(replayImage, 'base64'));
                         currentImageFilename = path_1.default.join(flowPath, step.stepUuid + '_baseline.png');
                         fs_1.default.writeFileSync(currentImageFilename, Buffer.from(step.image, 'base64'));
                         return [4 /*yield*/, ssim_1.default(currentImageFilename, replayImageFilename)];
-                    case 8:
+                    case 7:
                         ssimData = _a.sent();
                         if (ssimData.ssim < 0.96 || ssimData.mcs < 0.96) {
                             diffImage = compare_screenshot_1.default(step.image, replayImage);
@@ -563,23 +562,23 @@ var Replayer = /** @class */ (function () {
                                     .pipe(fs_1.default.createWriteStream(diffImageFilename_1));
                             });
                         }
-                        _a.label = 9;
-                    case 9: return [3 /*break*/, 14];
-                    case 10:
+                        _a.label = 8;
+                    case 8: return [3 /*break*/, 13];
+                    case 9:
                         e_3 = _a.sent();
                         page = this.getPage(step.uuid);
                         this.getSummary().handleError(step, e_3);
                         file_path = utils_1.getTempFolder(process.cwd()) + "/error-" + step.uuid + "-" + this.getSteps().indexOf(step) + ".png";
-                        if (!page) return [3 /*break*/, 12];
+                        if (!page) return [3 /*break*/, 11];
                         return [4 /*yield*/, page.screenshot({ path: file_path, type: 'png' })];
-                    case 11:
+                    case 10:
                         _a.sent();
-                        return [3 /*break*/, 13];
-                    case 12:
+                        return [3 /*break*/, 12];
+                    case 11:
                         this.getLogger().log("page don't exsit ");
-                        _a.label = 13;
-                    case 13: throw e_3;
-                    case 14: return [2 /*return*/];
+                        _a.label = 12;
+                    case 12: throw e_3;
+                    case 13: return [2 /*return*/];
                 }
             });
         });
@@ -768,9 +767,9 @@ var Replayer = /** @class */ (function () {
                         this.getLogger().log("Execute keydown, step path is " + xpath + ", key is " + value);
                         steps = this.getSteps();
                         currentIndex = this.getCurrentIndex();
-                        if (!(steps[currentIndex].type === 'keydown' && steps[currentIndex + 1].type === 'change')) return [3 /*break*/, 5];
-                        if (!(steps[currentIndex].target === steps[currentIndex + 1].target)) return [3 /*break*/, 5];
-                        if (!(steps[currentIndex + 2].type === 'click')) return [3 /*break*/, 5];
+                        if (!(steps[currentIndex + 1].type === last_hit_types_1.StepType.CHANGE)) return [3 /*break*/, 5];
+                        if (!(step.target === steps[currentIndex + 1].target)) return [3 /*break*/, 5];
+                        if (!(steps[currentIndex + 2].type === last_hit_types_1.StepType.CLICK)) return [3 /*break*/, 5];
                         return [4 /*yield*/, this.findElement(steps[currentIndex + 2], page)];
                     case 2:
                         element = _b.sent();
@@ -906,7 +905,7 @@ var Replayer = /** @class */ (function () {
     Replayer.prototype.executeAjaxStep = function (step) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                this.getLogger().log("Execute ajax, step url is " + step.url + ".");
+                this.getLogger().log("Execute ajax, step url is " + (step.request && step.request.url) + ".");
                 return [2 /*return*/];
             });
         });

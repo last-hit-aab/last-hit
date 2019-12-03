@@ -8,6 +8,7 @@ import {
 	ITreeProps,
 	Tree
 } from '@blueprintjs/core';
+import { Flow, Step, Story } from 'last-hit-types';
 import React from 'react';
 import styled from 'styled-components';
 import uuidv4 from 'uuid/v4';
@@ -15,7 +16,6 @@ import { getActiveWorkspace } from '../../active';
 import UIContext from '../../common/context';
 import IDESettings from '../../common/ide-settings';
 import { EventTypes } from '../../events';
-import { Flow, Step, Story } from '../../types';
 import { getFlowIcon } from '../flow/utils';
 import { getStepIcon, getStepTypeText } from './utils';
 

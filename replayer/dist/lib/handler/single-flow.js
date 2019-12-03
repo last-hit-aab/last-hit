@@ -61,8 +61,8 @@ var fs_1 = __importDefault(require("fs"));
 var jsonfile_1 = __importDefault(require("jsonfile"));
 var path_1 = __importDefault(require("path"));
 var stream_1 = __importDefault(require("stream"));
-var utils_1 = require("../utils");
 var replayer_1 = require("../replayer");
+var utils_1 = require("../utils");
 var processId = utils_1.getProcessId();
 var logger = utils_1.getLogger();
 /**
