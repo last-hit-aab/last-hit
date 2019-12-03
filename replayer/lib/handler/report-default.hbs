@@ -127,6 +127,32 @@
         </tbody>
     </table>
 
+
+    <table class="test-result-table" cellspacing="0">
+        <thead>
+            <tr>
+                <td class="test-result-table-header-cell">Slow API URL</td>
+                <td class="test-result-table-header-cell">Used Time</td>
+
+            </tr>
+        </thead>
+        <tbody>
+
+
+            {{#each results}}
+            {{!-- <li>{{this.storyName}}</li> --}}
+            {{#each this.slowAjaxRequest}}
+            <tr class="test-result-step-row test-result-step-row-altone">
+                <td class="test-result-step-command-cell">{{this.url}}</td>
+                <td class="test-result-step-command-cell">{{this.time}}</td>
+
+            </tr>
+            {{/each}}
+            {{/each}}
+
+        </tbody>
+    </table>
+
     <textarea style="width: 90vw;height: 200px;resize: none;margin-left: 0px;margin-right: 0px;display: block;"
         readonly>
 
