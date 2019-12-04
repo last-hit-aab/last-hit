@@ -1,9 +1,9 @@
-name: Package-And-Release-App
+name: Compile-Extensions
 
 on:
   push:
     branches:
-      - extensions
+      - extensions-x
 
 jobs:
   build:
