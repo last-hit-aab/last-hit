@@ -603,6 +603,12 @@ var Replayer = /** @class */ (function () {
                         return [4 /*yield*/, this.getElementType(element)];
                     case 4:
                         elementType = _a.sent();
+                        if (elementTagName === 'INPUT' && elementType === 'checkbox') {
+                            if (this.getElementChecked(element) && step.checked) {
+                                this.getLogger().log("Skip change for checkbox, step path is " + xpath + ".");
+                                return [2 /*return*/];
+                            }
+                        }
                         isFileUpload = false;
                         if (elementTagName === 'INPUT') {
                             if (elementType === 'file') {
