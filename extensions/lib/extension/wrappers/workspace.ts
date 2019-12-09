@@ -35,11 +35,16 @@ export class WorkspaceExtensionEntryPointWrapper extends AbstractExtensionEntryP
 	async handle(event: WorkspaceExtensions.WorkspaceEvent): Promise<void> {
 		const handler: EventHandler<WorkspaceExtensions.WorkspaceEvent> = this.handlers[event.type];
 		if (handler) {
-			const result = await handler.call(this.getEntrypoint(), event);
-			this.getHelper().sendMessage(result);
+			try {
+				const result = await handler.call(this.getEntrypoint(), event);
+				return this.getHelper().sendMessage(result);
+			} catch (e) {
+				return this.getHelper().sendError(e);
+			}
 		} else {
-			console.error(`Handler not found for event[${event.type}]`);
-			console.error(event);
+			// console.error(`Handler not found for event[${event.type}]`);
+			// console.error(event);
+			return this.getHelper().sendIgnore();
 		}
 	}
 }

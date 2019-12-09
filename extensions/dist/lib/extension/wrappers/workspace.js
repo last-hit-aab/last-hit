@@ -71,22 +71,28 @@ var WorkspaceExtensionEntryPointWrapper = /** @class */ (function (_super) {
     }
     WorkspaceExtensionEntryPointWrapper.prototype.handle = function (event) {
         return __awaiter(this, void 0, void 0, function () {
-            var handler, result;
+            var handler, result, e_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         handler = this.handlers[event.type];
-                        if (!handler) return [3 /*break*/, 2];
-                        return [4 /*yield*/, handler.call(this.getEntrypoint(), event)];
+                        if (!handler) return [3 /*break*/, 5];
+                        _a.label = 1;
                     case 1:
-                        result = _a.sent();
-                        this.getHelper().sendMessage(result);
-                        return [3 /*break*/, 3];
+                        _a.trys.push([1, 3, , 4]);
+                        return [4 /*yield*/, handler.call(this.getEntrypoint(), event)];
                     case 2:
-                        console.error("Handler not found for event[" + event.type + "]");
-                        console.error(event);
-                        _a.label = 3;
-                    case 3: return [2 /*return*/];
+                        result = _a.sent();
+                        return [2 /*return*/, this.getHelper().sendMessage(result)];
+                    case 3:
+                        e_1 = _a.sent();
+                        return [2 /*return*/, this.getHelper().sendError(e_1)];
+                    case 4: return [3 /*break*/, 6];
+                    case 5: 
+                    // console.error(`Handler not found for event[${event.type}]`);
+                    // console.error(event);
+                    return [2 /*return*/, this.getHelper().sendIgnore()];
+                    case 6: return [2 /*return*/];
                 }
             });
         });

@@ -171,6 +171,46 @@ class ExtensionEntryPointHelper implements IExtensionEntryPointHelper {
 			);
 		});
 	}
+	sendIgnore(): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			process.send(
+				{
+					extensionId: this.extensionId,
+					type: ExtensionEventTypes.DATA_TRANSMITTED,
+					data: { ignored: true }
+				} as ExtensionDataTransmittedEvent,
+				undefined,
+				undefined,
+				(error: Error) => {
+					if (error) {
+						reject(error);
+					} else {
+						resolve();
+					}
+				}
+			);
+		});
+	}
+	sendError(error: Error): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			process.send(
+				{
+					extensionId: this.extensionId,
+					type: ExtensionEventTypes.DATA_TRANSMITTED,
+					data: { error }
+				} as ExtensionDataTransmittedEvent,
+				undefined,
+				undefined,
+				(error: Error) => {
+					if (error) {
+						reject(error);
+					} else {
+						resolve();
+					}
+				}
+			);
+		});
+	}
 }
 
 export const activate = async (options: {

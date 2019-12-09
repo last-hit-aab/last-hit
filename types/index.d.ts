@@ -263,14 +263,22 @@ declare module 'last-hit-types' {
 			step: Step;
 		}
 
+		export type PreparedEnvironment = Environment & {};
+		export type PreparedStory = Story & {};
+		export type PreparedFlow = Flow & {};
+		export type AccomplishedFlow = Flow & {};
+		export type PreparedStep = Step & {};
+		export type FixedStep = Step & {};
+		export type AccomplishedStep = Step & {};
+
 		export interface IWorkspaceExtensionEntryPoint extends Extensions.IExtensionEntryPoint {
-			handleEnvironmentPrepare(event: EnvironmentPrepareEvent): Promise<any>;
-			handleStoryPrepare(event: StoryPrepareEvent): Promise<any>;
-			handleFlowShouldStart(event: FlowShouldStartEvent): Promise<any>;
-			handleFlowAccomplished(event: FlowAccomplishedEvent): Promise<any>;
-			handleStepShouldStart(event: StepShouldStartEvent): Promise<any>;
-			handleStepOnError(event: StepOnErrorEvent): Promise<any>;
-			handleStepAccomplished(event: StepAccomplishedEvent): Promise<any>;
+			handleEnvironmentPrepare(event: EnvironmentPrepareEvent): Promise<PreparedEnvironment>;
+			handleStoryPrepare(event: StoryPrepareEvent): Promise<PreparedStory>;
+			handleFlowShouldStart(event: FlowShouldStartEvent): Promise<PreparedFlow>;
+			handleFlowAccomplished(event: FlowAccomplishedEvent): Promise<AccomplishedFlow>;
+			handleStepShouldStart(event: StepShouldStartEvent): Promise<PreparedStep>;
+			handleStepOnError(event: StepOnErrorEvent): Promise<FixedStep>;
+			handleStepAccomplished(event: StepAccomplishedEvent): Promise<AccomplishedStep>;
 			handleReloadAllHandlers(event: ReloadAllHandlersEvent): Promise<void>;
 			handleReloadStoryHandler(event: ReloadStoryHandlerEvent): Promise<void>;
 			handleReloadFlowHandler(event: ReloadFlowHandlerEvent): Promise<void>;

@@ -1,0 +1,156 @@
+import { Extensions, WorkspaceExtensions } from 'last-hit-types';
+import path from 'path';
+import decache from 'decache';
+
+type HandlerType =
+	| 'env-prepare'
+	| 'story-prepare'
+	| 'flow-should-start'
+	| 'flow-accomplished'
+	| 'step-should-start'
+	| 'step-on-error'
+	| 'step-accomplished';
+type Handler = {
+	modulePath: string;
+	type: HandlerType;
+	story?: string;
+	flow?: string;
+	stepUuid?: string;
+	handle: (event: WorkspaceExtensions.WorkspaceEvent) => Promise<any>;
+};
+type Handlers = { [key in string]: Handler };
+
+export abstract class AbstractWorkspaceExtensionEntryPoint
+	implements WorkspaceExtensions.IWorkspaceExtensionEntryPoint {
+	private handlers: Handlers = {};
+	/**
+	 * get handler location, is a folder.
+	 * normally relative to entry point file
+	 */
+	abstract getHandlerLocation(): string;
+	protected findHandler(key: string, type: HandlerType, relativePath: string): Handler {
+		const handler = this.handlers[key];
+		if (!handler) {
+			const modulePath = path.join(this.getHandlerLocation(), relativePath);
+			this.handlers.env = { modulePath, type } as Handler;
+			this.doReloadHandler(this.handlers[key]);
+			return this.handlers[key];
+		} else {
+			return handler;
+		}
+	}
+	async handleEnvironmentPrepare(
+		event: WorkspaceExtensions.EnvironmentPrepareEvent
+	): Promise<WorkspaceExtensions.PreparedEnvironment> {
+		return await this.findHandler('env-prepare', 'env-prepare', 'env-prepare').handle(event);
+	}
+	async handleStoryPrepare(
+		event: WorkspaceExtensions.StoryPrepareEvent
+	): Promise<WorkspaceExtensions.PreparedStory> {
+		return await this.findHandler(
+			`story-prepare@${event.story.name}`,
+			'story-prepare',
+			`${event.story.name}/story-prepare`
+		).handle(event);
+	}
+	async handleFlowShouldStart(
+		event: WorkspaceExtensions.FlowShouldStartEvent
+	): Promise<WorkspaceExtensions.PreparedFlow> {
+		return await this.findHandler(
+			`flow-should-start@${event.flow.name}@${event.story.name}`,
+			'flow-should-start',
+			`${event.story.name}/${event.flow.name}/flow-should-start`
+		).handle(event);
+	}
+	async handleFlowAccomplished(
+		event: WorkspaceExtensions.FlowAccomplishedEvent
+	): Promise<WorkspaceExtensions.AccomplishedFlow> {
+		return await this.findHandler(
+			`flow-accomplished@${event.flow.name}@${event.story.name}`,
+			'flow-accomplished',
+			`${event.story.name}/${event.flow.name}/flow-accomplished`
+		).handle(event);
+	}
+	async handleStepShouldStart(
+		event: WorkspaceExtensions.StepShouldStartEvent
+	): Promise<WorkspaceExtensions.PreparedStep> {
+		return await this.findHandler(
+			`step-should-start@${event.step.stepUuid}@${event.flow.name}@${event.story.name}`,
+			'step-should-start',
+			`${event.story.name}/${event.flow.name}/${event.step.stepUuid}/step-should-start`
+		).handle(event);
+	}
+	async handleStepOnError(
+		event: WorkspaceExtensions.StepOnErrorEvent
+	): Promise<WorkspaceExtensions.FixedStep> {
+		return await this.findHandler(
+			`step-on-error@${event.step.stepUuid}@${event.flow.name}@${event.story.name}`,
+			'step-on-error',
+			`${event.story.name}/${event.flow.name}/${event.step.stepUuid}/step-on-error`
+		).handle(event);
+	}
+	async handleStepAccomplished(
+		event: WorkspaceExtensions.StepAccomplishedEvent
+	): Promise<WorkspaceExtensions.AccomplishedStep> {
+		return await this.findHandler(
+			`step-accomplished@${event.step.stepUuid}@${event.flow.name}@${event.story.name}`,
+			'step-accomplished',
+			`${event.story.name}/${event.flow.name}/${event.step.stepUuid}/step-accomplished`
+		).handle(event);
+	}
+
+	handleReloadAllHandlers(event: WorkspaceExtensions.ReloadAllHandlersEvent): Promise<void> {
+		Object.values(this.handlers).forEach(handler => {
+			this.doReloadHandler(handler);
+		});
+		return Promise.resolve();
+	}
+	handleReloadStoryHandler(event: WorkspaceExtensions.ReloadStoryHandlerEvent): Promise<void> {
+		Object.values(this.handlers)
+			.filter(handler => {
+				return handler.story === event.story.name;
+			})
+			.forEach(handler => {
+				this.doReloadHandler(handler);
+			});
+		return Promise.resolve();
+	}
+	handleReloadFlowHandler(event: WorkspaceExtensions.ReloadFlowHandlerEvent): Promise<void> {
+		Object.values(this.handlers)
+			.filter(handler => {
+				return handler.story === event.story.name && handler.flow === event.flow.name;
+			})
+			.forEach(handler => {
+				this.doReloadHandler(handler);
+			});
+		return Promise.resolve();
+	}
+	handleReloadStepHandler(event: WorkspaceExtensions.ReloadStepHandlerEvent): Promise<void> {
+		Object.values(this.handlers)
+			.filter(handler => {
+				return (
+					handler.story === event.story.name &&
+					handler.flow === event.flow.name &&
+					handler.stepUuid === event.step.stepUuid
+				);
+			})
+			.forEach(handler => {
+				this.doReloadHandler(handler);
+			});
+		return Promise.resolve();
+	}
+	protected doReloadHandler(handler: Handler) {
+		decache(handler.modulePath);
+		handler.handle = require(handler.modulePath);
+	}
+	activate(): Promise<void> {
+		if (this.getHandlerLocation()) {
+			return Promise.resolve();
+		} else {
+			return Promise.reject(new Error('Handler location not defined.'));
+		}
+	}
+	getType(): Extensions.ExtensionTypes {
+		return 'workspace';
+	}
+}

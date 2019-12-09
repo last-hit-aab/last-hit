@@ -1,0 +1,27 @@
+{
+	"name": "last-hit-workspace-extension",
+	"version": "0.7.5",
+	"description": "workspace extension abstract implementation",
+	"main": "dist/index.js",
+	"scripts": {
+		"compile": "tsc",
+		"deploy": "npm publish --access public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/last-hit-aab/last-hit.git"
+	},
+	"bugs": {
+		"url": "https://github.com/last-hit-aab/last-hit/issues"
+	},
+	"homepage": "https://www.last-hit.com",
+	"author": "last-hit-team",
+	"license": "UNLICENSED",
+	"private": false,
+	"dependencies": {
+		"decache": "^4.5.1",
+		"last-hit-types": "0.7.5",
+		"typescript": "^3.7.3"
+	},
+	"devDependencies": {}
+}

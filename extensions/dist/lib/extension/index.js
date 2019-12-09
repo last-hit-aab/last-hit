@@ -186,6 +186,40 @@ var ExtensionEntryPointHelper = /** @class */ (function () {
             });
         });
     };
+    ExtensionEntryPointHelper.prototype.sendIgnore = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            process.send({
+                extensionId: _this.extensionId,
+                type: types_1.ExtensionEventTypes.DATA_TRANSMITTED,
+                data: { ignored: true }
+            }, undefined, undefined, function (error) {
+                if (error) {
+                    reject(error);
+                }
+                else {
+                    resolve();
+                }
+            });
+        });
+    };
+    ExtensionEntryPointHelper.prototype.sendError = function (error) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            process.send({
+                extensionId: _this.extensionId,
+                type: types_1.ExtensionEventTypes.DATA_TRANSMITTED,
+                data: { error: error }
+            }, undefined, undefined, function (error) {
+                if (error) {
+                    reject(error);
+                }
+                else {
+                    resolve();
+                }
+            });
+        });
+    };
     return ExtensionEntryPointHelper;
 }());
 exports.activate = function (options) { return __awaiter(void 0, void 0, void 0, function () {

@@ -9,6 +9,8 @@ export interface IExtensionPoint {
 }
 export interface IExtensionEntryPointHelper {
 	sendMessage(data: any): Promise<void>;
+	sendError(e: Error): Promise<void>;
+	sendIgnore(): Promise<void>;
 }
 
 export enum ExtensionEventTypes {
@@ -34,10 +36,20 @@ export interface ExtensionUnregisteredEvent extends ExtensionEvent {
 	type: ExtensionEventTypes.UNREGISTERED;
 }
 export type ExtensionUnregisteredHandler = (event: ExtensionUnregisteredEvent) => void;
-
+/** event is process by extension handler, and response data returned */
 export interface ExtensionDataTransmittedEvent extends ExtensionEvent {
 	type: ExtensionEventTypes.DATA_TRANSMITTED;
 	data: any;
+}
+/** error occurs on extension handling */
+export interface ExtensionDataTransmittedErrorEvent extends ExtensionDataTransmittedEvent {
+	type: ExtensionEventTypes.DATA_TRANSMITTED;
+	data: { error: Error };
+}
+/** event is ignored by extension */
+export interface ExtensionDataTransmittedIgnoreEvent extends ExtensionDataTransmittedEvent {
+	type: ExtensionEventTypes.DATA_TRANSMITTED;
+	data: { ignore: true };
 }
 export type ExtensionDataTransmittedHandler = (event: ExtensionDataTransmittedEvent) => void;
 
