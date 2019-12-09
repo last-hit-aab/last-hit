@@ -163,8 +163,14 @@ declare module 'last-hit-types' {
 	};
 	export type Environment = {
 		name?: string;
+		/** url replacement regexp */
 		urlReplaceRegexp?: string | string[];
+		/** url replacement */
 		urlReplaceTo?: string | string[];
+		/** sleep time after change step, in millisecond */
+		sleepAfterChange?: number;
+		/** threshold of slow ajax, in millisecond */
+		slowAjaxTime?: number;
 	};
 
 	export namespace Extensions {
