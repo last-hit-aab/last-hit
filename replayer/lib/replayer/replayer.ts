@@ -454,6 +454,13 @@ class Replayer {
 		const elementTagName = await this.getElementTagName(element);
 		const elementType = await this.getElementType(element);
 
+		if (elementTagName === 'INPUT' && elementType === 'checkbox') {
+			if (this.getElementChecked(element) && step.checked) {
+				this.getLogger().log(`Skip change for checkbox, step path is ${xpath}.`);
+				return;
+			}
+		}
+
 		let isFileUpload = false;
 		if (elementTagName === 'INPUT') {
 			if (elementType === 'file') {
