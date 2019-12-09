@@ -454,13 +454,6 @@ class Replayer {
 		const elementTagName = await this.getElementTagName(element);
 		const elementType = await this.getElementType(element);
 
-		if (elementTagName === 'INPUT' && elementType === 'checkbox') {
-			if (this.getElementChecked(element) && step.checked) {
-				this.getLogger().log(`Skip change for checkbox, step path is ${xpath}.`);
-				return;
-			}
-		}
-
 		let isFileUpload = false;
 		if (elementTagName === 'INPUT') {
 			if (elementType === 'file') {
@@ -912,11 +905,18 @@ class Replayer {
 
 		// other
 		await element.evaluate((node: Element, value) => {
-			(node as HTMLInputElement).value = value;
-			// node.value = value;
-			const event = document.createEvent('HTMLEvents');
-			event.initEvent('change', true, true);
-			node.dispatchEvent(event);
+			const element = node as HTMLInputElement;
+			if (
+				!['checkbox', 'radio'].includes(
+					(element.getAttribute('type') || '').toLowerCase()
+				) ||
+				element.value != value
+			) {
+				element.value = value;
+				const event = document.createEvent('HTMLEvents');
+				event.initEvent('change', true, true);
+				node.dispatchEvent(event);
+			}
 		}, value);
 	}
 	private transformStepPathToXPath(stepPath: string): string {

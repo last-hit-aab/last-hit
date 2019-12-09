@@ -62,7 +62,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs_1 = __importDefault(require("fs"));
-var last_hit_types_1 = require("last-hit-types");
 var path_1 = __importDefault(require("path"));
 var puppeteer_1 = __importDefault(require("puppeteer"));
 var util_1 = __importDefault(require("util"));
@@ -602,12 +601,6 @@ var Replayer = /** @class */ (function () {
                         return [4 /*yield*/, this.getElementType(element)];
                     case 4:
                         elementType = _a.sent();
-                        if (elementTagName === 'INPUT' && elementType === 'checkbox') {
-                            if (this.getElementChecked(element) && step.checked) {
-                                this.getLogger().log("Skip change for checkbox, step path is " + xpath + ".");
-                                return [2 /*return*/];
-                            }
-                        }
                         isFileUpload = false;
                         if (elementTagName === 'INPUT') {
                             if (elementType === 'file') {
@@ -773,9 +766,9 @@ var Replayer = /** @class */ (function () {
                         this.getLogger().log("Execute keydown, step path is " + xpath + ", key is " + value);
                         steps = this.getSteps();
                         currentIndex = this.getCurrentIndex();
-                        if (!(steps[currentIndex + 1].type === last_hit_types_1.StepType.CHANGE)) return [3 /*break*/, 5];
+                        if (!(steps[currentIndex + 1].type === 'change')) return [3 /*break*/, 5];
                         if (!(step.target === steps[currentIndex + 1].target)) return [3 /*break*/, 5];
-                        if (!(steps[currentIndex + 2].type === last_hit_types_1.StepType.CLICK)) return [3 /*break*/, 5];
+                        if (!(steps[currentIndex + 2].type === 'click')) return [3 /*break*/, 5];
                         return [4 /*yield*/, this.findElement(steps[currentIndex + 2], page)];
                     case 2:
                         element = _b.sent();
@@ -1300,11 +1293,14 @@ var Replayer = /** @class */ (function () {
                     case 6: 
                     // other
                     return [4 /*yield*/, element.evaluate(function (node, value) {
-                            node.value = value;
-                            // node.value = value;
-                            var event = document.createEvent('HTMLEvents');
-                            event.initEvent('change', true, true);
-                            node.dispatchEvent(event);
+                            var element = node;
+                            var currentValue = element.value;
+                            if (currentValue != value) {
+                                element.value = value;
+                                var event_1 = document.createEvent('HTMLEvents');
+                                event_1.initEvent('change', true, true);
+                                node.dispatchEvent(event_1);
+                            }
                         }, value)];
                     case 7:
                         // other

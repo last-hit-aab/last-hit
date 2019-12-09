@@ -136,7 +136,12 @@ declare module 'last-hit-types' {
 		scrollLeft: number;
 	};
 	export type FocusStep = DomEventStep & { type: 'focus' };
-	export type ChangeStep = DomEventStep & { type: 'change'; value: string; file?: string };
+	export type ChangeStep = DomEventStep & {
+		type: 'change';
+		value: string;
+		file?: string;
+		checked?: boolean;
+	};
 	export type DomChangeStep = Step & { type: 'dom-change' };
 	export type AnimationStep = Step & { type: 'animation'; duration: number };
 
