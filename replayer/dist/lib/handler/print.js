@@ -107,4 +107,5 @@ exports.print = function (env) {
         'Pass Rate(%)'
     ]);
 };
+
 //# sourceMappingURL=print.js.map

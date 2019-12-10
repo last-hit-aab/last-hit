@@ -90,4 +90,5 @@ var Select2 = /** @class */ (function () {
     return Select2;
 }());
 exports.default = Select2;
+
 //# sourceMappingURL=select2.js.map

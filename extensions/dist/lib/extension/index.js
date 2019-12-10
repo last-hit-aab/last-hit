@@ -108,7 +108,11 @@ var ExtensionEntryPointHelper = /** @class */ (function () {
         process.send({
             type: types_1.ExtensionEventTypes.REGISTERED,
             extensionId: this.getExtensionId(),
-            error: e
+            error: {
+                name: e.name,
+                message: e.message,
+                stack: e.stack
+            }
         }, undefined, undefined, function (error) {
             if (error) {
                 console.error("Failed to start extension[" + _this.getExtensionId() + "]");
@@ -145,7 +149,15 @@ var ExtensionEntryPointHelper = /** @class */ (function () {
                             throw new Error("Main entry file[" + mainfile + "] is not a file.");
                         }
                         module_1 = uri_1.URI.file(mainfile);
-                        extension = this.createWrapper(require(module_1.fsPath));
+                        extension = this.createWrapper((function () {
+                            var extension = require(module_1.fsPath);
+                            if (extension && extension.default) {
+                                return extension.default;
+                            }
+                            else {
+                                return extension;
+                            }
+                        })());
                         return [4 /*yield*/, extension.activate()];
                     case 1:
                         _a.sent();
@@ -209,7 +221,13 @@ var ExtensionEntryPointHelper = /** @class */ (function () {
             process.send({
                 extensionId: _this.extensionId,
                 type: types_1.ExtensionEventTypes.DATA_TRANSMITTED,
-                data: { error: error }
+                data: {
+                    error: {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack
+                    }
+                }
             }, undefined, undefined, function (error) {
                 if (error) {
                     reject(error);

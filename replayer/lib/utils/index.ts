@@ -62,6 +62,7 @@ export const findFlows = (env: Environment): FlowFile[] => {
 	return fs
 		.readdirSync(workspace)
 		.filter(dir => fs.statSync(path.join(workspace, dir)).isDirectory())
+		.filter(dir => !['.scripts'].includes(dir))
 		.map(storyName => {
 			return fs
 				.readdirSync(path.join(workspace, storyName))

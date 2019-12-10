@@ -6,11 +6,23 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var os_1 = __importDefault(require("os"));
 var Environment = /** @class */ (function () {
     function Environment(options) {
+        /** environment name */
+        this.name = 'NO-ENVIRONMENT';
+        this.urlReplaceRegexps = [];
+        this.urlReplaceTos = [];
         this.constructed = false;
         this.constructed = true;
         this.originalOptions = options;
-        this.name = options.name;
         this.workspace = options.workspace;
+        this.mergeFrom(options);
+        this.includes = options.includes;
+        this.parallel = this.computeParallel(options.parallel);
+        this.child = options.child || false;
+        this.wrappers = [this.wrapUrl];
+    }
+    Environment.prototype.mergeFrom = function (options) {
+        var _this = this;
+        this.name = options.name || this.name;
         if (options.urlReplaceRegexp) {
             this.urlReplaceRegexps = options.urlReplaceRegexp
                 .split('&&')
@@ -23,13 +35,11 @@ var Environment = /** @class */ (function () {
             this.urlReplaceRegexps = [];
             this.urlReplaceTos = [];
         }
-        this.sleepAfterChange = options.sleepAfterChange;
-        this.slowAjaxTime = options.slowAjaxTime;
-        this.includes = options.includes;
-        this.parallel = this.computeParallel(options.parallel);
-        this.child = options.child || false;
-        this.wrappers = [this.wrapUrl];
-    }
+        this.sleepAfterChange = options.sleepAfterChange || this.sleepAfterChange;
+        this.slowAjaxTime = options.slowAjaxTime || this.slowAjaxTime;
+        // set original options
+        ['name', 'urlReplaceRegexp', 'urlReplaceTo', 'sleepAfterChange', 'slowAjaxTime'].forEach(function (prop) { return (_this.originalOptions[prop] = options[prop]); });
+    };
     Environment.prototype.wrap = function (step) {
         var _this = this;
         if (!this.isConstructed()) {
@@ -52,6 +62,9 @@ var Environment = /** @class */ (function () {
     };
     Environment.prototype.isConstructed = function () {
         return this.constructed;
+    };
+    Environment.prototype.getName = function () {
+        return this.name;
     };
     Environment.prototype.getWorkspace = function () {
         return this.workspace;
@@ -109,6 +122,14 @@ var Environment = /** @class */ (function () {
         Object.keys(replacement).forEach(function (key) { return (options[key] = replacement[key]); });
         return options;
     };
+    Environment.prototype.expose = function () {
+        var options = Object.assign({}, this.originalOptions);
+        delete options.parallel;
+        delete options.workspace;
+        delete options.includes;
+        delete options.child;
+        return options;
+    };
     Environment.exposeNoop = function () {
         return {
             name: 'NO-ENVIRONMENT'
@@ -117,4 +138,5 @@ var Environment = /** @class */ (function () {
     return Environment;
 }());
 exports.default = Environment;
+
 //# sourceMappingURL=env.js.map

@@ -41,6 +41,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("../utils");
 var replayer_1 = __importDefault(require("./replayer"));
+var replayer_extension_registry_1 = require("./replayer-extension-registry");
 var createNextStepHandler = function (emitter, logger) {
     var waitForNextStep = function (options) {
         var storyName = options.storyName, flowName = options.flowName, replayer = options.replayer;
@@ -122,18 +123,29 @@ var launch = function (emitter, replayers, logger, env) {
     var waitForNextStep = createNextStepHandler(emitter, logger);
     var handle = {};
     emitter.on('launch-replay', function (event, arg) { return __awaiter(void 0, void 0, void 0, function () {
-        var storyName, flow, index, replayer, e_2;
+        var storyName, flow, index, registry, replayer, e_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     storyName = arg.storyName, flow = arg.flow, index = arg.index;
-                    replayer = new replayer_1.default({ storyName: storyName, flow: flow, logger: logger, replayers: replayers, env: env });
-                    handle.current = replayer;
-                    _a.label = 1;
+                    registry = new replayer_extension_registry_1.WorkspaceExtensionRegistry({ env: env });
+                    return [4 /*yield*/, registry.launch()];
                 case 1:
-                    _a.trys.push([1, 3, , 4]);
-                    return [4 /*yield*/, replayer.start()];
+                    _a.sent();
+                    replayer = new replayer_1.default({
+                        storyName: storyName,
+                        flow: flow,
+                        logger: logger,
+                        replayers: replayers,
+                        env: env,
+                        registry: registry
+                    });
+                    handle.current = replayer;
+                    _a.label = 2;
                 case 2:
+                    _a.trys.push([2, 4, , 5]);
+                    return [4 /*yield*/, replayer.start()];
+                case 3:
                     _a.sent();
                     replayer.getSummary().handle((flow.steps || [])[0] || {});
                     // put into cache
@@ -141,8 +153,8 @@ var launch = function (emitter, replayers, logger, env) {
                     // successful, prepare for next step
                     // send back
                     waitForNextStep({ event: event, replayer: replayer, storyName: storyName, flowName: flow.name, index: index });
-                    return [3 /*break*/, 4];
-                case 3:
+                    return [3 /*break*/, 5];
+                case 4:
                     e_2 = _a.sent();
                     logger.error(e_2);
                     replayer.getSummary().handleError((flow.steps || [])[0] || {}, e_2);
@@ -157,8 +169,8 @@ var launch = function (emitter, replayers, logger, env) {
                         error: e_2.message,
                         errorStack: e_2.stack
                     });
-                    return [3 /*break*/, 4];
-                case 4: return [2 /*return*/];
+                    return [3 /*break*/, 5];
+                case 5: return [2 /*return*/];
             }
         });
     }); });
@@ -167,4 +179,5 @@ var launch = function (emitter, replayers, logger, env) {
 exports.default = (function (emitter, replayers, logger, env) {
     return function () { return launch(emitter, replayers, logger, env); };
 });
+
 //# sourceMappingURL=replayer-launcher.js.map

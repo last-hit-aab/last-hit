@@ -54,4 +54,5 @@ var ReplayEmitter = /** @class */ (function () {
     return ReplayEmitter;
 }());
 exports.default = ReplayEmitter;
+
 //# sourceMappingURL=replay-emitter.js.map

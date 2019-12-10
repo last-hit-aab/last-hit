@@ -8,10 +8,10 @@
 		"last-hit-replayer": "./bin/entry.js"
 	},
 	"scripts": {
-		"start": "tsc && node dist/index.js",
+		"start": "gulp && node bin/entry.js",
 		"test": "last-hit-replayer",
-		"deploy": "tsc && npm publish --access public",
-		"compile": "tsc"
+		"deploy": "gulp && npm publish --access public",
+		"compile": "gulp"
 	},
 	"repository": {
 		"type": "git",
@@ -45,6 +45,7 @@
 		"handlebars": "^4.5.3",
 		"image-ssim": "^0.2.0",
 		"jsonfile": "^5.0.0",
+		"last-hit-extensions": "0.7.5",
 		"last-hit-types": "0.7.5",
 		"mkdirp": "^0.5.1",
 		"node-resemble-js": "^0.2.0",
@@ -55,5 +56,10 @@
 		"typescript": "^3.7.2",
 		"uuid": "^3.3.3",
 		"yargs": "^14.0.0"
+	},
+	"devDependencies": {
+		"gulp": "^4.0.2",
+		"gulp-sourcemaps": "^2.6.5",
+		"gulp-typescript": "^6.0.0-alpha.1"
 	}
 }

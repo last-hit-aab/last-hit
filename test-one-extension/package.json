@@ -1,5 +1,5 @@
 {
-	"main": "index.js",
+	"main": "dist/index.js",
 	"scripts": {
 		"compile": "tsc"
 	},

@@ -1,8 +1,10 @@
 import { Flow, Step } from 'last-hit-types';
 import Environment from '../config/env';
+import { EnvironmentOptions } from '../types';
 import { generateKeyByString } from '../utils';
 import ReplayEmitter, { CallbackEvent } from './replay-emitter';
 import Replayer from './replayer';
+import { WorkspaceExtensionRegistry } from './replayer-extension-registry';
 import { ReplayerCache } from './replayers-cache';
 
 export type ReplayerHandle = { current?: Replayer };
@@ -125,8 +127,19 @@ const launch = (
 		'launch-replay',
 		async (event: CallbackEvent, arg: { storyName: string; flow: Flow; index: number }) => {
 			const { storyName, flow, index } = arg;
-			const replayer = new Replayer({ storyName, flow, logger, replayers, env });
+			const registry = new WorkspaceExtensionRegistry({ env });
+			await registry.launch();
+
+			const replayer = new Replayer({
+				storyName,
+				flow,
+				logger,
+				replayers,
+				env,
+				registry
+			});
 			handle.current = replayer;
+			
 			try {
 				await replayer.start();
 				replayer.getSummary().handle((flow.steps || [])[0] || ({} as Step));

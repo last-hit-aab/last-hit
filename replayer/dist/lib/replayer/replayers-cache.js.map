@@ -1,1 +1,1 @@
-{"version":3,"file":"replayers-cache.js","sourceRoot":"","sources":["../../../lib/replayer/replayers-cache.ts"],"names":[],"mappings":";;AAIA,IAAM,KAAK,GAAkB,EAAE,CAAC;AAEhC,kBAAe,KAAK,CAAC"}
+{"version":3,"sources":["../lib/replayer/replayers-cache.ts"],"names":[],"mappings":";;AAIA,IAAM,KAAK,GAAkB,EAAE,CAAC;AAEhC,kBAAe,KAAK,CAAC","file":"replayers-cache.js","sourcesContent":["import Replayer from './replayer';\n\nexport type ReplayerCache = { [key in string]: Replayer };\n\nconst cache: ReplayerCache = {};\n\nexport default cache;\n"]}

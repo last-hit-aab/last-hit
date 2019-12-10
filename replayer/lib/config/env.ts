@@ -3,15 +3,19 @@ import os from 'os';
 import { EnvironmentOptions, IncludingFilter, IncludingFilters } from '../types';
 
 type Wrapper = (step: Step) => Step;
+type SimpleEnvironmentOptions = Omit<
+	EnvironmentOptions,
+	'parallel' | 'workspace' | 'includes' | 'child'
+>;
 
 class Environment {
 	private constructed: boolean;
 	/** environment name */
-	private name: string;
+	private name: string = 'NO-ENVIRONMENT';
 	/** workspace folder */
 	private workspace: string;
-	private urlReplaceRegexps: RegExp[];
-	private urlReplaceTos: string[];
+	private urlReplaceRegexps: RegExp[] = [];
+	private urlReplaceTos: string[] = [];
 	private sleepAfterChange?: number;
 	private slowAjaxTime?: number;
 	private includes?: IncludingFilters;
@@ -28,9 +32,18 @@ class Environment {
 		this.constructed = true;
 		this.originalOptions = options;
 
-		this.name = options.name;
 		this.workspace = options.workspace;
+		this.mergeFrom(options);
 
+		this.includes = options.includes;
+
+		this.parallel = this.computeParallel(options.parallel);
+		this.child = options.child || false;
+
+		this.wrappers = [this.wrapUrl];
+	}
+	mergeFrom(options: SimpleEnvironmentOptions) {
+		this.name = options.name || this.name;
 		if (options.urlReplaceRegexp) {
 			this.urlReplaceRegexps = options.urlReplaceRegexp
 				.split('&&')
@@ -42,16 +55,13 @@ class Environment {
 			this.urlReplaceRegexps = [];
 			this.urlReplaceTos = [];
 		}
+		this.sleepAfterChange = options.sleepAfterChange || this.sleepAfterChange;
+		this.slowAjaxTime = options.slowAjaxTime || this.slowAjaxTime;
 
-		this.sleepAfterChange = options.sleepAfterChange;
-		this.slowAjaxTime = options.slowAjaxTime;
-
-		this.includes = options.includes;
-
-		this.parallel = this.computeParallel(options.parallel);
-		this.child = options.child || false;
-
-		this.wrappers = [this.wrapUrl];
+		// set original options
+		['name', 'urlReplaceRegexp', 'urlReplaceTo', 'sleepAfterChange', 'slowAjaxTime'].forEach(
+			prop => (this.originalOptions[prop] = options[prop])
+		);
 	}
 	wrap(step: Step): Step {
 		if (!this.isConstructed()) {
@@ -73,6 +83,9 @@ class Environment {
 	}
 	isConstructed(): boolean {
 		return this.constructed;
+	}
+	getName(): string {
+		return this.name;
 	}
 	getWorkspace(): string {
 		return this.workspace;
@@ -129,6 +142,14 @@ class Environment {
 		options.child = true;
 		Object.keys(replacement).forEach(key => (options[key] = replacement[key]));
 
+		return options;
+	}
+	expose(): SimpleEnvironmentOptions {
+		const options = Object.assign({}, this.originalOptions);
+		delete options.parallel;
+		delete options.workspace;
+		delete options.includes;
+		delete options.child;
 		return options;
 	}
 	static exposeNoop(): EnvironmentOptions {

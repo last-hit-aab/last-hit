@@ -59,7 +59,11 @@ var ExtensionWorker = /** @class */ (function () {
         this.terminating = false;
         this.childProcess = null;
         this.onChildProcessError = function (error) {
-            _this.getEmitter().emit("error" /* ERROR */, error);
+            _this.getEmitter().emit("error" /* ERROR */, {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+            });
         };
         this.onChildProcessExit = function (code, signal) {
             if (_this.terminating) {
@@ -121,7 +125,7 @@ var ExtensionWorker = /** @class */ (function () {
                     silent: true
                 };
                 // IMPORTANT relative path to me
-                this.childProcess = child_process_1.fork('dist/lib/extension/bootstrap', ['--type=extension'], opts);
+                this.childProcess = child_process_1.fork(__dirname + "/extension/bootstrap", ['--type=extension'], opts);
                 // Lifecycle
                 this.childProcess.on('error', this.onChildProcessError);
                 this.childProcess.on('exit', this.onChildProcessExit);
@@ -175,18 +179,28 @@ var ExtensionWorker = /** @class */ (function () {
     ExtensionWorker.prototype.sendMessage = function (extensionId, data) {
         var _this = this;
         return new Promise(function (resolve, reject) {
-            _this.childProcess.send({
-                extensionId: extensionId,
-                type: types_1.ExtensionEventTypes.DATA_TRANSMITTED,
-                data: data
-            }, undefined, undefined, function (error) {
-                if (error) {
-                    reject(error);
-                }
-                else {
-                    resolve();
-                }
-            });
+            if (_this.childProcess) {
+                _this.childProcess.send({
+                    extensionId: extensionId,
+                    type: types_1.ExtensionEventTypes.DATA_TRANSMITTED,
+                    data: data
+                }, undefined, undefined, function (error) {
+                    if (error) {
+                        reject(error);
+                    }
+                    else {
+                        resolve();
+                    }
+                });
+            }
+            else {
+                resolve();
+                _this.getEmitter().emit("data" /* DATA */, {
+                    type: types_1.ExtensionEventTypes.DATA_TRANSMITTED,
+                    extensionId: extensionId,
+                    data: { ignore: true }
+                });
+            }
         });
     };
     return ExtensionWorker;

@@ -1,23 +1,23 @@
 import fs from 'fs';
+import { ExtensionPointId, ExtensionRegistry } from 'last-hit-extensions';
 import {
-	ChangeStep,
-	Device,
-	Flow,
-	KeydownStep,
-	StartStep,
-	Step,
-	StepType,
-	ClickStep,
-	FocusStep,
-	MousedownStep,
-	AnimationStep,
-	ScrollStep,
-	DialogOpenStep,
-	DialogCloseStep,
 	AjaxStep,
+	AnimationStep,
+	ChangeStep,
+	ClickStep,
+	Device,
+	DialogCloseStep,
+	DialogOpenStep,
+	Flow,
+	FocusStep,
+	KeydownStep,
+	MousedownStep,
+	PageClosedStep,
 	PageCreatedStep,
 	PageSwitchStep,
-	PageClosedStep
+	ScrollStep,
+	StartStep,
+	Step
 } from 'last-hit-types';
 import path from 'path';
 import puppeteer, { Browser, CoverageEntry, ElementHandle, Page, Request } from 'puppeteer';
@@ -37,6 +37,7 @@ import ReplaySummary from './replay-summary';
 import { ReplayerCache } from './replayers-cache';
 import RequestCounter from './request-counter';
 import ssim from './ssim';
+import { WorkspaceExtensionRegistry } from './replayer-extension-registry';
 
 export type ReplayerOptions = {
 	storyName: string;
@@ -44,6 +45,7 @@ export type ReplayerOptions = {
 	env: Environment;
 	logger: Console;
 	replayers: ReplayerCache;
+	registry: WorkspaceExtensionRegistry;
 };
 
 const getChromiumExecPath = () => {
@@ -126,8 +128,10 @@ class Replayer {
 	private replayers: ReplayerCache;
 	private env: Environment;
 
+	private registry: WorkspaceExtensionRegistry;
+
 	constructor(options: ReplayerOptions) {
-		const { storyName, flow, env, logger, replayers } = options;
+		const { storyName, flow, env, logger, replayers, registry } = options;
 		this.storyName = storyName;
 		this.flow = (() => {
 			const { steps = [] as Step[], ...rest } = flow;
@@ -140,6 +144,7 @@ class Replayer {
 		this.summary = new ReplaySummary({ storyName, flow, env });
 		this.replayers = replayers;
 		this.env = env;
+		this.registry = registry;
 	}
 	switchToRecord(): Browser {
 		this.onRecord = true;

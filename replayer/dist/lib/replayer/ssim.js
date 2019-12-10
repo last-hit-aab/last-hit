@@ -47,4 +47,5 @@ exports.default = (function (baselineFilename, replayFilename) {
         });
     });
 });
+
 //# sourceMappingURL=ssim.js.map

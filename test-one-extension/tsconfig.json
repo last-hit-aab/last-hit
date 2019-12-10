@@ -11,15 +11,8 @@
 		"suppressImplicitAnyIndexErrors": true,
 		"resolveJsonModule": true,
 		"esModuleInterop": true,
-		"outDir": "runtime"
+		"strict": true,
+		"outDir": "dist"
 	},
-	"exclude": [
-		"extensions",
-		"node_modules",
-		"renderer",
-		"replayer",
-		"test-one-extension",
-		"types",
-		"workspace-extension"
-	]
+	"exclude": ["node_modules"]
 }

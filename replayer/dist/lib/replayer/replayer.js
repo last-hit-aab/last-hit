@@ -154,7 +154,7 @@ var Replayer = /** @class */ (function () {
         this.coverages = [];
         /** true when switch to record, never turn back to false again */
         this.onRecord = false;
-        var storyName = options.storyName, flow = options.flow, env = options.env, logger = options.logger, replayers = options.replayers;
+        var storyName = options.storyName, flow = options.flow, env = options.env, logger = options.logger, replayers = options.replayers, registry = options.registry;
         this.storyName = storyName;
         this.flow = (function () {
             var _a = flow.steps, steps = _a === void 0 ? [] : _a, rest = __rest(flow, ["steps"]);
@@ -164,6 +164,7 @@ var Replayer = /** @class */ (function () {
         this.summary = new replay_summary_1.default({ storyName: storyName, flow: flow, env: env });
         this.replayers = replayers;
         this.env = env;
+        this.registry = registry;
     }
     Replayer.prototype.switchToRecord = function () {
         this.onRecord = true;
@@ -1294,8 +1295,8 @@ var Replayer = /** @class */ (function () {
                     // other
                     return [4 /*yield*/, element.evaluate(function (node, value) {
                             var element = node;
-                            var currentValue = element.value;
-                            if (currentValue != value) {
+                            if (!['checkbox', 'radio'].includes((element.getAttribute('type') || '').toLowerCase()) ||
+                                element.value != value) {
                                 element.value = value;
                                 var event_1 = document.createEvent('HTMLEvents');
                                 event_1.initEvent('change', true, true);
@@ -1316,4 +1317,5 @@ var Replayer = /** @class */ (function () {
     return Replayer;
 }());
 exports.default = Replayer;
+
 //# sourceMappingURL=replayer.js.map

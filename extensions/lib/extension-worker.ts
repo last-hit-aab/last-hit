@@ -8,7 +8,8 @@ import {
 	ExtensionEventTypes,
 	ExtensionDataTransmittedEvent,
 	ExtensionRegisteredEvent,
-	ExtensionPointId
+	ExtensionPointId,
+	ExtensionDataTransmittedIgnoreEvent
 } from './types';
 import * as objects from './utils/objects';
 import * as platform from './utils/platform';
@@ -67,7 +68,7 @@ class ExtensionWorker implements IExtensionWorker {
 		};
 
 		// IMPORTANT relative path to me
-		this.childProcess = fork('dist/lib/extension/bootstrap', ['--type=extension'], opts);
+		this.childProcess = fork(`${__dirname}/extension/bootstrap`, ['--type=extension'], opts);
 
 		// Lifecycle
 		this.childProcess.on('error', this.onChildProcessError);
@@ -77,7 +78,11 @@ class ExtensionWorker implements IExtensionWorker {
 		this.childProcess.stderr!.on('data', this.onChildProcessStderr);
 	}
 	private onChildProcessError = (error: Error): void => {
-		this.getEmitter().emit(WorkerEvents.ERROR, error);
+		this.getEmitter().emit(WorkerEvents.ERROR, {
+			name: error.name,
+			message: error.message,
+			stack: error.stack
+		} as Error);
 	};
 	private onChildProcessExit = (code: number, signal: string): void => {
 		if (this.terminating) {
@@ -157,22 +162,31 @@ class ExtensionWorker implements IExtensionWorker {
 	}
 	sendMessage(extensionId: ExtensionPointId, data: any): Promise<void> {
 		return new Promise((resolve, reject) => {
-			this.childProcess.send(
-				{
-					extensionId,
-					type: ExtensionEventTypes.DATA_TRANSMITTED,
-					data
-				} as ExtensionDataTransmittedEvent,
-				undefined,
-				undefined,
-				(error: Error) => {
-					if (error) {
-						reject(error);
-					} else {
-						resolve();
+			if (this.childProcess) {
+				this.childProcess.send(
+					{
+						extensionId,
+						type: ExtensionEventTypes.DATA_TRANSMITTED,
+						data
+					} as ExtensionDataTransmittedEvent,
+					undefined,
+					undefined,
+					(error: Error | null) => {
+						if (error) {
+							reject(error);
+						} else {
+							resolve();
+						}
 					}
-				}
-			);
+				);
+			} else {
+				resolve();
+				this.getEmitter().emit(WorkerEvents.DATA, {
+					type: ExtensionEventTypes.DATA_TRANSMITTED,
+					extensionId,
+					data: { ignore: true }
+				} as ExtensionDataTransmittedIgnoreEvent);
+			}
 		});
 	}
 }

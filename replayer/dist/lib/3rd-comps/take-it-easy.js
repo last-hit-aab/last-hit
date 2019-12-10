@@ -6,4 +6,5 @@ var TakeItEasy = /** @class */ (function () {
     return TakeItEasy;
 }());
 exports.default = TakeItEasy;
+
 //# sourceMappingURL=take-it-easy.js.map

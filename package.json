@@ -7,6 +7,12 @@
 		"build:renderer": "npm run build --prefix renderer",
 		"build": "npm run build:renderer && tsc",
 		"compile": "tsc",
+		"compile:extensions": "npm run compile --prefix extensions",
+		"compile:replayer": "npm run compile --prefix replayer",
+		"compile:workspace-extension": "npm run compile --prefix workspace-extension",
+		"compile:test-one-extension": "npm run compile --prefix test-one-extension",
+		"compile:subs": "npm run compile:extensions && npm run compile:replayer && npm run compile:workspace-extension && npm run compile:test-one-extension",
+		"compile:all": "npm run build && npm run compile:subs",
 		"start": "npm run build && electron .",
 		"pack": "npm run build && electron-builder --dir",
 		"pack:windows": "npm run build && electron-builder -w",
@@ -56,6 +62,7 @@
 		"handlebars": "^4.5.3",
 		"image-ssim": "^0.2.0",
 		"jsonfile": "^5.0.0",
+		"last-hit-replayer": "0.7.5",
 		"last-hit-types": "0.7.5",
 		"mkdirp": "^0.5.1",
 		"node-resemble-js": "^0.2.0",
@@ -71,7 +78,14 @@
 	},
 	"build": {
 		"asar": true,
-		"asarUnpack": "node_modules/puppeteer/.local-chromium/**/*",
-		"artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
+		"asarUnpack": "./node_modules/puppeteer/.local-chromium/**/*",
+		"artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+		"files": [
+			"!extensions/*",
+			"!replayer/*",
+			"!types/*",
+			"!test-one-extension/*",
+			"!workspace-extension/*"
+		]
 	}
 }

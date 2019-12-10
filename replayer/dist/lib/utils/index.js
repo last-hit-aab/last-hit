@@ -61,6 +61,7 @@ exports.findFlows = function (env) {
     return fs_1.default
         .readdirSync(workspace)
         .filter(function (dir) { return fs_1.default.statSync(path_1.default.join(workspace, dir)).isDirectory(); })
+        .filter(function (dir) { return !['.scripts'].includes(dir); })
         .map(function (storyName) {
         return fs_1.default
             .readdirSync(path_1.default.join(workspace, storyName))
@@ -79,4 +80,5 @@ exports.findFlows = function (env) {
         return flows;
     }, []);
 };
+
 //# sourceMappingURL=index.js.map

@@ -41,6 +41,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var path_1 = __importDefault(require("path"));
 var decache_1 = __importDefault(require("decache"));
+var IgnoreHandler = function () {
+    return Promise.resolve({ ignore: true });
+};
 var AbstractWorkspaceExtensionEntryPoint = /** @class */ (function () {
     function AbstractWorkspaceExtensionEntryPoint() {
         this.handlers = {};
@@ -49,13 +52,14 @@ var AbstractWorkspaceExtensionEntryPoint = /** @class */ (function () {
         var handler = this.handlers[key];
         if (!handler) {
             var modulePath = path_1.default.join(this.getHandlerLocation(), relativePath);
-            this.handlers.env = { modulePath: modulePath, type: type };
+            this.handlers[key] = { modulePath: modulePath, type: type };
             this.doReloadHandler(this.handlers[key]);
-            return this.handlers[key];
+            handler = this.handlers[key];
+            if (!handler.handle) {
+                handler.handle = IgnoreHandler;
+            }
         }
-        else {
-            return handler;
-        }
+        return handler;
     };
     AbstractWorkspaceExtensionEntryPoint.prototype.handleEnvironmentPrepare = function (event) {
         return __awaiter(this, void 0, void 0, function () {
@@ -170,8 +174,21 @@ var AbstractWorkspaceExtensionEntryPoint = /** @class */ (function () {
         return Promise.resolve();
     };
     AbstractWorkspaceExtensionEntryPoint.prototype.doReloadHandler = function (handler) {
-        decache_1.default(handler.modulePath);
-        handler.handle = require(handler.modulePath);
+        console.log(handler.modulePath);
+        try {
+            decache_1.default(handler.modulePath);
+            var scripts = require(handler.modulePath);
+            if (scripts && scripts.default) {
+                handler.handle = scripts.default;
+            }
+            else {
+                handler.handle = scripts;
+            }
+        }
+        catch (e) {
+            delete handler.handle;
+            console.error("failed to reload handler[" + handler.modulePath + "]", e);
+        }
     };
     AbstractWorkspaceExtensionEntryPoint.prototype.activate = function () {
         if (this.getHandlerLocation()) {

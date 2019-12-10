@@ -44,33 +44,42 @@ var console_1 = __importDefault(require("console"));
 var config_1 = require("./lib/config");
 var handler_1 = require("./lib/handler");
 var utils_1 = require("./lib/utils");
-var processId = utils_1.getProcessId();
-console_1.default.info(("Process[" + processId + "] started.").bold.green);
-(function () { return __awaiter(void 0, void 0, void 0, function () {
-    var env, flows, _a;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0:
-                _b.trys.push([0, 6, , 7]);
-                return [4 /*yield*/, config_1.loadConfig()];
-            case 1:
-                env = _b.sent();
-                flows = utils_1.findFlows(env);
-                if (!env.isOnParallel()) return [3 /*break*/, 3];
-                return [4 /*yield*/, handler_1.doOnMultipleProcesses(flows, env)];
-            case 2:
-                _b.sent();
-                return [3 /*break*/, 5];
-            case 3: return [4 /*yield*/, handler_1.doOnSingleProcess(flows, env)];
-            case 4:
-                _b.sent();
-                _b.label = 5;
-            case 5: return [3 /*break*/, 7];
-            case 6:
-                _a = _b.sent();
-                return [2 /*return*/, Promise.reject()];
-            case 7: return [2 /*return*/];
-        }
-    });
-}); })().catch(function () { return process.exit(1); });
+var replayer_1 = require("./lib/replayer");
+exports.createReplayer = replayer_1.createReplayer;
+var run = function () {
+    var processId = utils_1.getProcessId();
+    console_1.default.info(("Process[" + processId + "] started.").bold.green);
+    (function () { return __awaiter(void 0, void 0, void 0, function () {
+        var env, flows, e_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 6, , 7]);
+                    return [4 /*yield*/, config_1.loadConfig()];
+                case 1:
+                    env = _a.sent();
+                    flows = utils_1.findFlows(env);
+                    if (!env.isOnParallel()) return [3 /*break*/, 3];
+                    return [4 /*yield*/, handler_1.doOnMultipleProcesses(flows, env)];
+                case 2:
+                    _a.sent();
+                    return [3 /*break*/, 5];
+                case 3: return [4 /*yield*/, handler_1.doOnSingleProcess(flows, env)];
+                case 4:
+                    _a.sent();
+                    _a.label = 5;
+                case 5: return [3 /*break*/, 7];
+                case 6:
+                    e_1 = _a.sent();
+                    console_1.default.error(e_1);
+                    return [2 /*return*/, Promise.reject()];
+                case 7: return [2 /*return*/];
+            }
+        });
+    }); })()
+        .then(function () { return process.exit(0); })
+        .catch(function () { return process.exit(1); });
+};
+exports.default = run;
+
 //# sourceMappingURL=index.js.map

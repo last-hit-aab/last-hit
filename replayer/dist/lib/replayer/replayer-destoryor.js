@@ -71,4 +71,5 @@ var destory = function (replayers, logger) {
 exports.default = (function (replayers, logger) {
     return function () { return destory(replayers, logger); };
 });
+
 //# sourceMappingURL=replayer-destoryor.js.map

@@ -92,7 +92,11 @@ class ExtensionEntryPointHelper implements IExtensionEntryPointHelper {
 			{
 				type: ExtensionEventTypes.REGISTERED,
 				extensionId: this.getExtensionId(),
-				error: e
+				error: {
+					name: e.name,
+					message: e.message,
+					stack: e.stack
+				}
 			},
 			undefined,
 			undefined,
@@ -130,7 +134,14 @@ class ExtensionEntryPointHelper implements IExtensionEntryPointHelper {
 			}
 			const module: URI = URI.file(mainfile);
 			const extension: IExtensionEntryPointWrapper<any> = this.createWrapper(
-				require(module.fsPath)
+				(() => {
+					const extension = require(module.fsPath);
+					if (extension && extension.default) {
+						return extension.default;
+					} else {
+						return extension;
+					}
+				})()
 			);
 			await extension.activate();
 			this.extension = extension;
@@ -197,7 +208,13 @@ class ExtensionEntryPointHelper implements IExtensionEntryPointHelper {
 				{
 					extensionId: this.extensionId,
 					type: ExtensionEventTypes.DATA_TRANSMITTED,
-					data: { error }
+					data: {
+						error: {
+							name: error.name,
+							message: error.message,
+							stack: error.stack
+						}
+					}
 				} as ExtensionDataTransmittedEvent,
 				undefined,
 				undefined,

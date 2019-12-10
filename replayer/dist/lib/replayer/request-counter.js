@@ -158,4 +158,5 @@ var RequestCounter = /** @class */ (function () {
     return RequestCounter;
 }());
 exports.default = RequestCounter;
+
 //# sourceMappingURL=request-counter.js.map

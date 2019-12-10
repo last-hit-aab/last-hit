@@ -21,25 +21,34 @@ type RegisteredExtension = {
 };
 class ExtensionRegistry implements IExtensionRegistry {
 	private emitter: Emitter = new Emitter();
-	private started: boolean = false;
 	private extensions: Array<RegisteredExtension> = [];
 
 	constructor() {
-		process.once('exit', () => this.shutdownAllExtensions());
-		process.once('SIGINT', () => this.shutdownAllExtensions());
+		process
+			.once('exit', () => this.shutdownAllExtensions())
+			.once('SIGINT', () => this.shutdownAllExtensions());
+		// .once('SIGTERM', () => this.shutdownAllExtensions());
 	}
-	private getEmitter(): Emitter {
+	protected getEmitter(): Emitter {
 		return this.emitter;
-	}
-	isStarted() {
-		return this.started;
 	}
 	findExtensionById(extensionId: ExtensionPointId): RegisteredExtension | undefined {
 		return this.extensions.find(extension => extension.definition.getId() === extensionId);
 	}
-	async startup(extensions: Array<IExtensionPoint>): Promise<void> {
+	isExtensionStarted(extensionId: ExtensionPointId): boolean {
+		const extension = this.extensions.find(
+			extension => extension.definition.getId() === extensionId
+		);
+		if (!extension) {
+			// not found, not started
+			return false;
+		} else {
+			return !!extension.started;
+		}
+	}
+	async startup(extensionPoints: Array<IExtensionPoint>): Promise<void> {
 		// build registered extensions
-		this.extensions = extensions.map(extensionPoint => {
+		this.extensions = extensionPoints.map(extensionPoint => {
 			return {
 				definition: extensionPoint,
 				worker: new ExtensionWorker(),
@@ -49,87 +58,98 @@ class ExtensionRegistry implements IExtensionRegistry {
 
 		// listen all child processes
 		// console.log(`main process pid[${process.pid}]`);
-		await Promise.all(
-			this.extensions.map(
-				async (extension): Promise<void> => {
-					const { definition, worker } = extension;
-					const extensionId = definition.getId();
-					worker
-						.on(WorkerEvents.REGISTERED, (error?: Error) => {
-							const extension = this.extensions.find(
-								extension => extension.definition.getId() === extensionId
-							);
-							if (!extension) {
-								console.error(
-									`Unknown extension[id=${extensionId}] register request received, ignored.`
-								);
-							} else if (error) {
-								// failed to activate extension, shutdown worker
-								console.error(error);
-								extension.worker.terminate();
-								extension.started = false;
-								this.getEmitter().emit(ExtensionEventTypes.REGISTERED, {
-									type: ExtensionEventTypes.REGISTERED,
-									extensionId,
-									error
-								} as ExtensionRegisteredEvent);
-							} else {
-								extension.started = true;
-								this.getEmitter().emit(ExtensionEventTypes.REGISTERED, {
-									type: ExtensionEventTypes.REGISTERED,
-									extensionId
-								} as ExtensionRegisteredEvent);
-							}
-						})
-						.on(
-							WorkerEvents.EXITED,
-							(code: number, signal: string, expected: boolean): void => {
-								console.log(
-									`Extension[id=${extensionId}, name=${definition.getName()}] terminated[code=${code}, signal=${signal}].`
-								);
-								extension.started = false;
-								this.getEmitter().emit(ExtensionEventTypes.UNREGISTERED, {
-									type: ExtensionEventTypes.UNREGISTERED,
-									extensionId
-								} as ExtensionUnregisteredEvent);
-							}
-						)
-						.on(WorkerEvents.LOG, (data: any): void => {
-							this.getEmitter().emit(ExtensionEventTypes.LOG, {
-								type: ExtensionEventTypes.LOG,
-								extensionId,
-								data
-							} as ExtensionLogEvent);
-						})
-						.on(WorkerEvents.ERROR_LOG, (data: any): void => {
-							this.getEmitter().emit(ExtensionEventTypes.ERROR_LOG, {
-								type: ExtensionEventTypes.ERROR_LOG,
-								extensionId,
-								data
-							} as ExtensionErrorLogEvent);
-						})
-						.on(WorkerEvents.ERROR, (error: Error): void => {
-							this.getEmitter().emit(ExtensionEventTypes.ERROR, {
-								type: ExtensionEventTypes.ERROR,
-								extensionId,
-								error
-							} as ExtensionErrorEvent);
-						})
-						.on(WorkerEvents.DATA, (data: any): void => {
-							this.getEmitter().emit(ExtensionEventTypes.DATA_TRANSMITTED, {
-								type: ExtensionEventTypes.DATA_TRANSMITTED,
-								extensionId,
-								data
-							} as ExtensionDataTransmittedEvent);
-						});
-					await worker.start(definition);
-					console.log(`Extension[${extensionId}] started successfully by worker.`);
-				}
-			)
-		);
-
-		this.started = true;
+		await Promise.all(this.extensions.map(this.doStartupExtension));
 	}
+	async startupExtension(extensionPoint: IExtensionPoint): Promise<void> {
+		let extension: RegisteredExtension | undefined = this.findExtensionById(
+			extensionPoint.getId()
+		);
+		if (!extension) {
+			extension = {
+				definition: extensionPoint,
+				worker: new ExtensionWorker(),
+				started: false
+			} as RegisteredExtension;
+			this.extensions.push(extension);
+		}
+		if (!extension.started) {
+			return await this.doStartupExtension(extension);
+		} else {
+			return Promise.resolve();
+		}
+	}
+	private doStartupExtension = async (extension: RegisteredExtension): Promise<void> => {
+		const { definition, worker } = extension;
+		const extensionId = definition.getId();
+		worker
+			.on(WorkerEvents.REGISTERED, (error?: Error) => {
+				const extension = this.extensions.find(
+					extension => extension.definition.getId() === extensionId
+				);
+				if (!extension) {
+					console.error(
+						`Unknown extension[id=${extensionId}] register request received, ignored.`
+					);
+				} else if (error) {
+					// failed to activate extension, shutdown worker
+					console.error('registered on error', error);
+					extension.worker.terminate();
+					extension.started = false;
+					this.getEmitter().emit(ExtensionEventTypes.REGISTERED, {
+						type: ExtensionEventTypes.REGISTERED,
+						extensionId,
+						error
+					} as ExtensionRegisteredEvent);
+				} else {
+					extension.started = true;
+					this.getEmitter().emit(ExtensionEventTypes.REGISTERED, {
+						type: ExtensionEventTypes.REGISTERED,
+						extensionId
+					} as ExtensionRegisteredEvent);
+				}
+			})
+			.on(WorkerEvents.EXITED, (code: number, signal: string, expected: boolean): void => {
+				console.log(
+					`Extension[id=${extensionId}, name=${definition.getName()}] terminated[code=${code}, signal=${signal}].`
+				);
+				extension.started = false;
+				this.getEmitter().emit(ExtensionEventTypes.UNREGISTERED, {
+					type: ExtensionEventTypes.UNREGISTERED,
+					extensionId
+				} as ExtensionUnregisteredEvent);
+			})
+			.on(WorkerEvents.LOG, (data: any): void => {
+				this.getEmitter().emit(ExtensionEventTypes.LOG, {
+					type: ExtensionEventTypes.LOG,
+					extensionId,
+					data
+				} as ExtensionLogEvent);
+			})
+			.on(WorkerEvents.ERROR_LOG, (data: any): void => {
+				this.getEmitter().emit(ExtensionEventTypes.ERROR_LOG, {
+					type: ExtensionEventTypes.ERROR_LOG,
+					extensionId,
+					data
+				} as ExtensionErrorLogEvent);
+			})
+			.on(WorkerEvents.ERROR, (error: Error): void => {
+				this.getEmitter().emit(ExtensionEventTypes.ERROR, {
+					type: ExtensionEventTypes.ERROR,
+					extensionId,
+					error
+				} as ExtensionErrorEvent);
+			})
+			.on(WorkerEvents.DATA, (data: any): void => {
+				this.getEmitter().emit(ExtensionEventTypes.DATA_TRANSMITTED, {
+					type: ExtensionEventTypes.DATA_TRANSMITTED,
+					extensionId,
+					data
+				} as ExtensionDataTransmittedEvent);
+			});
+		await worker.start(definition);
+		console.log(`Extension[${extensionId}] started successfully by worker.`);
+	};
+
 	shutdownExtension(extensionId: ExtensionPointId): void {
 		const extension = this.findExtensionById(extensionId);
 		if (extension) {
@@ -145,7 +165,6 @@ class ExtensionRegistry implements IExtensionRegistry {
 	}
 	destroy(): void {
 		this.shutdownAllExtensions();
-		this.started = false;
 	}
 	once(event: ExtensionEventTypes, handler: GenericHandler): this {
 		this.getEmitter().once(event, handler);

@@ -49,4 +49,5 @@ exports.generateReport = function (options) {
         console.error(err);
     }
 };
+
 //# sourceMappingURL=report-generator.js.map

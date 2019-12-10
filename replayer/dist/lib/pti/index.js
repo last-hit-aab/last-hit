@@ -110,4 +110,5 @@ exports.write = function (puppeteerFormat) {
     var pti = new PuppeteerToIstanbul(puppeteerFormat);
     pti.writeIstanbulFormat();
 };
+
 //# sourceMappingURL=index.js.map

@@ -16,9 +16,13 @@ type Handler = {
 	story?: string;
 	flow?: string;
 	stepUuid?: string;
-	handle: (event: WorkspaceExtensions.WorkspaceEvent) => Promise<any>;
+	handle?: (event: WorkspaceExtensions.WorkspaceEvent) => Promise<any>;
 };
 type Handlers = { [key in string]: Handler };
+
+const IgnoreHandler = (): Promise<any> => {
+	return Promise.resolve({ ignore: true });
+};
 
 export abstract class AbstractWorkspaceExtensionEntryPoint
 	implements WorkspaceExtensions.IWorkspaceExtensionEntryPoint {
@@ -29,20 +33,22 @@ export abstract class AbstractWorkspaceExtensionEntryPoint
 	 */
 	abstract getHandlerLocation(): string;
 	protected findHandler(key: string, type: HandlerType, relativePath: string): Handler {
-		const handler = this.handlers[key];
+		let handler = this.handlers[key];
 		if (!handler) {
 			const modulePath = path.join(this.getHandlerLocation(), relativePath);
-			this.handlers.env = { modulePath, type } as Handler;
+			this.handlers[key] = { modulePath, type } as Handler;
 			this.doReloadHandler(this.handlers[key]);
-			return this.handlers[key];
-		} else {
-			return handler;
+			handler = this.handlers[key];
+			if (!handler.handle) {
+				handler.handle = IgnoreHandler;
+			}
 		}
+		return handler;
 	}
 	async handleEnvironmentPrepare(
 		event: WorkspaceExtensions.EnvironmentPrepareEvent
 	): Promise<WorkspaceExtensions.PreparedEnvironment> {
-		return await this.findHandler('env-prepare', 'env-prepare', 'env-prepare').handle(event);
+		return await this.findHandler('env-prepare', 'env-prepare', 'env-prepare').handle!(event);
 	}
 	async handleStoryPrepare(
 		event: WorkspaceExtensions.StoryPrepareEvent
@@ -51,7 +57,7 @@ export abstract class AbstractWorkspaceExtensionEntryPoint
 			`story-prepare@${event.story.name}`,
 			'story-prepare',
 			`${event.story.name}/story-prepare`
-		).handle(event);
+		).handle!(event);
 	}
 	async handleFlowShouldStart(
 		event: WorkspaceExtensions.FlowShouldStartEvent
@@ -60,7 +66,7 @@ export abstract class AbstractWorkspaceExtensionEntryPoint
 			`flow-should-start@${event.flow.name}@${event.story.name}`,
 			'flow-should-start',
 			`${event.story.name}/${event.flow.name}/flow-should-start`
-		).handle(event);
+		).handle!(event);
 	}
 	async handleFlowAccomplished(
 		event: WorkspaceExtensions.FlowAccomplishedEvent
@@ -69,7 +75,7 @@ export abstract class AbstractWorkspaceExtensionEntryPoint
 			`flow-accomplished@${event.flow.name}@${event.story.name}`,
 			'flow-accomplished',
 			`${event.story.name}/${event.flow.name}/flow-accomplished`
-		).handle(event);
+		).handle!(event);
 	}
 	async handleStepShouldStart(
 		event: WorkspaceExtensions.StepShouldStartEvent
@@ -78,7 +84,7 @@ export abstract class AbstractWorkspaceExtensionEntryPoint
 			`step-should-start@${event.step.stepUuid}@${event.flow.name}@${event.story.name}`,
 			'step-should-start',
 			`${event.story.name}/${event.flow.name}/${event.step.stepUuid}/step-should-start`
-		).handle(event);
+		).handle!(event);
 	}
 	async handleStepOnError(
 		event: WorkspaceExtensions.StepOnErrorEvent
@@ -87,7 +93,7 @@ export abstract class AbstractWorkspaceExtensionEntryPoint
 			`step-on-error@${event.step.stepUuid}@${event.flow.name}@${event.story.name}`,
 			'step-on-error',
 			`${event.story.name}/${event.flow.name}/${event.step.stepUuid}/step-on-error`
-		).handle(event);
+		).handle!(event);
 	}
 	async handleStepAccomplished(
 		event: WorkspaceExtensions.StepAccomplishedEvent
@@ -96,7 +102,7 @@ export abstract class AbstractWorkspaceExtensionEntryPoint
 			`step-accomplished@${event.step.stepUuid}@${event.flow.name}@${event.story.name}`,
 			'step-accomplished',
 			`${event.story.name}/${event.flow.name}/${event.step.stepUuid}/step-accomplished`
-		).handle(event);
+		).handle!(event);
 	}
 
 	handleReloadAllHandlers(event: WorkspaceExtensions.ReloadAllHandlersEvent): Promise<void> {
@@ -140,8 +146,19 @@ export abstract class AbstractWorkspaceExtensionEntryPoint
 		return Promise.resolve();
 	}
 	protected doReloadHandler(handler: Handler) {
-		decache(handler.modulePath);
-		handler.handle = require(handler.modulePath);
+		console.log(handler.modulePath);
+		try {
+			decache(handler.modulePath);
+			const scripts = require(handler.modulePath);
+			if (scripts && scripts.default) {
+				handler.handle = scripts.default;
+			} else {
+				handler.handle = scripts;
+			}
+		} catch (e) {
+			delete handler.handle;
+			console.error(`failed to reload handler[${handler.modulePath}]`, e);
+		}
 	}
 	activate(): Promise<void> {
 		if (this.getHandlerLocation()) {

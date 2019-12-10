@@ -73,6 +73,7 @@ const loadWorkspaceStructure = (settings: WorkspaceSettings): WorkspaceStructure
 	const folder = path.parse(workspaceFile).dir;
 	const files = fs.readdirSync(folder);
 	structure.stories = files
+		.filter(file => !['.scripts'].includes(file))
 		.map(file => {
 			let story: Story | null = null;
 			const storyFolder = path.join(folder, file);

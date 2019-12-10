@@ -46,28 +46,112 @@ var ExtensionRegistry = /** @class */ (function () {
     function ExtensionRegistry() {
         var _this = this;
         this.emitter = new events_1.default();
-        this.started = false;
         this.extensions = [];
-        process.once('exit', function () { return _this.shutdownAllExtensions(); });
-        process.once('SIGINT', function () { return _this.shutdownAllExtensions(); });
-    }
-    ExtensionRegistry.prototype.getEmitter = function () {
-        return this.emitter;
-    };
-    ExtensionRegistry.prototype.isStarted = function () {
-        return this.started;
-    };
-    ExtensionRegistry.prototype.findExtensionById = function (extensionId) {
-        return this.extensions.find(function (extension) { return extension.definition.getId() === extensionId; });
-    };
-    ExtensionRegistry.prototype.startup = function (extensions) {
-        return __awaiter(this, void 0, void 0, function () {
+        this.doStartupExtension = function (extension) { return __awaiter(_this, void 0, void 0, function () {
+            var definition, worker, extensionId;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        definition = extension.definition, worker = extension.worker;
+                        extensionId = definition.getId();
+                        worker
+                            .on("registered" /* REGISTERED */, function (error) {
+                            var extension = _this.extensions.find(function (extension) { return extension.definition.getId() === extensionId; });
+                            if (!extension) {
+                                console.error("Unknown extension[id=" + extensionId + "] register request received, ignored.");
+                            }
+                            else if (error) {
+                                // failed to activate extension, shutdown worker
+                                console.error('registered on error', error);
+                                extension.worker.terminate();
+                                extension.started = false;
+                                _this.getEmitter().emit(types_1.ExtensionEventTypes.REGISTERED, {
+                                    type: types_1.ExtensionEventTypes.REGISTERED,
+                                    extensionId: extensionId,
+                                    error: error
+                                });
+                            }
+                            else {
+                                extension.started = true;
+                                _this.getEmitter().emit(types_1.ExtensionEventTypes.REGISTERED, {
+                                    type: types_1.ExtensionEventTypes.REGISTERED,
+                                    extensionId: extensionId
+                                });
+                            }
+                        })
+                            .on("exited" /* EXITED */, function (code, signal, expected) {
+                            console.log("Extension[id=" + extensionId + ", name=" + definition.getName() + "] terminated[code=" + code + ", signal=" + signal + "].");
+                            extension.started = false;
+                            _this.getEmitter().emit(types_1.ExtensionEventTypes.UNREGISTERED, {
+                                type: types_1.ExtensionEventTypes.UNREGISTERED,
+                                extensionId: extensionId
+                            });
+                        })
+                            .on("log" /* LOG */, function (data) {
+                            _this.getEmitter().emit(types_1.ExtensionEventTypes.LOG, {
+                                type: types_1.ExtensionEventTypes.LOG,
+                                extensionId: extensionId,
+                                data: data
+                            });
+                        })
+                            .on("error-log" /* ERROR_LOG */, function (data) {
+                            _this.getEmitter().emit(types_1.ExtensionEventTypes.ERROR_LOG, {
+                                type: types_1.ExtensionEventTypes.ERROR_LOG,
+                                extensionId: extensionId,
+                                data: data
+                            });
+                        })
+                            .on("error" /* ERROR */, function (error) {
+                            _this.getEmitter().emit(types_1.ExtensionEventTypes.ERROR, {
+                                type: types_1.ExtensionEventTypes.ERROR,
+                                extensionId: extensionId,
+                                error: error
+                            });
+                        })
+                            .on("data" /* DATA */, function (data) {
+                            _this.getEmitter().emit(types_1.ExtensionEventTypes.DATA_TRANSMITTED, {
+                                type: types_1.ExtensionEventTypes.DATA_TRANSMITTED,
+                                extensionId: extensionId,
+                                data: data
+                            });
+                        });
+                        return [4 /*yield*/, worker.start(definition)];
+                    case 1:
+                        _a.sent();
+                        console.log("Extension[" + extensionId + "] started successfully by worker.");
+                        return [2 /*return*/];
+                }
+            });
+        }); };
+        process
+            .once('exit', function () { return _this.shutdownAllExtensions(); })
+            .once('SIGINT', function () { return _this.shutdownAllExtensions(); });
+        // .once('SIGTERM', () => this.shutdownAllExtensions());
+    }
+    ExtensionRegistry.prototype.getEmitter = function () {
+        return this.emitter;
+    };
+    ExtensionRegistry.prototype.findExtensionById = function (extensionId) {
+        return this.extensions.find(function (extension) { return extension.definition.getId() === extensionId; });
+    };
+    ExtensionRegistry.prototype.isExtensionStarted = function (extensionId) {
+        var extension = this.extensions.find(function (extension) { return extension.definition.getId() === extensionId; });
+        if (!extension) {
+            // not found, not started
+            return false;
+        }
+        else {
+            return !!extension.started;
+        }
+    };
+    ExtensionRegistry.prototype.startup = function (extensionPoints) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
                         // build registered extensions
-                        this.extensions = extensions.map(function (extensionPoint) {
+                        this.extensions = extensionPoints.map(function (extensionPoint) {
                             return {
                                 definition: extensionPoint,
                                 worker: new extension_worker_1.default(),
@@ -76,89 +160,35 @@ var ExtensionRegistry = /** @class */ (function () {
                         });
                         // listen all child processes
                         // console.log(`main process pid[${process.pid}]`);
-                        return [4 /*yield*/, Promise.all(this.extensions.map(function (extension) { return __awaiter(_this, void 0, void 0, function () {
-                                var definition, worker, extensionId;
-                                var _this = this;
-                                return __generator(this, function (_a) {
-                                    switch (_a.label) {
-                                        case 0:
-                                            definition = extension.definition, worker = extension.worker;
-                                            extensionId = definition.getId();
-                                            worker
-                                                .on("registered" /* REGISTERED */, function (error) {
-                                                var extension = _this.extensions.find(function (extension) { return extension.definition.getId() === extensionId; });
-                                                if (!extension) {
-                                                    console.error("Unknown extension[id=" + extensionId + "] register request received, ignored.");
-                                                }
-                                                else if (error) {
-                                                    // failed to activate extension, shutdown worker
-                                                    console.error(error);
-                                                    extension.worker.terminate();
-                                                    extension.started = false;
-                                                    _this.getEmitter().emit(types_1.ExtensionEventTypes.REGISTERED, {
-                                                        type: types_1.ExtensionEventTypes.REGISTERED,
-                                                        extensionId: extensionId,
-                                                        error: error
-                                                    });
-                                                }
-                                                else {
-                                                    extension.started = true;
-                                                    _this.getEmitter().emit(types_1.ExtensionEventTypes.REGISTERED, {
-                                                        type: types_1.ExtensionEventTypes.REGISTERED,
-                                                        extensionId: extensionId
-                                                    });
-                                                }
-                                            })
-                                                .on("exited" /* EXITED */, function (code, signal, expected) {
-                                                console.log("Extension[id=" + extensionId + ", name=" + definition.getName() + "] terminated[code=" + code + ", signal=" + signal + "].");
-                                                extension.started = false;
-                                                _this.getEmitter().emit(types_1.ExtensionEventTypes.UNREGISTERED, {
-                                                    type: types_1.ExtensionEventTypes.UNREGISTERED,
-                                                    extensionId: extensionId
-                                                });
-                                            })
-                                                .on("log" /* LOG */, function (data) {
-                                                _this.getEmitter().emit(types_1.ExtensionEventTypes.LOG, {
-                                                    type: types_1.ExtensionEventTypes.LOG,
-                                                    extensionId: extensionId,
-                                                    data: data
-                                                });
-                                            })
-                                                .on("error-log" /* ERROR_LOG */, function (data) {
-                                                _this.getEmitter().emit(types_1.ExtensionEventTypes.ERROR_LOG, {
-                                                    type: types_1.ExtensionEventTypes.ERROR_LOG,
-                                                    extensionId: extensionId,
-                                                    data: data
-                                                });
-                                            })
-                                                .on("error" /* ERROR */, function (error) {
-                                                _this.getEmitter().emit(types_1.ExtensionEventTypes.ERROR, {
-                                                    type: types_1.ExtensionEventTypes.ERROR,
-                                                    extensionId: extensionId,
-                                                    error: error
-                                                });
-                                            })
-                                                .on("data" /* DATA */, function (data) {
-                                                _this.getEmitter().emit(types_1.ExtensionEventTypes.DATA_TRANSMITTED, {
-                                                    type: types_1.ExtensionEventTypes.DATA_TRANSMITTED,
-                                                    extensionId: extensionId,
-                                                    data: data
-                                                });
-                                            });
-                                            return [4 /*yield*/, worker.start(definition)];
-                                        case 1:
-                                            _a.sent();
-                                            console.log("Extension[" + extensionId + "] started successfully by worker.");
-                                            return [2 /*return*/];
-                                    }
-                                });
-                            }); }))];
+                        return [4 /*yield*/, Promise.all(this.extensions.map(this.doStartupExtension))];
                     case 1:
                         // listen all child processes
                         // console.log(`main process pid[${process.pid}]`);
                         _a.sent();
-                        this.started = true;
                         return [2 /*return*/];
+                }
+            });
+        });
+    };
+    ExtensionRegistry.prototype.startupExtension = function (extensionPoint) {
+        return __awaiter(this, void 0, void 0, function () {
+            var extension;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        extension = this.findExtensionById(extensionPoint.getId());
+                        if (!extension) {
+                            extension = {
+                                definition: extensionPoint,
+                                worker: new extension_worker_1.default(),
+                                started: false
+                            };
+                            this.extensions.push(extension);
+                        }
+                        if (!!extension.started) return [3 /*break*/, 2];
+                        return [4 /*yield*/, this.doStartupExtension(extension)];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2: return [2 /*return*/, Promise.resolve()];
                 }
             });
         });
@@ -178,7 +208,6 @@ var ExtensionRegistry = /** @class */ (function () {
     };
     ExtensionRegistry.prototype.destroy = function () {
         this.shutdownAllExtensions();
-        this.started = false;
     };
     ExtensionRegistry.prototype.once = function (event, handler) {
         this.getEmitter().once(event, handler);
