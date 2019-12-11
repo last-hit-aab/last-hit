@@ -10,7 +10,6 @@ import { FlowFile, FlowResult } from '../types';
 import { generateKeyByObject, getLogger, getProcessId } from '../utils';
 
 const processId = getProcessId();
-const logger = getLogger();
 
 /**
  * find all force dependencies, and merge steps to one flow
@@ -182,6 +181,7 @@ const handleReplayStepEnd = (
 };
 
 export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowResult> => {
+	const logger = getLogger();
 	const { story: storyName, flow: flowName } = flowFile;
 	const flowKey = `${flowName}@${storyName}`;
 	const workspace = env.getWorkspace();

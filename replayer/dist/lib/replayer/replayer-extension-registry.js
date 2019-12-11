@@ -114,6 +114,7 @@ var WorkspaceExtensionRegistry = /** @class */ (function (_super) {
                                                         console.log('environment returned from workspace extension scripts', data);
                                                         // merge
                                                         _this.getEnvironment().mergeFrom(data);
+                                                        resolve();
                                                     }
                                                 });
                                                 this.sendMessage(this.getWorkspaceExtensionId(), {

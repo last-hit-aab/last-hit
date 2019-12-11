@@ -121,14 +121,14 @@ var createNextStepHandler = function (emitter, logger) {
 };
 var launch = function (emitter, replayers, logger, env) {
     var waitForNextStep = createNextStepHandler(emitter, logger);
-    var handle = {};
+    var handle = { env: env };
     emitter.on('launch-replay', function (event, arg) { return __awaiter(void 0, void 0, void 0, function () {
         var storyName, flow, index, registry, replayer, e_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     storyName = arg.storyName, flow = arg.flow, index = arg.index;
-                    registry = new replayer_extension_registry_1.WorkspaceExtensionRegistry({ env: env });
+                    registry = new replayer_extension_registry_1.WorkspaceExtensionRegistry({ env: handle.env });
                     return [4 /*yield*/, registry.launch()];
                 case 1:
                     _a.sent();
@@ -137,7 +137,7 @@ var launch = function (emitter, replayers, logger, env) {
                         flow: flow,
                         logger: logger,
                         replayers: replayers,
-                        env: env,
+                        env: handle.env,
                         registry: registry
                     });
                     handle.current = replayer;

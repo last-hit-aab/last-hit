@@ -3,6 +3,7 @@ import path from 'path';
 import fsWathcer, { WatchrChangeEventListener, WatchrStalker, WatchrStartCallback } from 'watchr';
 import recorder from './recorder';
 import replayer from './replayer';
+import { Environment } from 'last-hit-replayer';
 
 // IMPORTANT: following enumerations are declared in global.d.ts
 // IMPORTANT: typescript compiler treats them as from the original module, which they are not
@@ -31,13 +32,18 @@ const generateKeyByString = (storyName: string, flowName: string): string => {
 	return `[${flowName}@${storyName}]`;
 };
 
+const getWorkspaceRootFolder = (workspaceFile: string): string => {
+	const parsedPath = path.parse(workspaceFile);
+	const rootFolder = path.resolve(parsedPath.root, parsedPath.dir);
+	console.log(rootFolder);
+	return rootFolder;
+};
+
 /**
  * start to watch file system for given workspace
  */
 const startFileSystemWatch = (workspaceFile: string): WatchrStalker => {
-	const parsedPath = path.parse(workspaceFile);
-	const rootFolder = path.resolve(parsedPath.root, parsedPath.dir);
-	console.log(rootFolder);
+	const rootFolder = getWorkspaceRootFolder(workspaceFile);
 	const listener: WatchrChangeEventListener = (
 		changeType,
 		fullPath,
@@ -90,22 +96,25 @@ const startFileSystemWatch = (workspaceFile: string): WatchrStalker => {
 };
 
 export const initialize = (): void => {
-	// let webapp = null;
 	ipcMain.on('workspace-closed', () => {
-		// shut down express when start up
-		// webapp && webapp.close();
 		const { workspaceFile } = state;
+
 		recorder.destory();
 		replayer.destory();
+
 		state.stalker && state.stalker.close();
 		state = {};
 		console.log(`Workspace[${workspaceFile}] closed.`);
 	});
 	ipcMain.on('workspace-opened', (event: IpcMainEvent, arg: { workspaceFile: string }): void => {
-		// start express when not start up
-		// webapp = webapp || startupWebapp();
 		state = arg;
 		const { workspaceFile } = state;
+		const env = new Environment({
+			name: 'IDE',
+			workspace: getWorkspaceRootFolder(workspaceFile)
+		});
+		replayer.swtichEnv(env);
+
 		state.stalker = startFileSystemWatch(workspaceFile);
 		console.log(`Workspace[${workspaceFile}] opened.`);
 	});

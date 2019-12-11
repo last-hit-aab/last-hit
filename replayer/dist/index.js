@@ -46,6 +46,8 @@ var handler_1 = require("./lib/handler");
 var utils_1 = require("./lib/utils");
 var replayer_1 = require("./lib/replayer");
 exports.createReplayer = replayer_1.createReplayer;
+var env_1 = __importDefault(require("./lib/config/env"));
+exports.Environment = env_1.default;
 var run = function () {
     var processId = utils_1.getProcessId();
     console_1.default.info(("Process[" + processId + "] started.").bold.green);

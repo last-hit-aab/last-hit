@@ -45,7 +45,6 @@ var path_1 = __importDefault(require("path"));
 var utils_1 = require("../utils");
 var print_1 = require("./print");
 var single_flow_1 = require("./single-flow");
-var logger = utils_1.getLogger();
 var processId = utils_1.getProcessId();
 var createTemporaryFolders = function (env) { return __awaiter(void 0, void 0, void 0, function () {
     var workspace, resultTempFolder, threadTempFolder;
@@ -70,10 +69,11 @@ var createTemporaryFolders = function (env) { return __awaiter(void 0, void 0, v
     });
 }); };
 exports.doOnSingleProcess = function (flows, env) { return __awaiter(void 0, void 0, void 0, function () {
-    var reports, allCoverages, isChildProcess, _a, resultTempFolder, threadTempFolder;
+    var logger, reports, allCoverages, isChildProcess, _a, resultTempFolder, threadTempFolder;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
+                logger = utils_1.getLogger();
                 reports = [];
                 allCoverages = [];
                 _b.label = 1;

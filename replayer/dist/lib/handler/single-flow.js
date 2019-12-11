@@ -64,7 +64,6 @@ var stream_1 = __importDefault(require("stream"));
 var replayer_1 = require("../replayer");
 var utils_1 = require("../utils");
 var processId = utils_1.getProcessId();
-var logger = utils_1.getLogger();
 /**
  * find all force dependencies, and merge steps to one flow
  */
@@ -191,6 +190,7 @@ var handleReplayStepEnd = function (emitter, story, flow, resolve) {
     });
 };
 exports.handleFlow = function (flowFile, env) {
+    var logger = utils_1.getLogger();
     var storyName = flowFile.story, flowName = flowFile.flow;
     var flowKey = flowName + "@" + storyName;
     var workspace = env.getWorkspace();

@@ -70,6 +70,7 @@ export class WorkspaceExtensionRegistry extends ExtensionRegistry {
 								);
 								// merge
 								this.getEnvironment().mergeFrom(data);
+								resolve();
 							}
 						}
 					);

@@ -4,6 +4,7 @@ import { loadConfig } from './lib/config';
 import { doOnMultipleProcesses, doOnSingleProcess } from './lib/handler';
 import { findFlows, getProcessId } from './lib/utils';
 import { createReplayer } from './lib/replayer';
+import Environment from './lib/config/env';
 
 const run = () => {
 	const processId = getProcessId();
@@ -28,4 +29,4 @@ const run = () => {
 };
 
 export default run;
-export { createReplayer };
+export { createReplayer, Environment };
