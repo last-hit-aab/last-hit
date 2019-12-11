@@ -23,4 +23,5 @@ var ExtensionPoint = /** @class */ (function () {
     return ExtensionPoint;
 }());
 exports.ExtensionPoint = ExtensionPoint;
+
 //# sourceMappingURL=extension-point.js.map

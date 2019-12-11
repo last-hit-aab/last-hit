@@ -204,4 +204,5 @@ var AbstractWorkspaceExtensionEntryPoint = /** @class */ (function () {
     return AbstractWorkspaceExtensionEntryPoint;
 }());
 exports.AbstractWorkspaceExtensionEntryPoint = AbstractWorkspaceExtensionEntryPoint;
+
 //# sourceMappingURL=entry-point.js.map

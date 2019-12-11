@@ -242,4 +242,5 @@ var ExtensionRegistry = /** @class */ (function () {
     return ExtensionRegistry;
 }());
 exports.default = ExtensionRegistry;
+
 //# sourceMappingURL=extension-registry.js.map

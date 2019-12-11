@@ -1,5 +1,7 @@
 .DS_Store
 
 node_modules
-
+package-lock
 package-lock.json
+.vscode/settings.json
+yarn-error.log

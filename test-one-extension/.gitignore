@@ -6,7 +6,3 @@ package-lock
 package-lock.json
 .vscode/settings.json
 yarn-error.log
-
-# ignore compiled map files
-**/*.js
-**/*.js.map

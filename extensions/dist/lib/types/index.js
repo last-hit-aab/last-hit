@@ -29,4 +29,5 @@ var AbstractExtensionEntryPointWrapper = /** @class */ (function () {
     return AbstractExtensionEntryPointWrapper;
 }());
 exports.AbstractExtensionEntryPointWrapper = AbstractExtensionEntryPointWrapper;
+
 //# sourceMappingURL=index.js.map

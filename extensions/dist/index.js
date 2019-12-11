@@ -12,4 +12,5 @@ var extension_point_1 = require("./lib/types/extension-point");
 exports.ExtensionPoint = extension_point_1.ExtensionPoint;
 __export(require("./lib/types"));
 exports.default = new extension_registry_1.default();
+
 //# sourceMappingURL=index.js.map

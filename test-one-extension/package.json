@@ -1,9 +1,14 @@
 {
 	"main": "dist/index.js",
 	"scripts": {
-		"compile": "tsc"
+		"compile": "gulp"
 	},
 	"dependencies": {
 		"typescript": "^3.7.2"
+	},
+	"devDependencies": {
+		"gulp": "^4.0.2",
+		"gulp-sourcemaps": "^2.6.5",
+		"gulp-typescript": "^6.0.0-alpha.1"
 	}
 }

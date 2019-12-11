@@ -246,4 +246,5 @@ exports.activate = function (options) { return __awaiter(void 0, void 0, void 0,
         return [2 /*return*/];
     });
 }); };
+
 //# sourceMappingURL=index.js.map

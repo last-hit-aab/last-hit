@@ -5,8 +5,8 @@
 	"main": "runtime/main/index.js",
 	"scripts": {
 		"build:renderer": "npm run build --prefix renderer",
-		"build": "npm run build:renderer && tsc",
-		"compile": "tsc",
+		"build": "npm run build:renderer && npm run compile",
+		"compile": "gulp clean && tsc",
 		"compile:extensions": "npm run compile --prefix extensions",
 		"compile:replayer": "npm run compile --prefix replayer",
 		"compile:workspace-extension": "npm run compile --prefix workspace-extension",
@@ -41,6 +41,7 @@
 	"devDependencies": {
 		"electron": "^7.1.1",
 		"electron-builder": "^22.1.0",
+		"gulp": "^4.0.2",
 		"nyc": "^14.1.1"
 	},
 	"dependencies": {

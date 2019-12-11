@@ -590,4 +590,5 @@ function _asFormatted(uri, skipEncoding) {
     }
     return res;
 }
+
 //# sourceMappingURL=uri.js.map

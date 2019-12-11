@@ -206,4 +206,5 @@ var ExtensionWorker = /** @class */ (function () {
     return ExtensionWorker;
 }());
 exports.default = ExtensionWorker;
+
 //# sourceMappingURL=extension-worker.js.map

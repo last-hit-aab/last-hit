@@ -231,4 +231,5 @@ function withUndefinedAsNull(x) {
     return typeof x === 'undefined' ? null : x;
 }
 exports.withUndefinedAsNull = withUndefinedAsNull;
+
 //# sourceMappingURL=types.js.map

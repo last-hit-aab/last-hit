@@ -138,4 +138,5 @@ exports.OS = _isMacintosh
     : _isWindows
         ? 1 /* Windows */
         : 3 /* Linux */;
+
 //# sourceMappingURL=platform.js.map

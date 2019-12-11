@@ -100,4 +100,5 @@ var WorkspaceExtensionEntryPointWrapper = /** @class */ (function (_super) {
     return WorkspaceExtensionEntryPointWrapper;
 }(types_1.AbstractExtensionEntryPointWrapper));
 exports.WorkspaceExtensionEntryPointWrapper = WorkspaceExtensionEntryPointWrapper;
+
 //# sourceMappingURL=workspace.js.map
