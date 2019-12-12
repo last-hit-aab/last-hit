@@ -166,6 +166,9 @@ var Replayer = /** @class */ (function () {
         this.env = env;
         this.registry = registry;
     }
+    Replayer.prototype.getRegistry = function () {
+        return this.registry;
+    };
     Replayer.prototype.switchToRecord = function () {
         this.onRecord = true;
         return this.browser;
@@ -361,14 +364,20 @@ var Replayer = /** @class */ (function () {
     };
     Replayer.prototype.start = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var page;
+            var preparedStory, preparedFlow, page;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, launchBrowser(this)];
+                    case 0: return [4 /*yield*/, this.getRegistry().prepareStory(this.getStoryName())];
                     case 1:
+                        preparedStory = _a.sent();
+                        return [4 /*yield*/, this.getRegistry().flowShouldStart(this.getStoryName(), this.getFlow())];
+                    case 2:
+                        preparedFlow = _a.sent();
+                        return [4 /*yield*/, launchBrowser(this)];
+                    case 3:
                         page = _a.sent();
                         return [4 /*yield*/, this.isRemoteFinsihed(page)];
-                    case 2:
+                    case 4:
                         _a.sent();
                         return [2 /*return*/];
                 }
@@ -380,48 +389,49 @@ var Replayer = /** @class */ (function () {
      */
     Replayer.prototype.end = function (close) {
         return __awaiter(this, void 0, void 0, function () {
-            var browser, logger, pages, _a, e_1, e_2;
+            var browser, accomplishedFlow, pages, _a, e_1, e_2;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
                         browser = this.getBrowser();
                         if (!(browser == null)) return [3 /*break*/, 1];
-                        return [3 /*break*/, 10];
-                    case 1:
-                        logger = this.getLogger();
-                        _b.label = 2;
+                        return [3 /*break*/, 11];
+                    case 1: return [4 /*yield*/, this.getRegistry().flowAccomplished(this.getStoryName(), this.getFlow())];
                     case 2:
-                        _b.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, browser.pages()];
+                        accomplishedFlow = _b.sent();
+                        _b.label = 3;
                     case 3:
+                        _b.trys.push([3, 6, , 7]);
+                        return [4 /*yield*/, browser.pages()];
+                    case 4:
                         pages = _b.sent();
                         _a = this;
                         return [4 /*yield*/, ci_helper_1.default.gatherCoverage(pages)];
-                    case 4:
+                    case 5:
                         _a.coverages = _b.sent();
                         browser.disconnect();
-                        return [3 /*break*/, 6];
-                    case 5:
+                        return [3 /*break*/, 7];
+                    case 6:
                         e_1 = _b.sent();
                         this.getLogger().error('Failed to disconnect from brwoser.');
                         this.getLogger().error(e_1);
-                        return [3 /*break*/, 6];
-                    case 6:
-                        if (!close) return [3 /*break*/, 10];
-                        _b.label = 7;
+                        return [3 /*break*/, 7];
                     case 7:
-                        _b.trys.push([7, 9, , 10]);
-                        return [4 /*yield*/, browser.close()];
+                        if (!close) return [3 /*break*/, 11];
+                        _b.label = 8;
                     case 8:
+                        _b.trys.push([8, 10, , 11]);
+                        return [4 /*yield*/, browser.close()];
+                    case 9:
                         _b.sent();
                         delete this.replayers[this.getIdentity()];
-                        return [3 /*break*/, 10];
-                    case 9:
+                        return [3 /*break*/, 11];
+                    case 10:
                         e_2 = _b.sent();
                         this.getLogger().error('Failed to close browser.');
                         this.getLogger().error(e_2);
-                        return [3 /*break*/, 10];
-                    case 10: return [2 /*return*/];
+                        return [3 /*break*/, 11];
+                    case 11: return [2 /*return*/];
                 }
             });
         });
@@ -431,7 +441,7 @@ var Replayer = /** @class */ (function () {
      */
     Replayer.prototype.next = function (flow, index, storyName) {
         return __awaiter(this, void 0, void 0, function () {
-            var step, ret, page, screenshotPath, flowPath, replayImage, replayImageFilename, currentImageFilename, ssimData, diffImage, diffImageFilename_1, e_3, page, file_path;
+            var step, ret, page, screenshotPath, flowPath, replayImage, replayImageFilename, currentImageFilename, ssimData, diffImage, diffImageFilename_1, e_3, stepOnError, accomplishedStep;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -442,9 +452,13 @@ var Replayer = /** @class */ (function () {
                         if (step.type === 'end') {
                             return [2 /*return*/];
                         }
-                        _a.label = 1;
+                        return [4 /*yield*/, this.getRegistry().stepShouldStart(this.getStoryName(), this.getFlow(), step)];
                     case 1:
-                        _a.trys.push([1, 9, , 13]);
+                        // send step-should-start to extension, replace step when successfully return
+                        step = _a.sent();
+                        _a.label = 2;
+                    case 2:
+                        _a.trys.push([2, 10, , 13]);
                         return [4 /*yield*/, (function () { return __awaiter(_this, void 0, void 0, function () {
                                 var _a;
                                 var _this = this;
@@ -520,20 +534,20 @@ var Replayer = /** @class */ (function () {
                                     }
                                 });
                             }); })()];
-                    case 2:
+                    case 3:
                         ret = _a.sent();
                         page = this.getPage(step.uuid);
-                        if (!((!ret || ret.wait !== false) && page != null)) return [3 /*break*/, 4];
+                        if (!((!ret || ret.wait !== false) && page != null)) return [3 /*break*/, 5];
                         // const page = await this.getPageOrThrow(step.uuid);
                         return [4 /*yield*/, this.isRemoteFinsihed(page)];
-                    case 3:
+                    case 4:
                         // const page = await this.getPageOrThrow(step.uuid);
                         _a.sent();
-                        _a.label = 4;
-                    case 4: return [4 /*yield*/, this.sleepAfterStep(step)];
-                    case 5:
+                        _a.label = 5;
+                    case 5: return [4 /*yield*/, this.sleepAfterStep(step)];
+                    case 6:
                         _a.sent();
-                        if (!(step.image && page != null && !page.isClosed())) return [3 /*break*/, 8];
+                        if (!(step.image && page != null && !page.isClosed())) return [3 /*break*/, 9];
                         screenshotPath = path_1.default.join(utils_1.getTempFolder(process.cwd()), 'screen-record');
                         if (!fs_1.default.existsSync(screenshotPath)) {
                             fs_1.default.mkdirSync(screenshotPath, { recursive: true });
@@ -543,14 +557,14 @@ var Replayer = /** @class */ (function () {
                             fs_1.default.mkdirSync(flowPath, { recursive: true });
                         }
                         return [4 /*yield*/, page.screenshot({ encoding: 'base64' })];
-                    case 6:
+                    case 7:
                         replayImage = _a.sent();
                         replayImageFilename = path_1.default.join(flowPath, step.stepUuid + '_replay.png');
                         fs_1.default.writeFileSync(replayImageFilename, Buffer.from(replayImage, 'base64'));
                         currentImageFilename = path_1.default.join(flowPath, step.stepUuid + '_baseline.png');
                         fs_1.default.writeFileSync(currentImageFilename, Buffer.from(step.image, 'base64'));
                         return [4 /*yield*/, ssim_1.default(currentImageFilename, replayImageFilename)];
-                    case 7:
+                    case 8:
                         ssimData = _a.sent();
                         if (ssimData.ssim < 0.96 || ssimData.mcs < 0.96) {
                             diffImage = compare_screenshot_1.default(step.image, replayImage);
@@ -562,23 +576,60 @@ var Replayer = /** @class */ (function () {
                                     .pipe(fs_1.default.createWriteStream(diffImageFilename_1));
                             });
                         }
-                        _a.label = 8;
-                    case 8: return [3 /*break*/, 13];
-                    case 9:
-                        e_3 = _a.sent();
-                        page = this.getPage(step.uuid);
-                        this.getSummary().handleError(step, e_3);
-                        file_path = utils_1.getTempFolder(process.cwd()) + "/error-" + step.uuid + "-" + this.getSteps().indexOf(step) + ".png";
-                        if (!page) return [3 /*break*/, 11];
-                        return [4 /*yield*/, page.screenshot({ path: file_path, type: 'png' })];
+                        _a.label = 9;
+                    case 9: return [3 /*break*/, 13];
                     case 10:
-                        _a.sent();
-                        return [3 /*break*/, 12];
+                        e_3 = _a.sent();
+                        // console.error(e);
+                        return [4 /*yield*/, this.handleStepError(step, e_3)];
                     case 11:
+                        // console.error(e);
+                        _a.sent();
+                        return [4 /*yield*/, this.getRegistry().stepOnError(this.getStoryName(), this.getFlow(), step, e_3)];
+                    case 12:
+                        stepOnError = _a.sent();
+                        if (!stepOnError._.fixed) {
+                            // extension says not fixed, throw error
+                            throw e_3;
+                        }
+                        else {
+                            // extension says fixed, ignore error and continue replay
+                            return [2 /*return*/];
+                        }
+                        return [3 /*break*/, 13];
+                    case 13: return [4 /*yield*/, this.getRegistry().stepAccomplished(this.getStoryName(), this.getFlow(), step)];
+                    case 14:
+                        accomplishedStep = _a.sent();
+                        if (!!accomplishedStep._.passed) return [3 /*break*/, 16];
+                        // extension says failed
+                        return [4 /*yield*/, this.handleStepError(step, accomplishedStep._.error)];
+                    case 15:
+                        // extension says failed
+                        _a.sent();
+                        throw accomplishedStep._.error;
+                    case 16: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    Replayer.prototype.handleStepError = function (step, e) {
+        return __awaiter(this, void 0, void 0, function () {
+            var page, file_path;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        page = this.getPage(step.uuid);
+                        this.getSummary().handleError(step, e);
+                        file_path = utils_1.getTempFolder(process.cwd()) + "/error-" + step.uuid + "-" + this.getSteps().indexOf(step) + ".png";
+                        if (!page) return [3 /*break*/, 2];
+                        return [4 /*yield*/, page.screenshot({ path: file_path, type: 'png' })];
+                    case 1:
+                        _a.sent();
+                        return [3 /*break*/, 3];
+                    case 2:
                         this.getLogger().log("page don't exsit ");
-                        _a.label = 12;
-                    case 12: throw e_3;
-                    case 13: return [2 /*return*/];
+                        _a.label = 3;
+                    case 3: return [2 /*return*/];
                 }
             });
         });

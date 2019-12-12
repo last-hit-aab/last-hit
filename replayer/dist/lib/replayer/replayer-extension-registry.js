@@ -12,6 +12,17 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -55,7 +66,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var last_hit_extensions_1 = require("last-hit-extensions");
 var path_1 = __importDefault(require("path"));
 var v4_1 = __importDefault(require("uuid/v4"));
-var DEFAULT_EVENT_HANDLER_TIMEOUT = 5000;
+var DEFAULT_EVENT_HANDLER_TIMEOUT = 3000;
+var asStory = function (storyName) {
+    return {
+        name: storyName,
+        description: ''
+    };
+};
 var WorkspaceExtensionRegistry = /** @class */ (function (_super) {
     __extends(WorkspaceExtensionRegistry, _super);
     function WorkspaceExtensionRegistry(options) {
@@ -75,11 +92,193 @@ var WorkspaceExtensionRegistry = /** @class */ (function (_super) {
     WorkspaceExtensionRegistry.prototype.getEnvironment = function () {
         return this.env;
     };
+    WorkspaceExtensionRegistry.prototype.sendWorkspaceEvent = function (event) {
+        var _this = this;
+        return new Promise(function (resolve) {
+            _this.once(last_hit_extensions_1.ExtensionEventTypes.DATA_TRANSMITTED, function (evt) {
+                var data = evt.data;
+                if (data.ignore) {
+                    // ignore event, do nothing
+                    // console.log(`[${event.type}] is ignored by workspace extension scripts`);
+                    resolve({ ignored: true });
+                }
+                else if (data.error) {
+                    // error occurred
+                    // console.error(
+                    // 	`error occurred on [${event.type}] via workspace extension scripts, ignored`
+                    // );
+                    // console.error(data.error);
+                    resolve({ ignored: false, error: data.error });
+                }
+                else {
+                    // console.log(
+                    // 	`data returned on [${event.type}] from workspace extension scripts`,
+                    // 	data
+                    // );
+                    // merge
+                    resolve({ ignored: false, data: data });
+                }
+            }, DEFAULT_EVENT_HANDLER_TIMEOUT, function () {
+                console.log("Timeout on [" + event.type + "] via workspace extension scripts, ignored");
+                resolve({ ignored: true, timeout: true });
+            });
+            _this.sendMessage(_this.getWorkspaceExtensionId(), event);
+        });
+    };
+    /**
+     * quick send step-should-start to extension,
+     * return data when success, otherwise return nothing(void)
+     */
+    WorkspaceExtensionRegistry.prototype.quickSendWorkspaceEvent = function (eventType, data) {
+        return __awaiter(this, void 0, void 0, function () {
+            var result;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.sendWorkspaceEvent(__assign({ type: eventType }, data))];
+                    case 1:
+                        result = _a.sent();
+                        if (!result.ignored) {
+                            if (result.error) {
+                                // error thrown from extension
+                                throw result.error;
+                            }
+                            else {
+                                // everything is ok
+                                return [2 /*return*/, result.data];
+                            }
+                        }
+                        else {
+                            // extension returns ignored or extension timeout
+                            return [2 /*return*/, null];
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    /**
+     * send step-accomplished to extension, return data when success
+     */
+    WorkspaceExtensionRegistry.prototype.stepAccomplished = function (storyName, flow, step) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.quickSendWorkspaceEvent('step-accomplished', {
+                            story: asStory(storyName),
+                            flow: flow,
+                            step: step
+                        })];
+                    case 1: return [2 /*return*/, ((_a.sent()) || __assign(__assign({}, step), { _: { passed: true } }))];
+                }
+            });
+        });
+    };
+    /**
+     * send step-accomplished to extension, return data when success
+     */
+    WorkspaceExtensionRegistry.prototype.stepOnError = function (storyName, flow, step, error) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.quickSendWorkspaceEvent('step-on-error', {
+                            story: asStory(storyName),
+                            flow: flow,
+                            step: step,
+                            error: {
+                                name: error.name,
+                                message: error.message,
+                                stack: error.stack
+                            }
+                        })];
+                    case 1: return [2 /*return*/, ((_a.sent()) || __assign(__assign({}, step), { _: { fixed: false } }))];
+                }
+            });
+        });
+    };
+    /**
+     * send step-should-start to extension, return data when success
+     */
+    WorkspaceExtensionRegistry.prototype.stepShouldStart = function (storyName, flow, step) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.quickSendWorkspaceEvent('step-should-start', {
+                            story: asStory(storyName),
+                            flow: flow,
+                            step: step
+                        })];
+                    case 1: return [2 /*return*/, ((_a.sent()) || step)];
+                }
+            });
+        });
+    };
+    /**
+     * send flow-accomplished to extension, return data when success
+     */
+    WorkspaceExtensionRegistry.prototype.flowAccomplished = function (storyName, flow) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.quickSendWorkspaceEvent('flow-accomplished', {
+                            story: asStory(storyName),
+                            flow: flow
+                        })];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    /**
+     * send flow-should-start to extension, return data when success
+     */
+    WorkspaceExtensionRegistry.prototype.flowShouldStart = function (storyName, flow) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.quickSendWorkspaceEvent('flow-should-start', {
+                            story: asStory(storyName),
+                            flow: flow
+                        })];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    /**
+     * send story-prepare to extension, return data anyway
+     */
+    WorkspaceExtensionRegistry.prototype.prepareStory = function (storyName) {
+        return __awaiter(this, void 0, void 0, function () {
+            var story, data;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        story = asStory(storyName);
+                        return [4 /*yield*/, this.quickSendWorkspaceEvent('story-prepare', {
+                                story: story
+                            })];
+                    case 1:
+                        data = _a.sent();
+                        return [2 /*return*/, data || story];
+                }
+            });
+        });
+    };
     WorkspaceExtensionRegistry.prototype.once = function (event, handler, timeout, onTimeout) {
         var _this = this;
-        _super.prototype.once.call(this, event, handler);
+        var timeoutHanlder;
+        _super.prototype.once.call(this, event, function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i] = arguments[_i];
+            }
+            if (timeoutHanlder) {
+                clearTimeout(timeoutHanlder);
+            }
+            handler.apply(void 0, args);
+        });
         if (onTimeout) {
-            setTimeout(function () {
+            timeoutHanlder = setTimeout(function () {
                 _this.off(event, handler);
                 onTimeout();
             }, timeout);
@@ -123,7 +322,7 @@ var WorkspaceExtensionRegistry = /** @class */ (function (_super) {
                                                         resolve();
                                                     }
                                                     else {
-                                                        console.log('environment returned from workspace extension scripts', data);
+                                                        console.log('data returned on environment prepare from workspace extension scripts', data);
                                                         // merge
                                                         _this.getEnvironment().mergeFrom(data);
                                                         resolve();

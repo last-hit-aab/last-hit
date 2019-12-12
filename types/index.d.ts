@@ -172,6 +172,7 @@ declare module 'last-hit-types' {
 		/** threshold of slow ajax, in millisecond */
 		slowAjaxTime?: number;
 	};
+	export type FlowParameters = { [key in string]: any };
 
 	export namespace Extensions {
 		export type ExtensionTypes = 'workspace' | 'tbd';
@@ -210,37 +211,31 @@ declare module 'last-hit-types' {
 			type: 'story-prepare';
 			story: SimpleStory;
 		}
-		export interface FlowEvent extends WorkspaceEvent {}
-		export interface FlowShouldStartEvent extends FlowEvent {
-			type: 'flow-should-start';
+		export interface FlowEvent extends WorkspaceEvent {
 			story: SimpleStory;
 			flow: Flow;
+		}
+		export interface FlowShouldStartEvent extends FlowEvent {
+			type: 'flow-should-start';
 		}
 		export interface FlowAccomplishedEvent extends FlowEvent {
 			type: 'flow-accomplished';
-			story: SimpleStory;
-			flow: Flow;
 		}
 
-		export interface StepEvent extends WorkspaceEvent {}
-		export interface StepShouldStartEvent extends StepEvent {
-			type: 'step-should-start';
+		export interface StepEvent extends WorkspaceEvent {
 			story: SimpleStory;
 			flow: Flow;
 			step: Step;
+		}
+		export interface StepShouldStartEvent extends StepEvent {
+			type: 'step-should-start';
 		}
 		export interface StepOnErrorEvent extends StepEvent {
 			type: 'step-on-error';
-			story: SimpleStory;
-			flow: Flow;
-			step: Step;
 			error: Error;
 		}
 		export interface StepAccomplishedEvent extends StepEvent {
 			type: 'step-accomplished';
-			story: SimpleStory;
-			flow: Flow;
-			step: Step;
 		}
 
 		export interface ReloadHandlerEvent extends WorkspaceEvent {}
@@ -263,13 +258,30 @@ declare module 'last-hit-types' {
 			step: Step;
 		}
 
-		export type PreparedEnvironment = Environment & {};
-		export type PreparedStory = Story & {};
-		export type PreparedFlow = Flow & {};
-		export type AccomplishedFlow = Flow & {};
-		export type PreparedStep = Step & {};
-		export type FixedStep = Step & {};
-		export type AccomplishedStep = Step & {};
+		export interface ReturnedData {}
+		export interface PreparedEnvironment extends ReturnedData, Environment {}
+		export interface PreparedStory extends ReturnedData, Omit<Story, 'flows'> {}
+		export interface ReturnedFlow extends ReturnedData, Omit<Flow, 'steps' | 'settings'> {}
+		export interface PreparedFlow extends ReturnedFlow {
+			_?: { input: FlowParameters };
+		}
+		export interface AccomplishedFlow extends ReturnedFlow {
+			_?: { output: FlowParameters };
+		}
+		export interface ReturnedStep extends ReturnedData, Step {
+			_?: object;
+		}
+		export interface PreparedStep extends ReturnedStep {}
+		export interface FixedStep extends ReturnedStep {
+			_: { fixed: boolean };
+		}
+		export interface AccomplishedStep extends ReturnedStep {
+			_: {
+				passed: boolean;
+				/** error when not passed */
+				error?: Error;
+			};
+		}
 
 		export interface IWorkspaceExtensionEntryPoint extends Extensions.IExtensionEntryPoint {
 			handleEnvironmentPrepare(event: EnvironmentPrepareEvent): Promise<PreparedEnvironment>;

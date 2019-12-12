@@ -1,5 +1,4 @@
 import fs from 'fs';
-import { ExtensionPointId, ExtensionRegistry } from 'last-hit-extensions';
 import {
 	AjaxStep,
 	AnimationStep,
@@ -17,7 +16,8 @@ import {
 	PageSwitchStep,
 	ScrollStep,
 	StartStep,
-	Step
+	Step,
+	WorkspaceExtensions
 } from 'last-hit-types';
 import path from 'path';
 import puppeteer, { Browser, CoverageEntry, ElementHandle, Page, Request } from 'puppeteer';
@@ -34,10 +34,10 @@ import ci from './ci-helper';
 import compareScreenshot from './compare-screenshot';
 import { controlPage } from './page-controller';
 import ReplaySummary from './replay-summary';
+import { WorkspaceExtensionRegistry } from './replayer-extension-registry';
 import { ReplayerCache } from './replayers-cache';
 import RequestCounter from './request-counter';
 import ssim from './ssim';
-import { WorkspaceExtensionRegistry } from './replayer-extension-registry';
 
 export type ReplayerOptions = {
 	storyName: string;
@@ -145,6 +145,9 @@ class Replayer {
 		this.replayers = replayers;
 		this.env = env;
 		this.registry = registry;
+	}
+	getRegistry(): WorkspaceExtensionRegistry {
+		return this.registry;
 	}
 	switchToRecord(): Browser {
 		this.onRecord = true;
@@ -312,6 +315,16 @@ class Replayer {
 		}
 	}
 	async start() {
+		// TODO how to use prepared story? currently ignored
+		const preparedStory: WorkspaceExtensions.PreparedStory = await this.getRegistry().prepareStory(
+			this.getStoryName()
+		);
+		// TODO how to use prepared flow? currently ignored
+		const preparedFlow: WorkspaceExtensions.PreparedFlow | null = await this.getRegistry().flowShouldStart(
+			this.getStoryName(),
+			this.getFlow()
+		);
+
 		const page = await launchBrowser(this);
 		await this.isRemoteFinsihed(page);
 	}
@@ -323,7 +336,11 @@ class Replayer {
 		if (browser == null) {
 			// do nothing, seems not start
 		} else {
-			const logger = this.getLogger();
+			// TODO how to use accomplised flow? currently ignored
+			const accomplishedFlow: WorkspaceExtensions.AccomplishedFlow | null = await this.getRegistry().flowAccomplished(
+				this.getStoryName(),
+				this.getFlow()
+			);
 			try {
 				const pages = await browser.pages();
 				this.coverages = await ci.gatherCoverage(pages);
@@ -349,10 +366,13 @@ class Replayer {
 	async next(flow: Flow, index: number, storyName: string) {
 		this.flow = flow;
 		this.currentIndex = index;
-		const step = this.getCurrentStep();
+		let step: Step = this.getCurrentStep();
 		if (step.type === 'end') {
 			return;
 		}
+
+		// send step-should-start to extension, replace step when successfully return
+		step = await this.getRegistry().stepShouldStart(this.getStoryName(), this.getFlow(), step);
 
 		try {
 			const ret = await (async () => {
@@ -435,19 +455,47 @@ class Replayer {
 			}
 		} catch (e) {
 			// console.error(e);
-			const page = this.getPage(step.uuid);
-			this.getSummary().handleError(step, e);
+			await this.handleStepError(step, e);
 
-			const file_path = `${getTempFolder(process.cwd())}/error-${
-				step.uuid
-			}-${this.getSteps().indexOf(step)}.png`;
-			if (page) {
-				await page.screenshot({ path: file_path, type: 'png' });
+			// send step-on-error to extension
+			const stepOnError = await this.getRegistry().stepOnError(
+				this.getStoryName(),
+				this.getFlow(),
+				step,
+				e
+			);
+			if (!stepOnError._.fixed) {
+				// extension says not fixed, throw error
+				throw e;
 			} else {
-				this.getLogger().log("page don't exsit ");
+				// extension says fixed, ignore error and continue replay
+				return;
 			}
+		}
 
-			throw e;
+		// send step-accomplished to extension
+		// accomplished only triggerred when step has not error on replaying
+		const accomplishedStep = await this.getRegistry().stepAccomplished(
+			this.getStoryName(),
+			this.getFlow(),
+			step
+		);
+		if (!accomplishedStep._.passed) {
+			// extension says failed
+			await this.handleStepError(step, accomplishedStep._.error!);
+			throw accomplishedStep._.error!;
+		}
+	}
+	private async handleStepError(step: Step, e: any) {
+		const page = this.getPage(step.uuid);
+		this.getSummary().handleError(step, e);
+		const file_path = `${getTempFolder(process.cwd())}/error-${
+			step.uuid
+		}-${this.getSteps().indexOf(step)}.png`;
+		if (page) {
+			await page.screenshot({ path: file_path, type: 'png' });
+		} else {
+			this.getLogger().log("page don't exsit ");
 		}
 	}
 	private async executeChangeStep(step: ChangeStep): Promise<void> {
