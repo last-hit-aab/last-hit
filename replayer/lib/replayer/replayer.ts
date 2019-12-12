@@ -5,7 +5,8 @@ import {
 	ExtensionLogEvent,
 	ExtensionBrowserOperationEvent,
 	GetElementAttrValueData,
-	GetElementPropValueData
+	GetElementPropValueData,
+	ExtensionBrowserOperationData
 } from 'last-hit-extensions';
 import {
 	AjaxStep,
@@ -185,7 +186,7 @@ class Replayer {
 	};
 	private handlerBrowserOperation = (event: ExtensionBrowserOperationEvent): void => {
 		const { data } = event;
-		switch (data.type) {
+		switch ((data as ExtensionBrowserOperationData).type) {
 			case 'get-element-attr-value':
 				this.tryToGetElementAttrValue(data as GetElementAttrValueData);
 				break;

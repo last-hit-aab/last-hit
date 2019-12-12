@@ -69,9 +69,20 @@ export type GetElementPropValueData = ExtensionBrowserOperationData & {
 	propName: string;
 	pageUuid?: string;
 };
+export type BrowserOperationReturnData = string | null;
+export type BrowserOperationError = {
+	error: true;
+	name: string;
+	message: string;
+};
 export interface ExtensionBrowserOperationEvent extends ExtensionEvent {
 	type: ExtensionEventTypes.BROWSER_OPERATION;
-	data: GetElementAttrValueData | GetElementPropValueData;
+	data: // from extension to replayer
+	| GetElementAttrValueData
+		| GetElementPropValueData
+		// from replayer to extension
+		| BrowserOperationReturnData
+		| BrowserOperationError;
 }
 export type ExtensionBrowserOperationHandler = (event: ExtensionBrowserOperationEvent) => void;
 
