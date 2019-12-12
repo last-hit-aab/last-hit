@@ -87,6 +87,9 @@ var ExtensionWorker = /** @class */ (function () {
                     var event_1 = data;
                     _this.emitter.emit("registered" /* REGISTERED */, event_1.error);
                     break;
+                case data.extensionId && data.type === types_1.ExtensionEventTypes.BROWSER_OPERATION:
+                    _this.emitter.emit("browser" /* BROWSER */, data.data);
+                    break;
                 default:
                     console.error('Neither extension id nor type declared via message, ignore.');
                     console.error(data);
@@ -200,6 +203,37 @@ var ExtensionWorker = /** @class */ (function () {
                     extensionId: extensionId,
                     data: { ignore: true }
                 });
+            }
+        });
+    };
+    ExtensionWorker.prototype.sendBrowserOperation = function (extensionId, value) {
+        var _this = this;
+        var data = value;
+        if (data instanceof Error) {
+            data = {
+                error: true,
+                name: data.name,
+                message: data.message
+                // stack is not necessary, error always sent from browser to extension
+            };
+        }
+        return new Promise(function (resolve, reject) {
+            if (_this.childProcess) {
+                _this.childProcess.send({
+                    extensionId: extensionId,
+                    type: types_1.ExtensionEventTypes.BROWSER_OPERATION,
+                    data: data
+                }, undefined, undefined, function (error) {
+                    if (error) {
+                        reject(error);
+                    }
+                    else {
+                        resolve();
+                    }
+                });
+            }
+            else {
+                resolve();
             }
         });
     };

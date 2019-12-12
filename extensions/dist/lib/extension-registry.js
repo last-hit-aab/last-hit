@@ -115,6 +115,13 @@ var ExtensionRegistry = /** @class */ (function () {
                                 extensionId: extensionId,
                                 data: data
                             });
+                        })
+                            .on("browser" /* BROWSER */, function (data) {
+                            _this.getEmitter().emit(types_1.ExtensionEventTypes.BROWSER_OPERATION, {
+                                type: types_1.ExtensionEventTypes.BROWSER_OPERATION,
+                                extensionId: extensionId,
+                                data: data
+                            });
                         });
                         return [4 /*yield*/, worker.start(definition)];
                     case 1:
@@ -230,6 +237,24 @@ var ExtensionRegistry = /** @class */ (function () {
                 if (worker) {
                     worker
                         .sendMessage(extensionId, data)
+                        .then(function () { return resolve(); })
+                        .catch(function (e) { return reject(e); });
+                }
+            }
+            else {
+                reject(new Error("Worker not found of extension[" + extensionId + "]."));
+            }
+        });
+    };
+    ExtensionRegistry.prototype.sendBrowserOperation = function (extensionId, value) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            var extension = _this.findExtensionById(extensionId);
+            if (extension) {
+                var worker = extension.worker;
+                if (worker) {
+                    worker
+                        .sendBrowserOperation(extensionId, value)
                         .then(function () { return resolve(); })
                         .catch(function (e) { return reject(e); });
                 }

@@ -4,14 +4,17 @@ import { Extensions, WorkspaceExtensions } from 'last-hit-types';
 import net from 'net';
 import path from 'path';
 import {
+	ExtensionBrowserOperationEvent,
 	ExtensionDataTransmittedEvent,
 	ExtensionEventTypes,
 	ExtensionPointId,
 	IExtensionEntryPointHelper,
-	IExtensionEntryPointWrapper
+	IExtensionEntryPointWrapper,
+	ExtensionEvent
 } from '../types';
 import { URI } from '../utils/uri';
 import { WorkspaceExtensionEntryPointWrapper } from './wrappers/workspace';
+import EventEmitter from 'events';
 
 // With Electron 2.x and node.js 8.x the "natives" module
 // can cause a native crash (see https://github.com/nodejs/node/issues/19891 and
@@ -39,6 +42,8 @@ class ExtensionEntryPointHelper implements IExtensionEntryPointHelper {
 
 	private extension: IExtensionEntryPointWrapper<any> | null = null;
 
+	private emitter: EventEmitter = new EventEmitter();
+
 	constructor(options: { extensionId: ExtensionPointId; packageFolder: string }) {
 		const { extensionId, packageFolder } = options;
 
@@ -51,6 +56,18 @@ class ExtensionEntryPointHelper implements IExtensionEntryPointHelper {
 	private getPackageFolder(): string {
 		return this.packageFolder;
 	}
+	once(eventType: ExtensionEventTypes, handler: (value: any) => void): this {
+		this.emitter.once(eventType, handler);
+		return this;
+	}
+	on(eventType: ExtensionEventTypes, handler: (value: any) => void): this {
+		this.emitter.on(eventType, handler);
+		return this;
+	}
+	off(eventType: ExtensionEventTypes, handler: (value: any) => void): this {
+		this.emitter.off(eventType, handler);
+		return this;
+	}
 	private onMainProcessMessageReceived = (
 		message: any,
 		sendHandle: net.Socket | net.Server
@@ -59,16 +76,24 @@ class ExtensionEntryPointHelper implements IExtensionEntryPointHelper {
 			console.log('Empty message received, ignore.');
 			return;
 		}
-		const data = message as ExtensionDataTransmittedEvent;
-		if (data.extensionId && data.type === ExtensionEventTypes.DATA_TRANSMITTED) {
-			if (data.extensionId !== this.getExtensionId()) {
-				// do nothing, return
-				return;
-			}
-			this.extension.handle(data.data);
-		} else {
-			console.error('Neither extension id nor type declared via message, ignore.');
-			console.error(data);
+		const data = message as ExtensionEvent;
+		if (data.extensionId !== this.getExtensionId()) {
+			// do nothing, return
+			return;
+		}
+		switch (true) {
+			case data.extensionId && data.type === ExtensionEventTypes.DATA_TRANSMITTED:
+				this.extension.handle((data as ExtensionDataTransmittedEvent).data);
+				break;
+			case data.extensionId && data.type === ExtensionEventTypes.BROWSER_OPERATION:
+				this.emitter.emit(
+					ExtensionEventTypes.BROWSER_OPERATION,
+					(data as ExtensionBrowserOperationEvent).data
+				);
+				break;
+			default:
+				console.error('No extension type declared via message, ignore.');
+				console.error(data);
 		}
 	};
 	private onStartSuccessful() {
@@ -161,6 +186,26 @@ class ExtensionEntryPointHelper implements IExtensionEntryPointHelper {
 			default:
 				throw new Error(`Extension type[${entrypoint.getType()}] is not supported.`);
 		}
+	}
+	sendBrowserOperation(data: any): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			process.send(
+				{
+					extensionId: this.extensionId,
+					type: ExtensionEventTypes.BROWSER_OPERATION,
+					data
+				} as ExtensionBrowserOperationEvent,
+				undefined,
+				undefined,
+				(error: Error) => {
+					if (error) {
+						reject(error);
+					} else {
+						resolve();
+					}
+				}
+			);
+		});
 	}
 	sendMessage(data: any): Promise<void> {
 		return new Promise<void>((resolve, reject) => {

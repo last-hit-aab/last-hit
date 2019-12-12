@@ -9,7 +9,8 @@ import {
 	ExtensionDataTransmittedEvent,
 	ExtensionRegisteredEvent,
 	ExtensionPointId,
-	ExtensionDataTransmittedIgnoreEvent
+	ExtensionDataTransmittedIgnoreEvent,
+	ExtensionBrowserOperationEvent
 } from './types';
 import * as objects from './utils/objects';
 import * as platform from './utils/platform';
@@ -20,7 +21,8 @@ export const enum WorkerEvents {
 	LOG = 'log',
 	ERROR_LOG = 'error-log',
 	ERROR = 'error',
-	DATA = 'data'
+	DATA = 'data',
+	BROWSER = 'browser'
 }
 type GenericListener = (...args: any[]) => void;
 export type ChildProcessRegisteredListener = (error?: Error) => void;
@@ -108,6 +110,12 @@ class ExtensionWorker implements IExtensionWorker {
 				const event = data as ExtensionRegisteredEvent;
 				this.emitter.emit(WorkerEvents.REGISTERED, event.error);
 				break;
+			case data.extensionId && data.type === ExtensionEventTypes.BROWSER_OPERATION:
+				this.emitter.emit(
+					WorkerEvents.BROWSER,
+					(data as ExtensionBrowserOperationEvent).data
+				);
+				break;
 			default:
 				console.error('Neither extension id nor type declared via message, ignore.');
 				console.error(data);
@@ -186,6 +194,39 @@ class ExtensionWorker implements IExtensionWorker {
 					extensionId,
 					data: { ignore: true }
 				} as ExtensionDataTransmittedIgnoreEvent);
+			}
+		});
+	}
+	sendBrowserOperation(extensionId: ExtensionPointId, value: any): Promise<void> {
+		let data = value;
+		if (data instanceof Error) {
+			data = {
+				error: true,
+				name: data.name,
+				message: data.message
+				// stack is not necessary, error always sent from browser to extension
+			};
+		}
+		return new Promise((resolve, reject) => {
+			if (this.childProcess) {
+				this.childProcess.send(
+					{
+						extensionId,
+						type: ExtensionEventTypes.BROWSER_OPERATION,
+						data
+					} as ExtensionBrowserOperationEvent,
+					undefined,
+					undefined,
+					(error: Error | null) => {
+						if (error) {
+							reject(error);
+						} else {
+							resolve();
+						}
+					}
+				);
+			} else {
+				resolve();
 			}
 		});
 	}

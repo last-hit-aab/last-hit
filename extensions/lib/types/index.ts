@@ -11,12 +11,17 @@ export interface IExtensionEntryPointHelper {
 	sendMessage(data: any): Promise<void>;
 	sendError(e: Error): Promise<void>;
 	sendIgnore(): Promise<void>;
+	sendBrowserOperation(data: any): Promise<void>;
+	once(eventType: ExtensionEventTypes, handler: (value: any) => void): this;
+	on(eventType: ExtensionEventTypes, handler: (value: any) => void): this;
+	off(eventType: ExtensionEventTypes, handler: (value: any) => void): this;
 }
 
 export enum ExtensionEventTypes {
 	REGISTERED = 'registered',
 	UNREGISTERED = 'unregitered',
 	DATA_TRANSMITTED = 'data-transmitted',
+	BROWSER_OPERATION = 'browser-operation',
 	LOG = 'log',
 	ERROR_LOG = 'error-log',
 	ERROR = 'error'
@@ -53,6 +58,23 @@ export interface ExtensionDataTransmittedIgnoreEvent extends ExtensionDataTransm
 }
 export type ExtensionDataTransmittedHandler = (event: ExtensionDataTransmittedEvent) => void;
 
+export type ExtensionBrowserOperationData = { type: Extensions.BrowserOperationEventTypes };
+export type GetElementAttrValueData = ExtensionBrowserOperationData & {
+	csspath: string;
+	attrName: string;
+	pageUuid?: string;
+};
+export type GetElementPropValueData = ExtensionBrowserOperationData & {
+	csspath: string;
+	propName: string;
+	pageUuid?: string;
+};
+export interface ExtensionBrowserOperationEvent extends ExtensionEvent {
+	type: ExtensionEventTypes.BROWSER_OPERATION;
+	data: GetElementAttrValueData | GetElementPropValueData;
+}
+export type ExtensionBrowserOperationHandler = (event: ExtensionBrowserOperationEvent) => void;
+
 export interface ExtensionLogEvent extends ExtensionEvent {
 	type: ExtensionEventTypes.LOG;
 	data: any;
@@ -88,6 +110,19 @@ export interface IExtensionRegistry {
 	off(
 		event: ExtensionEventTypes.DATA_TRANSMITTED,
 		handler: ExtensionDataTransmittedHandler
+	): this;
+
+	once(
+		event: ExtensionEventTypes.BROWSER_OPERATION,
+		handler: ExtensionBrowserOperationHandler
+	): this;
+	on(
+		event: ExtensionEventTypes.BROWSER_OPERATION,
+		handler: ExtensionBrowserOperationHandler
+	): this;
+	off(
+		event: ExtensionEventTypes.BROWSER_OPERATION,
+		handler: ExtensionBrowserOperationHandler
 	): this;
 
 	once(event: ExtensionEventTypes.LOG, handler: ExtensionLogHandler): this;

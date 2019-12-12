@@ -2,7 +2,10 @@ import fs from 'fs';
 import {
 	ExtensionErrorLogEvent,
 	ExtensionEventTypes,
-	ExtensionLogEvent
+	ExtensionLogEvent,
+	ExtensionBrowserOperationEvent,
+	GetElementAttrValueData,
+	GetElementPropValueData
 } from 'last-hit-extensions';
 import {
 	AjaxStep,
@@ -171,7 +174,8 @@ class Replayer {
 		this.registry = registry;
 		this.registry
 			.on(ExtensionEventTypes.LOG, this.handleExtensionLog)
-			.on(ExtensionEventTypes.ERROR_LOG, this.handleExtensionErrorLog);
+			.on(ExtensionEventTypes.ERROR_LOG, this.handleExtensionErrorLog)
+			.on(ExtensionEventTypes.BROWSER_OPERATION, this.handlerBrowserOperation);
 	}
 	private handleExtensionLog = (event: ExtensionLogEvent): void => {
 		this.getLogger().log(event);
@@ -179,6 +183,75 @@ class Replayer {
 	private handleExtensionErrorLog = (event: ExtensionErrorLogEvent): void => {
 		this.getLogger().error(event);
 	};
+	private handlerBrowserOperation = (event: ExtensionBrowserOperationEvent): void => {
+		const { data } = event;
+		switch (data.type) {
+			case 'get-element-attr-value':
+				this.tryToGetElementAttrValue(data as GetElementAttrValueData);
+				break;
+			case 'get-element-prop-value':
+				this.tryToGetElementPropValue(data as GetElementPropValueData);
+				break;
+			default:
+				const registry = this.getRegistry();
+				registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), null);
+		}
+	};
+	private async findCurrentPage(uuid?: string): Promise<Page> {
+		if (uuid) {
+			const page = this.getPage(uuid);
+			if (!page) {
+				throw new Error(`page[${uuid}] not found`);
+			}
+			return page;
+		} else {
+			// uuid not given, try to get first one
+			const pages = await this.getBrowser()!.pages();
+			if (pages.length === 0) {
+				throw new Error(`No page now`);
+			} else {
+				return pages[0];
+			}
+		}
+	}
+	private async tryToGetElementAttrValue(data: GetElementAttrValueData): Promise<void> {
+		const { csspath, attrName, pageUuid } = data;
+		const registry = this.getRegistry();
+
+		try {
+			const page = await this.findCurrentPage(pageUuid);
+			const element = await page.$(csspath);
+			if (!element) {
+				throw new Error(`element[${csspath}] not found`);
+			}
+			const value = await element.evaluate(
+				(node, attrName: string) => node.getAttribute(attrName),
+				attrName
+			);
+			registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), value);
+		} catch (e) {
+			registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), e);
+		}
+	}
+	private async tryToGetElementPropValue(data: GetElementPropValueData): Promise<void> {
+		const { csspath, propName, pageUuid } = data;
+		const registry = this.getRegistry();
+
+		try {
+			const page = await this.findCurrentPage(pageUuid);
+			const element = await page.$(csspath);
+			if (!element) {
+				throw new Error(`element[${csspath}] not found`);
+			}
+			const value = await element.evaluate(
+				(node, propName: string) => node[propName],
+				propName
+			);
+			registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), value);
+		} catch (e) {
+			registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), e);
+		}
+	}
 	getRegistry(): WorkspaceExtensionRegistry {
 		return this.registry;
 	}

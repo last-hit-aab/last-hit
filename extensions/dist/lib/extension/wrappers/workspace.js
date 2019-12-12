@@ -50,10 +50,66 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var types_1 = require("../../types");
+var BrowserHelper = /** @class */ (function () {
+    function BrowserHelper(helper) {
+        this.helper = helper;
+    }
+    BrowserHelper.prototype.getHelper = function () {
+        return this.helper;
+    };
+    BrowserHelper.prototype.getElementAttrValue = function (csspath, attrName, pageUuid) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            var timeout;
+            var onValue = function (value) {
+                if (timeout) {
+                    clearTimeout(timeout);
+                }
+                resolve(value);
+            };
+            _this.helper.once(types_1.ExtensionEventTypes.BROWSER_OPERATION, onValue);
+            _this.helper.sendBrowserOperation({
+                type: 'get-element-attr-value',
+                csspath: csspath,
+                attrName: attrName,
+                pageUuid: pageUuid
+            });
+            timeout = setTimeout(function () {
+                _this.helper.off(types_1.ExtensionEventTypes.BROWSER_OPERATION, onValue);
+                reject(new Error('Timeout'));
+            }, 5000);
+        });
+    };
+    BrowserHelper.prototype.getElementPropValue = function (csspath, propName, pageUuid) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            var timeout;
+            var onValue = function (value) {
+                if (timeout) {
+                    clearTimeout(timeout);
+                }
+                resolve(value);
+            };
+            _this.helper.once(types_1.ExtensionEventTypes.BROWSER_OPERATION, onValue);
+            _this.helper.sendBrowserOperation({
+                type: 'get-element-prop-value',
+                csspath: csspath,
+                propName: propName,
+                pageUuid: pageUuid
+            });
+            timeout = setTimeout(function () {
+                _this.helper.off(types_1.ExtensionEventTypes.BROWSER_OPERATION, onValue);
+                reject(new Error('Timeout'));
+            }, 5000);
+        });
+    };
+    return BrowserHelper;
+}());
 var WorkspaceExtensionEntryPointWrapper = /** @class */ (function (_super) {
     __extends(WorkspaceExtensionEntryPointWrapper, _super);
     function WorkspaceExtensionEntryPointWrapper(entrypoint, helper) {
         var _this = _super.call(this, entrypoint, helper) || this;
+        _this.browserHelper = new BrowserHelper(helper);
         _this.handlers = {
             'env-prepare': entrypoint.handleEnvironmentPrepare,
             'story-prepare': entrypoint.handleStoryPrepare,
@@ -80,7 +136,7 @@ var WorkspaceExtensionEntryPointWrapper = /** @class */ (function (_super) {
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, handler.call(this.getEntrypoint(), event)];
+                        return [4 /*yield*/, handler.call(this.getEntrypoint(), event, this.browserHelper)];
                     case 2:
                         result = _a.sent();
                         return [2 /*return*/, this.getHelper().sendMessage(result)];

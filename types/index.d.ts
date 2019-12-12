@@ -176,6 +176,10 @@ declare module 'last-hit-types' {
 
 	export namespace Extensions {
 		export type ExtensionTypes = 'workspace' | 'tbd';
+		export type BrowserOperationEventTypes =
+			| 'get-element-attr-value'
+			| 'get-element-prop-value';
+
 		export interface IExtensionEntryPoint {
 			activate(): Promise<void>;
 			getType(): ExtensionTypes;
@@ -284,14 +288,39 @@ declare module 'last-hit-types' {
 			};
 		}
 
+		export interface IWorkspaceExtensionBrowserHelper {
+			getElementAttrValue(
+				csspath: string,
+				attrName: string,
+				pageUuid?: string
+			): Promise<string | null>;
+			getElementPropValue(
+				csspath: string,
+				propName: string,
+				pageUuid?: string
+			): Promise<string | null>;
+		}
+
 		export interface IWorkspaceExtensionEntryPoint extends Extensions.IExtensionEntryPoint {
 			handleEnvironmentPrepare(event: EnvironmentPrepareEvent): Promise<PreparedEnvironment>;
 			handleStoryPrepare(event: StoryPrepareEvent): Promise<PreparedStory>;
 			handleFlowShouldStart(event: FlowShouldStartEvent): Promise<PreparedFlow>;
-			handleFlowAccomplished(event: FlowAccomplishedEvent): Promise<AccomplishedFlow>;
-			handleStepShouldStart(event: StepShouldStartEvent): Promise<PreparedStep>;
-			handleStepOnError(event: StepOnErrorEvent): Promise<FixedStep>;
-			handleStepAccomplished(event: StepAccomplishedEvent): Promise<AccomplishedStep>;
+			handleFlowAccomplished(
+				event: FlowAccomplishedEvent,
+				browserHelper: IWorkspaceExtensionBrowserHelper
+			): Promise<AccomplishedFlow>;
+			handleStepShouldStart(
+				event: StepShouldStartEvent,
+				browserHelper: IWorkspaceExtensionBrowserHelper
+			): Promise<PreparedStep>;
+			handleStepOnError(
+				event: StepOnErrorEvent,
+				browserHelper: IWorkspaceExtensionBrowserHelper
+			): Promise<FixedStep>;
+			handleStepAccomplished(
+				event: StepAccomplishedEvent,
+				browserHelper: IWorkspaceExtensionBrowserHelper
+			): Promise<AccomplishedStep>;
 			handleReloadAllHandlers(event: ReloadAllHandlersEvent): Promise<void>;
 			handleReloadStoryHandler(event: ReloadStoryHandlerEvent): Promise<void>;
 			handleReloadFlowHandler(event: ReloadFlowHandlerEvent): Promise<void>;

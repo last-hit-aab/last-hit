@@ -10,7 +10,8 @@ import {
 	ExtensionUnregisteredEvent,
 	IExtensionPoint,
 	IExtensionRegistry,
-	ExtensionRegisteredEvent
+	ExtensionRegisteredEvent,
+	ExtensionBrowserOperationEvent
 } from './types';
 
 export type GenericEventHandler = (...args: any[]) => void;
@@ -145,6 +146,13 @@ class ExtensionRegistry implements IExtensionRegistry {
 					extensionId,
 					data
 				} as ExtensionDataTransmittedEvent);
+			})
+			.on(WorkerEvents.BROWSER, (data: any): void => {
+				this.getEmitter().emit(ExtensionEventTypes.BROWSER_OPERATION, {
+					type: ExtensionEventTypes.BROWSER_OPERATION,
+					extensionId,
+					data
+				} as ExtensionBrowserOperationEvent);
 			});
 		await worker.start(definition);
 		console.log(`Extension[${extensionId}] started successfully by worker.`);
@@ -186,6 +194,22 @@ class ExtensionRegistry implements IExtensionRegistry {
 				if (worker) {
 					worker
 						.sendMessage(extensionId, data)
+						.then(() => resolve())
+						.catch((e: Error) => reject(e));
+				}
+			} else {
+				reject(new Error(`Worker not found of extension[${extensionId}].`));
+			}
+		});
+	}
+	sendBrowserOperation(extensionId: ExtensionPointId, value: any): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			const extension = this.findExtensionById(extensionId);
+			if (extension) {
+				const worker = extension.worker;
+				if (worker) {
+					worker
+						.sendBrowserOperation(extensionId, value)
 						.then(() => resolve())
 						.catch((e: Error) => reject(e));
 				}

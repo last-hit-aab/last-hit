@@ -16,7 +16,10 @@ type Handler = {
 	story?: string;
 	flow?: string;
 	stepUuid?: string;
-	handle?: (event: WorkspaceExtensions.WorkspaceEvent) => Promise<any>;
+	handle?: (
+		event: WorkspaceExtensions.WorkspaceEvent,
+		browserHelper?: WorkspaceExtensions.IWorkspaceExtensionBrowserHelper
+	) => Promise<any>;
 };
 type Handlers = { [key in string]: Handler };
 
@@ -69,40 +72,44 @@ export abstract class AbstractWorkspaceExtensionEntryPoint
 		).handle!(event);
 	}
 	async handleFlowAccomplished(
-		event: WorkspaceExtensions.FlowAccomplishedEvent
+		event: WorkspaceExtensions.FlowAccomplishedEvent,
+		browserHelper: WorkspaceExtensions.IWorkspaceExtensionBrowserHelper
 	): Promise<WorkspaceExtensions.AccomplishedFlow> {
 		return await this.findHandler(
 			`flow-accomplished@${event.flow.name}@${event.story.name}`,
 			'flow-accomplished',
 			`${event.story.name}/${event.flow.name}/flow-accomplished`
-		).handle!(event);
+		).handle!(event, browserHelper);
 	}
 	async handleStepShouldStart(
-		event: WorkspaceExtensions.StepShouldStartEvent
+		event: WorkspaceExtensions.StepShouldStartEvent,
+		browserHelper: WorkspaceExtensions.IWorkspaceExtensionBrowserHelper
 	): Promise<WorkspaceExtensions.PreparedStep> {
 		return await this.findHandler(
 			`step-should-start@${event.step.stepUuid}@${event.flow.name}@${event.story.name}`,
 			'step-should-start',
 			`${event.story.name}/${event.flow.name}/${event.step.stepUuid}/step-should-start`
-		).handle!(event);
+		).handle!(event, browserHelper);
 	}
 	async handleStepOnError(
-		event: WorkspaceExtensions.StepOnErrorEvent
+		event: WorkspaceExtensions.StepOnErrorEvent,
+		browserHelper: WorkspaceExtensions.IWorkspaceExtensionBrowserHelper
 	): Promise<WorkspaceExtensions.FixedStep> {
 		return await this.findHandler(
 			`step-on-error@${event.step.stepUuid}@${event.flow.name}@${event.story.name}`,
 			'step-on-error',
 			`${event.story.name}/${event.flow.name}/${event.step.stepUuid}/step-on-error`
-		).handle!(event);
+		).handle!(event, browserHelper);
 	}
 	async handleStepAccomplished(
-		event: WorkspaceExtensions.StepAccomplishedEvent
+		event: WorkspaceExtensions.StepAccomplishedEvent,
+		browserHelper: WorkspaceExtensions.IWorkspaceExtensionBrowserHelper
 	): Promise<WorkspaceExtensions.AccomplishedStep> {
 		return await this.findHandler(
 			`step-accomplished@${event.step.stepUuid}@${event.flow.name}@${event.story.name}`,
 			'step-accomplished',
 			`${event.story.name}/${event.flow.name}/${event.step.stepUuid}/step-accomplished`
-		).handle!(event);
+		).handle!(event, browserHelper);
 	}
 
 	handleReloadAllHandlers(event: WorkspaceExtensions.ReloadAllHandlersEvent): Promise<void> {
@@ -156,7 +163,11 @@ export abstract class AbstractWorkspaceExtensionEntryPoint
 			}
 		} catch (e) {
 			delete handler.handle;
-			console.error(`failed to reload handler[${handler.modulePath}]`, e);
+			if (e.stack && e.stack.indexOf("'MODULE_NOT_FOUND'")) {
+				// module not found, ignored
+			} else {
+				console.error(`failed to reload handler[${handler.modulePath}]`, e);
+			}
 		}
 	}
 	activate(): Promise<void> {

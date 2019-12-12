@@ -1,7 +1,78 @@
 import { WorkspaceExtensions } from 'last-hit-types';
-import { AbstractExtensionEntryPointWrapper, IExtensionEntryPointHelper } from '../../types';
+import {
+	AbstractExtensionEntryPointWrapper,
+	IExtensionEntryPointHelper,
+	ExtensionEventTypes
+} from '../../types';
 
-export type EventHandler<E extends WorkspaceExtensions.WorkspaceEvent> = (event: E) => Promise<any>;
+export type EventHandler<E extends WorkspaceExtensions.WorkspaceEvent> =
+	| ((event: E) => Promise<any>)
+	| ((
+			event: E,
+			browserHelper: WorkspaceExtensions.IWorkspaceExtensionBrowserHelper
+	  ) => Promise<any>);
+
+class BrowserHelper implements WorkspaceExtensions.IWorkspaceExtensionBrowserHelper {
+	private helper: IExtensionEntryPointHelper;
+	constructor(helper: IExtensionEntryPointHelper) {
+		this.helper = helper;
+	}
+	getHelper(): IExtensionEntryPointHelper {
+		return this.helper;
+	}
+	getElementAttrValue(
+		csspath: string,
+		attrName: string,
+		pageUuid?: string
+	): Promise<string | null> {
+		return new Promise((resolve, reject) => {
+			let timeout;
+			const onValue = (value: string | null) => {
+				if (timeout) {
+					clearTimeout(timeout);
+				}
+				resolve(value);
+			};
+			this.helper.once(ExtensionEventTypes.BROWSER_OPERATION, onValue);
+			this.helper.sendBrowserOperation({
+				type: 'get-element-attr-value',
+				csspath,
+				attrName,
+				pageUuid
+			});
+			timeout = setTimeout(() => {
+				this.helper.off(ExtensionEventTypes.BROWSER_OPERATION, onValue);
+				reject(new Error('Timeout'));
+			}, 5000);
+		});
+	}
+	getElementPropValue(
+		csspath: string,
+		propName: string,
+		pageUuid?: string
+	): Promise<string | null> {
+		return new Promise((resolve, reject) => {
+			let timeout;
+			const onValue = (value: string | null) => {
+				if (timeout) {
+					clearTimeout(timeout);
+				}
+				resolve(value);
+			};
+			this.helper.once(ExtensionEventTypes.BROWSER_OPERATION, onValue);
+			this.helper.sendBrowserOperation({
+				type: 'get-element-prop-value',
+				csspath,
+				propName,
+				pageUuid
+			});
+			timeout = setTimeout(() => {
+				this.helper.off(ExtensionEventTypes.BROWSER_OPERATION, onValue);
+				reject(new Error('Timeout'));
+			}, 5000);
+		});
+	}
+}
 
 export class WorkspaceExtensionEntryPointWrapper extends AbstractExtensionEntryPointWrapper<
 	WorkspaceExtensions.IWorkspaceExtensionEntryPoint
@@ -11,12 +82,14 @@ export class WorkspaceExtensionEntryPointWrapper extends AbstractExtensionEntryP
 			WorkspaceExtensions.WorkspaceEvent
 		>;
 	};
+	private browserHelper: WorkspaceExtensions.IWorkspaceExtensionBrowserHelper;
 
 	constructor(
 		entrypoint: WorkspaceExtensions.IWorkspaceExtensionEntryPoint,
 		helper: IExtensionEntryPointHelper
 	) {
 		super(entrypoint, helper);
+		this.browserHelper = new BrowserHelper(helper);
 
 		this.handlers = {
 			'env-prepare': entrypoint.handleEnvironmentPrepare,
@@ -36,7 +109,7 @@ export class WorkspaceExtensionEntryPointWrapper extends AbstractExtensionEntryP
 		const handler: EventHandler<WorkspaceExtensions.WorkspaceEvent> = this.handlers[event.type];
 		if (handler) {
 			try {
-				const result = await handler.call(this.getEntrypoint(), event);
+				const result = await handler.call(this.getEntrypoint(), event, this.browserHelper);
 				return this.getHelper().sendMessage(result);
 			} catch (e) {
 				return this.getHelper().sendError(e);

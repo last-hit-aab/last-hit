@@ -91,41 +91,41 @@ var AbstractWorkspaceExtensionEntryPoint = /** @class */ (function () {
             });
         });
     };
-    AbstractWorkspaceExtensionEntryPoint.prototype.handleFlowAccomplished = function (event) {
+    AbstractWorkspaceExtensionEntryPoint.prototype.handleFlowAccomplished = function (event, browserHelper) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.findHandler("flow-accomplished@" + event.flow.name + "@" + event.story.name, 'flow-accomplished', event.story.name + "/" + event.flow.name + "/flow-accomplished").handle(event)];
+                    case 0: return [4 /*yield*/, this.findHandler("flow-accomplished@" + event.flow.name + "@" + event.story.name, 'flow-accomplished', event.story.name + "/" + event.flow.name + "/flow-accomplished").handle(event, browserHelper)];
                     case 1: return [2 /*return*/, _a.sent()];
                 }
             });
         });
     };
-    AbstractWorkspaceExtensionEntryPoint.prototype.handleStepShouldStart = function (event) {
+    AbstractWorkspaceExtensionEntryPoint.prototype.handleStepShouldStart = function (event, browserHelper) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.findHandler("step-should-start@" + event.step.stepUuid + "@" + event.flow.name + "@" + event.story.name, 'step-should-start', event.story.name + "/" + event.flow.name + "/" + event.step.stepUuid + "/step-should-start").handle(event)];
+                    case 0: return [4 /*yield*/, this.findHandler("step-should-start@" + event.step.stepUuid + "@" + event.flow.name + "@" + event.story.name, 'step-should-start', event.story.name + "/" + event.flow.name + "/" + event.step.stepUuid + "/step-should-start").handle(event, browserHelper)];
                     case 1: return [2 /*return*/, _a.sent()];
                 }
             });
         });
     };
-    AbstractWorkspaceExtensionEntryPoint.prototype.handleStepOnError = function (event) {
+    AbstractWorkspaceExtensionEntryPoint.prototype.handleStepOnError = function (event, browserHelper) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.findHandler("step-on-error@" + event.step.stepUuid + "@" + event.flow.name + "@" + event.story.name, 'step-on-error', event.story.name + "/" + event.flow.name + "/" + event.step.stepUuid + "/step-on-error").handle(event)];
+                    case 0: return [4 /*yield*/, this.findHandler("step-on-error@" + event.step.stepUuid + "@" + event.flow.name + "@" + event.story.name, 'step-on-error', event.story.name + "/" + event.flow.name + "/" + event.step.stepUuid + "/step-on-error").handle(event, browserHelper)];
                     case 1: return [2 /*return*/, _a.sent()];
                 }
             });
         });
     };
-    AbstractWorkspaceExtensionEntryPoint.prototype.handleStepAccomplished = function (event) {
+    AbstractWorkspaceExtensionEntryPoint.prototype.handleStepAccomplished = function (event, browserHelper) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.findHandler("step-accomplished@" + event.step.stepUuid + "@" + event.flow.name + "@" + event.story.name, 'step-accomplished', event.story.name + "/" + event.flow.name + "/" + event.step.stepUuid + "/step-accomplished").handle(event)];
+                    case 0: return [4 /*yield*/, this.findHandler("step-accomplished@" + event.step.stepUuid + "@" + event.flow.name + "@" + event.story.name, 'step-accomplished', event.story.name + "/" + event.flow.name + "/" + event.step.stepUuid + "/step-accomplished").handle(event, browserHelper)];
                     case 1: return [2 /*return*/, _a.sent()];
                 }
             });
@@ -186,7 +186,12 @@ var AbstractWorkspaceExtensionEntryPoint = /** @class */ (function () {
         }
         catch (e) {
             delete handler.handle;
-            console.error("failed to reload handler[" + handler.modulePath + "]", e);
+            if (e.stack && e.stack.indexOf("'MODULE_NOT_FOUND'")) {
+                // module not found, ignored
+            }
+            else {
+                console.error("failed to reload handler[" + handler.modulePath + "]", e);
+            }
         }
     };
     AbstractWorkspaceExtensionEntryPoint.prototype.activate = function () {

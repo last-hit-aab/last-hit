@@ -5,6 +5,7 @@ var ExtensionEventTypes;
     ExtensionEventTypes["REGISTERED"] = "registered";
     ExtensionEventTypes["UNREGISTERED"] = "unregitered";
     ExtensionEventTypes["DATA_TRANSMITTED"] = "data-transmitted";
+    ExtensionEventTypes["BROWSER_OPERATION"] = "browser-operation";
     ExtensionEventTypes["LOG"] = "log";
     ExtensionEventTypes["ERROR_LOG"] = "error-log";
     ExtensionEventTypes["ERROR"] = "error";

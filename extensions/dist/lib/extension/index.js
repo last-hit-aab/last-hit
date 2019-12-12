@@ -45,6 +45,7 @@ var path_1 = __importDefault(require("path"));
 var types_1 = require("../types");
 var uri_1 = require("../utils/uri");
 var workspace_1 = require("./wrappers/workspace");
+var events_1 = __importDefault(require("events"));
 // With Electron 2.x and node.js 8.x the "natives" module
 // can cause a native crash (see https://github.com/nodejs/node/issues/19891 and
 // https://github.com/electron/electron/issues/10905). To prevent this from
@@ -64,22 +65,27 @@ var ExtensionEntryPointHelper = /** @class */ (function () {
     function ExtensionEntryPointHelper(options) {
         var _this = this;
         this.extension = null;
+        this.emitter = new events_1.default();
         this.onMainProcessMessageReceived = function (message, sendHandle) {
             if (!message) {
                 console.log('Empty message received, ignore.');
                 return;
             }
             var data = message;
-            if (data.extensionId && data.type === types_1.ExtensionEventTypes.DATA_TRANSMITTED) {
-                if (data.extensionId !== _this.getExtensionId()) {
-                    // do nothing, return
-                    return;
-                }
-                _this.extension.handle(data.data);
+            if (data.extensionId !== _this.getExtensionId()) {
+                // do nothing, return
+                return;
             }
-            else {
-                console.error('Neither extension id nor type declared via message, ignore.');
-                console.error(data);
+            switch (true) {
+                case data.extensionId && data.type === types_1.ExtensionEventTypes.DATA_TRANSMITTED:
+                    _this.extension.handle(data.data);
+                    break;
+                case data.extensionId && data.type === types_1.ExtensionEventTypes.BROWSER_OPERATION:
+                    _this.emitter.emit(types_1.ExtensionEventTypes.BROWSER_OPERATION, data.data);
+                    break;
+                default:
+                    console.error('No extension type declared via message, ignore.');
+                    console.error(data);
             }
         };
         var extensionId = options.extensionId, packageFolder = options.packageFolder;
@@ -91,6 +97,18 @@ var ExtensionEntryPointHelper = /** @class */ (function () {
     };
     ExtensionEntryPointHelper.prototype.getPackageFolder = function () {
         return this.packageFolder;
+    };
+    ExtensionEntryPointHelper.prototype.once = function (eventType, handler) {
+        this.emitter.once(eventType, handler);
+        return this;
+    };
+    ExtensionEntryPointHelper.prototype.on = function (eventType, handler) {
+        this.emitter.on(eventType, handler);
+        return this;
+    };
+    ExtensionEntryPointHelper.prototype.off = function (eventType, handler) {
+        this.emitter.off(eventType, handler);
+        return this;
     };
     ExtensionEntryPointHelper.prototype.onStartSuccessful = function () {
         process.send({
@@ -180,6 +198,23 @@ var ExtensionEntryPointHelper = /** @class */ (function () {
             default:
                 throw new Error("Extension type[" + entrypoint.getType() + "] is not supported.");
         }
+    };
+    ExtensionEntryPointHelper.prototype.sendBrowserOperation = function (data) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            process.send({
+                extensionId: _this.extensionId,
+                type: types_1.ExtensionEventTypes.BROWSER_OPERATION,
+                data: data
+            }, undefined, undefined, function (error) {
+                if (error) {
+                    reject(error);
+                }
+                else {
+                    resolve();
+                }
+            });
+        });
     };
     ExtensionEntryPointHelper.prototype.sendMessage = function (data) {
         var _this = this;
