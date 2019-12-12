@@ -6,12 +6,15 @@ import {
 	ExtensionPoint,
 	ExtensionRegisteredEvent,
 	ExtensionRegistry,
-	ExtensionUnregisteredEvent
+	ExtensionUnregisteredEvent,
+	GenericEventHandler
 } from 'last-hit-extensions';
 import { Environment as Env, WorkspaceExtensions } from 'last-hit-types';
 import path from 'path';
 import uuidv4 from 'uuid/v4';
 import Environment from '../config/env';
+
+const DEFAULT_EVENT_HANDLER_TIMEOUT = 5000;
 
 export class WorkspaceExtensionRegistry extends ExtensionRegistry {
 	private workspaceExtensionId: string;
@@ -34,6 +37,21 @@ export class WorkspaceExtensionRegistry extends ExtensionRegistry {
 	}
 	getEnvironment(): Environment {
 		return this.env;
+	}
+	once(
+		event: ExtensionEventTypes,
+		handler: GenericEventHandler,
+		timeout?: number,
+		onTimeout?: () => void
+	): this {
+		super.once(event, handler);
+		if (onTimeout) {
+			setTimeout(() => {
+				this.off(event, handler);
+				onTimeout();
+			}, timeout);
+		}
+		return this;
 	}
 	async launch(): Promise<void> {
 		return new Promise(async (resolve, reject) => {
@@ -72,6 +90,13 @@ export class WorkspaceExtensionRegistry extends ExtensionRegistry {
 								this.getEnvironment().mergeFrom(data);
 								resolve();
 							}
+						},
+						DEFAULT_EVENT_HANDLER_TIMEOUT,
+						() => {
+							console.log(
+								'Timeout on environment prepare via workspace extension scripts, ignored'
+							);
+							resolve();
 						}
 					);
 					this.sendMessage(this.getWorkspaceExtensionId(), {

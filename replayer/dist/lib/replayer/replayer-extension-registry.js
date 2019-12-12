@@ -55,6 +55,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var last_hit_extensions_1 = require("last-hit-extensions");
 var path_1 = __importDefault(require("path"));
 var v4_1 = __importDefault(require("uuid/v4"));
+var DEFAULT_EVENT_HANDLER_TIMEOUT = 5000;
 var WorkspaceExtensionRegistry = /** @class */ (function (_super) {
     __extends(WorkspaceExtensionRegistry, _super);
     function WorkspaceExtensionRegistry(options) {
@@ -73,6 +74,17 @@ var WorkspaceExtensionRegistry = /** @class */ (function (_super) {
     };
     WorkspaceExtensionRegistry.prototype.getEnvironment = function () {
         return this.env;
+    };
+    WorkspaceExtensionRegistry.prototype.once = function (event, handler, timeout, onTimeout) {
+        var _this = this;
+        _super.prototype.once.call(this, event, handler);
+        if (onTimeout) {
+            setTimeout(function () {
+                _this.off(event, handler);
+                onTimeout();
+            }, timeout);
+        }
+        return this;
     };
     WorkspaceExtensionRegistry.prototype.launch = function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -116,6 +128,9 @@ var WorkspaceExtensionRegistry = /** @class */ (function (_super) {
                                                         _this.getEnvironment().mergeFrom(data);
                                                         resolve();
                                                     }
+                                                }, DEFAULT_EVENT_HANDLER_TIMEOUT, function () {
+                                                    console.log('Timeout on environment prepare via workspace extension scripts, ignored');
+                                                    resolve();
                                                 });
                                                 this.sendMessage(this.getWorkspaceExtensionId(), {
                                                     type: 'env-prepare',

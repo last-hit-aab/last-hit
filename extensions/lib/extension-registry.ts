@@ -13,7 +13,7 @@ import {
 	ExtensionRegisteredEvent
 } from './types';
 
-type GenericHandler = (...args: any[]) => void;
+export type GenericEventHandler = (...args: any[]) => void;
 type RegisteredExtension = {
 	definition: IExtensionPoint;
 	worker: ExtensionWorker;
@@ -166,15 +166,15 @@ class ExtensionRegistry implements IExtensionRegistry {
 	destroy(): void {
 		this.shutdownAllExtensions();
 	}
-	once(event: ExtensionEventTypes, handler: GenericHandler): this {
+	once(event: ExtensionEventTypes, handler: GenericEventHandler): this {
 		this.getEmitter().once(event, handler);
 		return this;
 	}
-	on(event: ExtensionEventTypes, handler: GenericHandler): this {
+	on(event: ExtensionEventTypes, handler: GenericEventHandler): this {
 		this.getEmitter().on(event, handler);
 		return this;
 	}
-	off(event: ExtensionEventTypes, handler: GenericHandler): this {
+	off(event: ExtensionEventTypes, handler: GenericEventHandler): this {
 		this.getEmitter().off(event, handler);
 		return this;
 	}
