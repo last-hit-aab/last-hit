@@ -62,6 +62,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs_1 = __importDefault(require("fs"));
+var last_hit_extensions_1 = require("last-hit-extensions");
 var path_1 = __importDefault(require("path"));
 var puppeteer_1 = __importDefault(require("puppeteer"));
 var util_1 = __importDefault(require("util"));
@@ -78,11 +79,17 @@ var getChromiumExecPath = function () {
     return puppeteer_1.default.executablePath().replace('app.asar', 'app.asar.unpacked');
 };
 var launchBrowser = function (replayer) { return __awaiter(void 0, void 0, void 0, function () {
-    var step, _a, url, device, uuid, _b, width, height, browserArgs, browser, pages, page;
+    var step, _a, url, device, uuid, _b, width, height, browserArgs, browser, pages, page, accomplishedStep;
     return __generator(this, function (_c) {
         switch (_c.label) {
             case 0:
                 step = replayer.getCurrentStep();
+                return [4 /*yield*/, replayer
+                        .getRegistry()
+                        .stepShouldStart(replayer.getStoryName(), simplifyFlow(replayer.getFlow()), step)];
+            case 1:
+                // send step-should-start to extension, replace step when successfully return
+                step = _c.sent();
                 _a = step, url = _a.url, device = _a.device, uuid = _a.uuid;
                 _b = device.viewport, width = _b.width, height = _b.height;
                 browserArgs = [];
@@ -98,52 +105,53 @@ var launchBrowser = function (replayer) { return __awaiter(void 0, void 0, void 
                         defaultViewport: null,
                         slowMo: 20
                     })];
-            case 1:
+            case 2:
                 browser = _c.sent();
                 return [4 /*yield*/, browser.pages()];
-            case 2:
+            case 3:
                 pages = _c.sent();
-                if (!(pages != null && pages.length > 0)) return [3 /*break*/, 3];
+                if (!(pages != null && pages.length > 0)) return [3 /*break*/, 4];
                 page = pages[0];
-                return [3 /*break*/, 5];
-            case 3: return [4 /*yield*/, browser.newPage()];
-            case 4:
-                page = _c.sent();
-                _c.label = 5;
+                return [3 /*break*/, 6];
+            case 4: return [4 /*yield*/, browser.newPage()];
             case 5:
+                page = _c.sent();
+                _c.label = 6;
+            case 6:
                 // set back to replayer
                 replayer.setBrowser(browser);
                 replayer.putPage(uuid, page, true);
                 replayer.setDevice(device);
                 // add control into page
                 return [4 /*yield*/, page_controller_1.controlPage(replayer, page, device, uuid)];
-            case 6:
+            case 7:
                 // add control into page
                 _c.sent();
                 // open url, timeout to 2 mins
                 return [4 /*yield*/, page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 })];
-            case 7:
+            case 8:
                 // open url, timeout to 2 mins
                 _c.sent();
-                // RESEARCH waste too much time, remove
-                // try {
-                // 	await page.waitForNavigation();
-                // } catch (e) {
-                // 	logger.error(e);
-                // }
-                // you can try this solution about wait for navigateion
-                /*
-                const [response] = await Promise.all([
-                    page.waitForNavigation(), // The promise resolves after navigation has finished
-                    await page.goto(step.url, { waitUntil: 'domcontentloaded' }), // Go to the url will indirectly cause a navigation
-                ]);
-                */
+                return [4 /*yield*/, replayer
+                        .getRegistry()
+                        .stepAccomplished(replayer.getStoryName(), simplifyFlow(replayer.getFlow()), step)];
+            case 9:
+                accomplishedStep = _c.sent();
+                if (!accomplishedStep._.passed) {
+                    // extension says failed
+                    throw accomplishedStep._.error;
+                }
                 return [2 /*return*/, page];
         }
     });
 }); };
+var simplifyFlow = function (flow) {
+    var name = flow.name, description = flow.description;
+    return { name: name, description: description };
+};
 var Replayer = /** @class */ (function () {
     function Replayer(options) {
+        var _this = this;
         this.device = null;
         this.browser = null;
         /** key is uuid, value is page */
@@ -154,6 +162,12 @@ var Replayer = /** @class */ (function () {
         this.coverages = [];
         /** true when switch to record, never turn back to false again */
         this.onRecord = false;
+        this.handleExtensionLog = function (event) {
+            _this.getLogger().log(event);
+        };
+        this.handleExtensionErrorLog = function (event) {
+            _this.getLogger().error(event);
+        };
         var storyName = options.storyName, flow = options.flow, env = options.env, logger = options.logger, replayers = options.replayers, registry = options.registry;
         this.storyName = storyName;
         this.flow = (function () {
@@ -165,6 +179,9 @@ var Replayer = /** @class */ (function () {
         this.replayers = replayers;
         this.env = env;
         this.registry = registry;
+        this.registry
+            .on(last_hit_extensions_1.ExtensionEventTypes.LOG, this.handleExtensionLog)
+            .on(last_hit_extensions_1.ExtensionEventTypes.ERROR_LOG, this.handleExtensionErrorLog);
     }
     Replayer.prototype.getRegistry = function () {
         return this.registry;
@@ -370,7 +387,7 @@ var Replayer = /** @class */ (function () {
                     case 0: return [4 /*yield*/, this.getRegistry().prepareStory(this.getStoryName())];
                     case 1:
                         preparedStory = _a.sent();
-                        return [4 /*yield*/, this.getRegistry().flowShouldStart(this.getStoryName(), this.getFlow())];
+                        return [4 /*yield*/, this.getRegistry().flowShouldStart(this.getStoryName(), simplifyFlow(this.getFlow()))];
                     case 2:
                         preparedFlow = _a.sent();
                         return [4 /*yield*/, launchBrowser(this)];
@@ -396,7 +413,7 @@ var Replayer = /** @class */ (function () {
                         browser = this.getBrowser();
                         if (!(browser == null)) return [3 /*break*/, 1];
                         return [3 /*break*/, 11];
-                    case 1: return [4 /*yield*/, this.getRegistry().flowAccomplished(this.getStoryName(), this.getFlow())];
+                    case 1: return [4 /*yield*/, this.getRegistry().flowAccomplished(this.getStoryName(), simplifyFlow(this.getFlow()))];
                     case 2:
                         accomplishedFlow = _b.sent();
                         _b.label = 3;
@@ -431,7 +448,11 @@ var Replayer = /** @class */ (function () {
                         this.getLogger().error('Failed to close browser.');
                         this.getLogger().error(e_2);
                         return [3 /*break*/, 11];
-                    case 11: return [2 /*return*/];
+                    case 11:
+                        this.registry
+                            .off(last_hit_extensions_1.ExtensionEventTypes.LOG, this.handleExtensionLog)
+                            .off(last_hit_extensions_1.ExtensionEventTypes.ERROR_LOG, this.handleExtensionErrorLog);
+                        return [2 /*return*/];
                 }
             });
         });
@@ -452,7 +473,7 @@ var Replayer = /** @class */ (function () {
                         if (step.type === 'end') {
                             return [2 /*return*/];
                         }
-                        return [4 /*yield*/, this.getRegistry().stepShouldStart(this.getStoryName(), this.getFlow(), step)];
+                        return [4 /*yield*/, this.getRegistry().stepShouldStart(this.getStoryName(), simplifyFlow(this.getFlow()), step)];
                     case 1:
                         // send step-should-start to extension, replace step when successfully return
                         step = _a.sent();
@@ -585,7 +606,7 @@ var Replayer = /** @class */ (function () {
                     case 11:
                         // console.error(e);
                         _a.sent();
-                        return [4 /*yield*/, this.getRegistry().stepOnError(this.getStoryName(), this.getFlow(), step, e_3)];
+                        return [4 /*yield*/, this.getRegistry().stepOnError(this.getStoryName(), simplifyFlow(this.getFlow()), step, e_3)];
                     case 12:
                         stepOnError = _a.sent();
                         if (!stepOnError._.fixed) {
@@ -597,7 +618,7 @@ var Replayer = /** @class */ (function () {
                             return [2 /*return*/];
                         }
                         return [3 /*break*/, 13];
-                    case 13: return [4 /*yield*/, this.getRegistry().stepAccomplished(this.getStoryName(), this.getFlow(), step)];
+                    case 13: return [4 /*yield*/, this.getRegistry().stepAccomplished(this.getStoryName(), simplifyFlow(this.getFlow()), step)];
                     case 14:
                         accomplishedStep = _a.sent();
                         if (!!accomplishedStep._.passed) return [3 /*break*/, 16];

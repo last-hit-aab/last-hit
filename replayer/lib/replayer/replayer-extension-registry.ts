@@ -210,7 +210,7 @@ export class WorkspaceExtensionRegistry extends ExtensionRegistry {
 		timeout?: number,
 		onTimeout?: () => void
 	): this {
-		let timeoutHanlder: number;
+		let timeoutHanlder;
 		super.once(event, (...args: Array<any>) => {
 			if (timeoutHanlder) {
 				clearTimeout(timeoutHanlder);

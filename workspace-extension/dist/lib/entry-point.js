@@ -174,7 +174,6 @@ var AbstractWorkspaceExtensionEntryPoint = /** @class */ (function () {
         return Promise.resolve();
     };
     AbstractWorkspaceExtensionEntryPoint.prototype.doReloadHandler = function (handler) {
-        console.log(handler.modulePath);
         try {
             decache_1.default(handler.modulePath);
             var scripts = require(handler.modulePath);

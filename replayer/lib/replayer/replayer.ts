@@ -1,5 +1,10 @@
 import fs from 'fs';
 import {
+	ExtensionErrorLogEvent,
+	ExtensionEventTypes,
+	ExtensionLogEvent
+} from 'last-hit-extensions';
+import {
 	AjaxStep,
 	AnimationStep,
 	ChangeStep,
@@ -53,7 +58,12 @@ const getChromiumExecPath = () => {
 };
 
 const launchBrowser = async (replayer: Replayer) => {
-	const step = replayer.getCurrentStep();
+	let step = replayer.getCurrentStep();
+	// send step-should-start to extension, replace step when successfully return
+	step = await replayer
+		.getRegistry()
+		.stepShouldStart(replayer.getStoryName(), simplifyFlow(replayer.getFlow()), step);
+
 	const { url, device, uuid } = step as StartStep;
 	const {
 		viewport: { width, height }
@@ -103,7 +113,21 @@ const launchBrowser = async (replayer: Replayer) => {
 		await page.goto(step.url, { waitUntil: 'domcontentloaded' }), // Go to the url will indirectly cause a navigation
 	]);
 	*/
+	// send step-accomplished to extension
+	// accomplished only triggerred when step has not error on replaying
+	const accomplishedStep = await replayer
+		.getRegistry()
+		.stepAccomplished(replayer.getStoryName(), simplifyFlow(replayer.getFlow()), step);
+	if (!accomplishedStep._.passed) {
+		// extension says failed
+		throw accomplishedStep._.error!;
+	}
 	return page;
+};
+
+const simplifyFlow = (flow: Flow): WorkspaceExtensions.SimpleFlow => {
+	const { name, description } = flow;
+	return { name, description };
 };
 
 class Replayer {
@@ -145,7 +169,16 @@ class Replayer {
 		this.replayers = replayers;
 		this.env = env;
 		this.registry = registry;
+		this.registry
+			.on(ExtensionEventTypes.LOG, this.handleExtensionLog)
+			.on(ExtensionEventTypes.ERROR_LOG, this.handleExtensionErrorLog);
 	}
+	private handleExtensionLog = (event: ExtensionLogEvent): void => {
+		this.getLogger().log(event);
+	};
+	private handleExtensionErrorLog = (event: ExtensionErrorLogEvent): void => {
+		this.getLogger().error(event);
+	};
 	getRegistry(): WorkspaceExtensionRegistry {
 		return this.registry;
 	}
@@ -322,7 +355,7 @@ class Replayer {
 		// TODO how to use prepared flow? currently ignored
 		const preparedFlow: WorkspaceExtensions.PreparedFlow | null = await this.getRegistry().flowShouldStart(
 			this.getStoryName(),
-			this.getFlow()
+			simplifyFlow(this.getFlow())
 		);
 
 		const page = await launchBrowser(this);
@@ -339,7 +372,7 @@ class Replayer {
 			// TODO how to use accomplised flow? currently ignored
 			const accomplishedFlow: WorkspaceExtensions.AccomplishedFlow | null = await this.getRegistry().flowAccomplished(
 				this.getStoryName(),
-				this.getFlow()
+				simplifyFlow(this.getFlow())
 			);
 			try {
 				const pages = await browser.pages();
@@ -359,6 +392,9 @@ class Replayer {
 				}
 			}
 		}
+		this.registry
+			.off(ExtensionEventTypes.LOG, this.handleExtensionLog)
+			.off(ExtensionEventTypes.ERROR_LOG, this.handleExtensionErrorLog);
 	}
 	/**
 	 * do next step
@@ -372,7 +408,11 @@ class Replayer {
 		}
 
 		// send step-should-start to extension, replace step when successfully return
-		step = await this.getRegistry().stepShouldStart(this.getStoryName(), this.getFlow(), step);
+		step = await this.getRegistry().stepShouldStart(
+			this.getStoryName(),
+			simplifyFlow(this.getFlow()),
+			step
+		);
 
 		try {
 			const ret = await (async () => {
@@ -460,7 +500,7 @@ class Replayer {
 			// send step-on-error to extension
 			const stepOnError = await this.getRegistry().stepOnError(
 				this.getStoryName(),
-				this.getFlow(),
+				simplifyFlow(this.getFlow()),
 				step,
 				e
 			);
@@ -477,7 +517,7 @@ class Replayer {
 		// accomplished only triggerred when step has not error on replaying
 		const accomplishedStep = await this.getRegistry().stepAccomplished(
 			this.getStoryName(),
-			this.getFlow(),
+			simplifyFlow(this.getFlow()),
 			step
 		);
 		if (!accomplishedStep._.passed) {

@@ -146,7 +146,6 @@ export abstract class AbstractWorkspaceExtensionEntryPoint
 		return Promise.resolve();
 	}
 	protected doReloadHandler(handler: Handler) {
-		console.log(handler.modulePath);
 		try {
 			decache(handler.modulePath);
 			const scripts = require(handler.modulePath);

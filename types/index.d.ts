@@ -183,6 +183,7 @@ declare module 'last-hit-types' {
 	}
 	export namespace WorkspaceExtensions {
 		export type SimpleStory = Omit<Story, 'flows'>;
+		export type SimpleFlow = Omit<Flow, 'steps' | 'settings'>;
 
 		export type WorkspaceEventTypes =
 			| 'env-prepare'
@@ -213,7 +214,7 @@ declare module 'last-hit-types' {
 		}
 		export interface FlowEvent extends WorkspaceEvent {
 			story: SimpleStory;
-			flow: Flow;
+			flow: SimpleFlow;
 		}
 		export interface FlowShouldStartEvent extends FlowEvent {
 			type: 'flow-should-start';
@@ -224,7 +225,7 @@ declare module 'last-hit-types' {
 
 		export interface StepEvent extends WorkspaceEvent {
 			story: SimpleStory;
-			flow: Flow;
+			flow: SimpleFlow;
 			step: Step;
 		}
 		export interface StepShouldStartEvent extends StepEvent {
@@ -249,12 +250,12 @@ declare module 'last-hit-types' {
 		export interface ReloadFlowHandlerEvent extends ReloadHandlerEvent {
 			type: 'reload-flow-handler';
 			story: SimpleStory;
-			flow: Flow;
+			flow: SimpleFlow;
 		}
 		export interface ReloadStepHandlerEvent extends ReloadHandlerEvent {
 			type: 'reload-step-handler';
 			story: SimpleStory;
-			flow: Flow;
+			flow: SimpleFlow;
 			step: Step;
 		}
 
