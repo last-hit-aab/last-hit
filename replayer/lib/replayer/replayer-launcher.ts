@@ -82,7 +82,7 @@ const createNextStepHandler = (emitter: ReplayEmitter, logger: Console): NextSte
 							logger.error(e);
 							// failed, prepare for next step
 							// send back
-							replayer.getSummary().handleError(step, e);
+							// replayer.getSummary().handleError(step, e);
 							waitForNextStep({
 								event,
 								replayer,

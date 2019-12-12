@@ -94,7 +94,7 @@ var createNextStepHandler = function (emitter, logger) {
                         logger.error(e_1);
                         // failed, prepare for next step
                         // send back
-                        replayer.getSummary().handleError(step, e_1);
+                        // replayer.getSummary().handleError(step, e);
                         waitForNextStep({
                             event: event,
                             replayer: replayer,
