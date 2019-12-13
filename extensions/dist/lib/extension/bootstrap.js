@@ -55,7 +55,8 @@ if (process.env[Consts.ARG_ENTRY_POINT]) {
     var entrypoint = require(process.env[Consts.ARG_ENTRY_POINT]);
     var packageFolder = process.env[Consts.ARG_PACKAGE_FOLDER];
     var extensionId = process.env[Consts.ARG_EXTENSION_ID];
-    entrypoint.activate({ extensionId: extensionId, packageFolder: packageFolder });
+    var inIDE = process.env[Consts.ARG_IN_IDE];
+    entrypoint.activate({ extensionId: extensionId, packageFolder: packageFolder, inIDE: inIDE === 'true' });
 }
 /*
 function configureCrashReporter() {

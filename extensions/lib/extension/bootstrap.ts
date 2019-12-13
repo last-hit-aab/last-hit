@@ -53,7 +53,8 @@ if (process.env[Consts.ARG_ENTRY_POINT]) {
 	const entrypoint = require(process.env[Consts.ARG_ENTRY_POINT]);
 	const packageFolder = process.env[Consts.ARG_PACKAGE_FOLDER];
 	const extensionId = process.env[Consts.ARG_EXTENSION_ID];
-	entrypoint.activate({ extensionId, packageFolder });
+	const inIDE = process.env[Consts.ARG_IN_IDE];
+	entrypoint.activate({ extensionId, packageFolder, inIDE: inIDE === 'true' });
 }
 
 /*

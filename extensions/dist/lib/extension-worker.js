@@ -118,6 +118,7 @@ var ExtensionWorker = /** @class */ (function () {
                         _a[Consts.ARG_PACKAGE_FOLDER] = extension.getFolder(),
                         _a[Consts.ARG_HANDLES_UNCAUGHT_ERRORS] = true,
                         _a[Consts.ARG_EXTENSION_ID] = extension.getId(),
+                        _a[Consts.ARG_IN_IDE] = !!process.versions.electron,
                         _a)),
                     // We only detach the extension host on windows. Linux and Mac orphan by default
                     // and detach under Linux and Mac create another process group.

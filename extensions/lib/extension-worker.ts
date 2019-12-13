@@ -30,6 +30,7 @@ export type ChildProcessExistListener = (code: number, signal: string, unexcepte
 export type LogListener = (data: any) => void;
 export type ErrorListener = (error: Error) => void;
 export type DataListener = (data: any) => void;
+export type BrowserOperationListener = (data: any) => void;
 export interface IExtensionWorker {
 	once(event: WorkerEvents.REGISTERED, listener: ChildProcessRegisteredListener): this;
 	once(event: WorkerEvents.EXITED, listener: ChildProcessExistListener): this;
@@ -39,6 +40,8 @@ export interface IExtensionWorker {
 	off(event: WorkerEvents.ERROR, listener: ErrorListener): this;
 	on(event: WorkerEvents.DATA, listener: DataListener): this;
 	off(event: WorkerEvents.DATA, listener: DataListener): this;
+	on(event: WorkerEvents.BROWSER, listener: BrowserOperationListener): this;
+	off(event: WorkerEvents.BROWSER, listener: BrowserOperationListener): this;
 }
 
 class ExtensionWorker implements IExtensionWorker {
@@ -58,7 +61,8 @@ class ExtensionWorker implements IExtensionWorker {
 				[Consts.ARG_ENTRY_POINT]: './index.js',
 				[Consts.ARG_PACKAGE_FOLDER]: extension.getFolder(),
 				[Consts.ARG_HANDLES_UNCAUGHT_ERRORS]: true,
-				[Consts.ARG_EXTENSION_ID]: extension.getId()
+				[Consts.ARG_EXTENSION_ID]: extension.getId(),
+				[Consts.ARG_IN_IDE]: !!process.versions.electron
 			}),
 			// We only detach the extension host on windows. Linux and Mac orphan by default
 			// and detach under Linux and Mac create another process group.

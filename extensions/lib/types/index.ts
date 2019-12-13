@@ -8,6 +8,7 @@ export interface IExtensionPoint {
 	getFolder(): string;
 }
 export interface IExtensionEntryPointHelper {
+	isInIDE(): boolean;
 	sendMessage(data: any): Promise<void>;
 	sendError(e: Error): Promise<void>;
 	sendIgnore(): Promise<void>;

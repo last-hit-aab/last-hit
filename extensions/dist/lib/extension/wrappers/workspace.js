@@ -57,6 +57,9 @@ var BrowserHelper = /** @class */ (function () {
     BrowserHelper.prototype.getHelper = function () {
         return this.helper;
     };
+    BrowserHelper.prototype.isInIDE = function () {
+        return this.getHelper().isInIDE();
+    };
     BrowserHelper.prototype.getElementAttrValue = function (csspath, attrName, pageUuid) {
         var _this = this;
         return new Promise(function (resolve, reject) {

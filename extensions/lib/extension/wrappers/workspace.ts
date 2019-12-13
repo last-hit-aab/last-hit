@@ -14,11 +14,15 @@ export type EventHandler<E extends WorkspaceExtensions.WorkspaceEvent> =
 
 class BrowserHelper implements WorkspaceExtensions.IWorkspaceExtensionBrowserHelper {
 	private helper: IExtensionEntryPointHelper;
+
 	constructor(helper: IExtensionEntryPointHelper) {
 		this.helper = helper;
 	}
 	getHelper(): IExtensionEntryPointHelper {
 		return this.helper;
+	}
+	isInIDE(): boolean {
+		return this.getHelper().isInIDE();
 	}
 	getElementAttrValue(
 		csspath: string,

@@ -39,22 +39,27 @@ import EventEmitter from 'events';
 class ExtensionEntryPointHelper implements IExtensionEntryPointHelper {
 	private extensionId: ExtensionPointId;
 	private packageFolder: string | undefined;
+	private inIDE: boolean;
 
 	private extension: IExtensionEntryPointWrapper<any> | null = null;
 
 	private emitter: EventEmitter = new EventEmitter();
 
-	constructor(options: { extensionId: ExtensionPointId; packageFolder: string }) {
-		const { extensionId, packageFolder } = options;
+	constructor(options: { extensionId: ExtensionPointId; packageFolder: string; inIDE: boolean }) {
+		const { extensionId, packageFolder, inIDE } = options;
 
 		this.extensionId = extensionId;
 		this.packageFolder = packageFolder;
+		this.inIDE = !!inIDE;
 	}
 	private getExtensionId(): ExtensionPointId {
 		return this.extensionId;
 	}
 	private getPackageFolder(): string {
 		return this.packageFolder;
+	}
+	isInIDE(): boolean {
+		return this.inIDE;
 	}
 	once(eventType: ExtensionEventTypes, handler: (value: any) => void): this {
 		this.emitter.once(eventType, handler);
@@ -278,6 +283,7 @@ class ExtensionEntryPointHelper implements IExtensionEntryPointHelper {
 export const activate = async (options: {
 	extensionId: ExtensionPointId;
 	packageFolder: string;
+	inIDE: boolean;
 }): Promise<void> => {
 	new ExtensionEntryPointHelper(options).activate();
 };

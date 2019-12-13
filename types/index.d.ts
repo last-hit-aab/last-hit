@@ -149,6 +149,7 @@ declare module 'last-hit-types' {
 		name: string;
 		description: string;
 		steps?: Step[];
+		params?: { [key in string]: null | string | number | boolean };
 		settings?: {
 			forceDepends?: {
 				story: string;
@@ -299,6 +300,7 @@ declare module 'last-hit-types' {
 				propName: string,
 				pageUuid?: string
 			): Promise<string | null>;
+			isInIDE(): boolean;
 		}
 
 		export interface IWorkspaceExtensionEntryPoint extends Extensions.IExtensionEntryPoint {

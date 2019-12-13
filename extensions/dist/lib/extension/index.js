@@ -88,15 +88,19 @@ var ExtensionEntryPointHelper = /** @class */ (function () {
                     console.error(data);
             }
         };
-        var extensionId = options.extensionId, packageFolder = options.packageFolder;
+        var extensionId = options.extensionId, packageFolder = options.packageFolder, inIDE = options.inIDE;
         this.extensionId = extensionId;
         this.packageFolder = packageFolder;
+        this.inIDE = !!inIDE;
     }
     ExtensionEntryPointHelper.prototype.getExtensionId = function () {
         return this.extensionId;
     };
     ExtensionEntryPointHelper.prototype.getPackageFolder = function () {
         return this.packageFolder;
+    };
+    ExtensionEntryPointHelper.prototype.isInIDE = function () {
+        return this.inIDE;
     };
     ExtensionEntryPointHelper.prototype.once = function (eventType, handler) {
         this.emitter.once(eventType, handler);
