@@ -1,16 +1,17 @@
 import { WorkspaceExtensions } from 'last-hit-types';
 import {
 	AbstractExtensionEntryPointWrapper,
-	IExtensionEntryPointHelper,
-	ExtensionEventTypes
+	ExtensionEventTypes,
+	IExtensionEntryPointHelper
 } from '../../types';
 
-export type EventHandler<E extends WorkspaceExtensions.WorkspaceEvent> =
-	| ((event: E) => Promise<any>)
-	| ((
-			event: E,
-			browserHelper: WorkspaceExtensions.IWorkspaceExtensionBrowserHelper
-	  ) => Promise<any>);
+export type EventHandler<E extends WorkspaceExtensions.WorkspaceEvent> = (
+	event: E,
+	helpers: {
+		browser: BrowserHelper;
+		test: TestHelper;
+	}
+) => Promise<any>;
 
 class BrowserHelper implements WorkspaceExtensions.IWorkspaceExtensionBrowserHelper {
 	private helper: IExtensionEntryPointHelper;
@@ -78,6 +79,26 @@ class BrowserHelper implements WorkspaceExtensions.IWorkspaceExtensionBrowserHel
 	}
 }
 
+class TestHelper implements WorkspaceExtensions.IWorkspaceExtensionTestHelper {
+	private helper: IExtensionEntryPointHelper;
+
+	constructor(helper: IExtensionEntryPointHelper) {
+		this.helper = helper;
+	}
+	private getHelper(): IExtensionEntryPointHelper {
+		return this.helper;
+	}
+	async test(title: string, fn: () => void | Promise<void>): Promise<this> {
+		try {
+			await fn.call(this);
+			this.helper.sendTestLog(title, true, 0);
+		} catch {
+			this.helper.sendTestLog(title, false, 0);
+		}
+		return this;
+	}
+}
+
 export class WorkspaceExtensionEntryPointWrapper extends AbstractExtensionEntryPointWrapper<
 	WorkspaceExtensions.IWorkspaceExtensionEntryPoint
 > {
@@ -87,6 +108,7 @@ export class WorkspaceExtensionEntryPointWrapper extends AbstractExtensionEntryP
 		>;
 	};
 	private browserHelper: WorkspaceExtensions.IWorkspaceExtensionBrowserHelper;
+	private testHelper: WorkspaceExtensions.IWorkspaceExtensionTestHelper;
 
 	constructor(
 		entrypoint: WorkspaceExtensions.IWorkspaceExtensionEntryPoint,
@@ -94,6 +116,7 @@ export class WorkspaceExtensionEntryPointWrapper extends AbstractExtensionEntryP
 	) {
 		super(entrypoint, helper);
 		this.browserHelper = new BrowserHelper(helper);
+		this.testHelper = new TestHelper(helper);
 
 		this.handlers = {
 			'env-prepare': entrypoint.handleEnvironmentPrepare,
@@ -113,7 +136,10 @@ export class WorkspaceExtensionEntryPointWrapper extends AbstractExtensionEntryP
 		const handler: EventHandler<WorkspaceExtensions.WorkspaceEvent> = this.handlers[event.type];
 		if (handler) {
 			try {
-				const result = await handler.call(this.getEntrypoint(), event, this.browserHelper);
+				const result = await handler.call(this.getEntrypoint(), event, {
+					browser: this.browserHelper,
+					test: this.testHelper
+				});
 				return this.getHelper().sendMessage(result);
 			} catch (e) {
 				return this.getHelper().sendError(e);

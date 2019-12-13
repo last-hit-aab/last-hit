@@ -39,13 +39,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var events_1 = __importDefault(require("events"));
 var fs_1 = __importDefault(require("fs"));
 var jsonfile_1 = __importDefault(require("jsonfile"));
 var path_1 = __importDefault(require("path"));
 var types_1 = require("../types");
 var uri_1 = require("../utils/uri");
 var workspace_1 = require("./wrappers/workspace");
-var events_1 = __importDefault(require("events"));
 // With Electron 2.x and node.js 8.x the "natives" module
 // can cause a native crash (see https://github.com/nodejs/node/issues/19891 and
 // https://github.com/electron/electron/issues/10905). To prevent this from
@@ -210,6 +210,23 @@ var ExtensionEntryPointHelper = /** @class */ (function () {
                 extensionId: _this.extensionId,
                 type: types_1.ExtensionEventTypes.BROWSER_OPERATION,
                 data: data
+            }, undefined, undefined, function (error) {
+                if (error) {
+                    reject(error);
+                }
+                else {
+                    resolve();
+                }
+            });
+        });
+    };
+    ExtensionEntryPointHelper.prototype.sendTestLog = function (title, passed, level) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            process.send({
+                extensionId: _this.extensionId,
+                type: types_1.ExtensionEventTypes.TEST_LOG,
+                data: { title: title, passed: passed, level: level }
             }, undefined, undefined, function (error) {
                 if (error) {
                     reject(error);

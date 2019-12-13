@@ -1,11 +1,12 @@
 {
 	"name": "last-hit-types",
-	"version": "0.7.5-dev.3",
+	"version": "0.7.5-dev.5",
 	"description": "types declaration of last-hit packages",
 	"main": "index.js",
 	"types": "index",
 	"scripts": {
-		"deploy": "npm publish --access public"
+		"deploy": "npm publish --access public",
+		"deploy:dev": "npm publish --tag dev"
 	},
 	"repository": {
 		"type": "git",

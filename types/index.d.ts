@@ -290,7 +290,7 @@ declare module 'last-hit-types' {
 		}
 
 		export interface IWorkspaceExtensionTestHelper {
-			test(title: string, fn: () => void | Promise<void>): this;
+			test(title: string, fn: () => void | Promise<void>): Promise<this>;
 		}
 
 		export interface IWorkspaceExtensionBrowserHelper {
@@ -307,49 +307,38 @@ declare module 'last-hit-types' {
 			isInIDE(): boolean;
 		}
 
+		export type HandlerTestHelper = { test: IWorkspaceExtensionTestHelper };
+		export type HandlerBrowserHelper = { browser: IWorkspaceExtensionBrowserHelper };
+		export type HandlerHelpers = HandlerTestHelper & HandlerBrowserHelper;
+
 		export interface IWorkspaceExtensionEntryPoint extends Extensions.IExtensionEntryPoint {
 			handleEnvironmentPrepare(
 				event: EnvironmentPrepareEvent,
-				helpers: { test: IWorkspaceExtensionTestHelper }
+				helpers: HandlerTestHelper
 			): Promise<PreparedEnvironment>;
 
 			handleStoryPrepare(
 				event: StoryPrepareEvent,
-				helpers: { test: IWorkspaceExtensionTestHelper }
+				helpers: HandlerTestHelper
 			): Promise<PreparedStory>;
 
 			handleFlowShouldStart(
 				event: FlowShouldStartEvent,
-				helpers: { test: IWorkspaceExtensionTestHelper }
+				helpers: HandlerTestHelper
 			): Promise<PreparedFlow>;
 			handleFlowAccomplished(
 				event: FlowAccomplishedEvent,
-				helpers: {
-					test: IWorkspaceExtensionTestHelper;
-					browser: IWorkspaceExtensionBrowserHelper;
-				}
+				helpers: HandlerHelpers
 			): Promise<AccomplishedFlow>;
 
 			handleStepShouldStart(
 				event: StepShouldStartEvent,
-				helpers: {
-					test: IWorkspaceExtensionTestHelper;
-					browser: IWorkspaceExtensionBrowserHelper;
-				}
+				helpers: HandlerHelpers
 			): Promise<PreparedStep>;
-			handleStepOnError(
-				event: StepOnErrorEvent,
-				helpers: {
-					test: IWorkspaceExtensionTestHelper;
-					browser: IWorkspaceExtensionBrowserHelper;
-				}
-			): Promise<FixedStep>;
+			handleStepOnError(event: StepOnErrorEvent, helpers: HandlerHelpers): Promise<FixedStep>;
 			handleStepAccomplished(
 				event: StepAccomplishedEvent,
-				helpers: {
-					test: IWorkspaceExtensionTestHelper;
-					browser: IWorkspaceExtensionBrowserHelper;
-				}
+				helpers: HandlerHelpers
 			): Promise<AccomplishedStep>;
 
 			handleReloadAllHandlers(event: ReloadAllHandlersEvent): Promise<void>;

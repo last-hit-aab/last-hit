@@ -1,12 +1,13 @@
 import fs from 'fs';
 import {
+	ExtensionBrowserOperationData,
+	ExtensionBrowserOperationEvent,
 	ExtensionErrorLogEvent,
 	ExtensionEventTypes,
 	ExtensionLogEvent,
-	ExtensionBrowserOperationEvent,
+	ExtensionTestLogEvent,
 	GetElementAttrValueData,
-	GetElementPropValueData,
-	ExtensionBrowserOperationData
+	GetElementPropValueData
 } from 'last-hit-extensions';
 import {
 	AjaxStep,
@@ -157,6 +158,7 @@ class Replayer {
 	private env: Environment;
 
 	private registry: WorkspaceExtensionRegistry;
+	private testLogs: Array<{ title: string; passed: boolean; level?: number }> = [];
 
 	constructor(options: ReplayerOptions) {
 		const { storyName, flow, env, logger, replayers, registry } = options;
@@ -176,7 +178,8 @@ class Replayer {
 		this.registry
 			.on(ExtensionEventTypes.LOG, this.handleExtensionLog)
 			.on(ExtensionEventTypes.ERROR_LOG, this.handleExtensionErrorLog)
-			.on(ExtensionEventTypes.BROWSER_OPERATION, this.handlerBrowserOperation);
+			.on(ExtensionEventTypes.BROWSER_OPERATION, this.handlerBrowserOperation)
+			.on(ExtensionEventTypes.TEST_LOG, this.handleTestLog);
 	}
 	private handleExtensionLog = (event: ExtensionLogEvent): void => {
 		this.getLogger().log(event);
@@ -198,6 +201,12 @@ class Replayer {
 				registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), null);
 		}
 	};
+	private handleTestLog = (event: ExtensionTestLogEvent): void => {
+		this.testLogs.push(event.data);
+	};
+	getTestLogs() {
+		return this.testLogs;
+	}
 	private async findCurrentPage(uuid?: string): Promise<Page> {
 		if (uuid) {
 			const page = this.getPage(uuid);

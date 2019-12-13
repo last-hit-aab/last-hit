@@ -18,7 +18,7 @@ type Handler = {
 	stepUuid?: string;
 	handle?: (
 		event: WorkspaceExtensions.WorkspaceEvent,
-		browserHelper?: WorkspaceExtensions.IWorkspaceExtensionBrowserHelper
+		helpers: WorkspaceExtensions.HandlerTestHelper | WorkspaceExtensions.HandlerBrowserHelper
 	) => Promise<any>;
 };
 type Handlers = { [key in string]: Handler };
@@ -49,67 +49,76 @@ export abstract class AbstractWorkspaceExtensionEntryPoint
 		return handler;
 	}
 	async handleEnvironmentPrepare(
-		event: WorkspaceExtensions.EnvironmentPrepareEvent
+		event: WorkspaceExtensions.EnvironmentPrepareEvent,
+		helpers: WorkspaceExtensions.HandlerTestHelper
 	): Promise<WorkspaceExtensions.PreparedEnvironment> {
-		return await this.findHandler('env-prepare', 'env-prepare', 'env-prepare').handle!(event);
+		return await this.findHandler('env-prepare', 'env-prepare', 'env-prepare').handle!(
+			event,
+			helpers
+		);
 	}
+
 	async handleStoryPrepare(
-		event: WorkspaceExtensions.StoryPrepareEvent
+		event: WorkspaceExtensions.StoryPrepareEvent,
+		helpers: WorkspaceExtensions.HandlerTestHelper
 	): Promise<WorkspaceExtensions.PreparedStory> {
 		return await this.findHandler(
 			`story-prepare@${event.story.name}`,
 			'story-prepare',
 			`${event.story.name}/story-prepare`
-		).handle!(event);
+		).handle!(event, helpers);
 	}
+
 	async handleFlowShouldStart(
-		event: WorkspaceExtensions.FlowShouldStartEvent
+		event: WorkspaceExtensions.FlowShouldStartEvent,
+		helpers: WorkspaceExtensions.HandlerTestHelper
 	): Promise<WorkspaceExtensions.PreparedFlow> {
 		return await this.findHandler(
 			`flow-should-start@${event.flow.name}@${event.story.name}`,
 			'flow-should-start',
 			`${event.story.name}/${event.flow.name}/flow-should-start`
-		).handle!(event);
+		).handle!(event, helpers);
 	}
 	async handleFlowAccomplished(
 		event: WorkspaceExtensions.FlowAccomplishedEvent,
-		browserHelper: WorkspaceExtensions.IWorkspaceExtensionBrowserHelper
+		helpers: WorkspaceExtensions.HandlerHelpers
 	): Promise<WorkspaceExtensions.AccomplishedFlow> {
 		return await this.findHandler(
 			`flow-accomplished@${event.flow.name}@${event.story.name}`,
 			'flow-accomplished',
 			`${event.story.name}/${event.flow.name}/flow-accomplished`
-		).handle!(event, browserHelper);
+		).handle!(event, helpers);
 	}
+	
 	async handleStepShouldStart(
 		event: WorkspaceExtensions.StepShouldStartEvent,
-		browserHelper: WorkspaceExtensions.IWorkspaceExtensionBrowserHelper
+		helpers: WorkspaceExtensions.HandlerHelpers
 	): Promise<WorkspaceExtensions.PreparedStep> {
 		return await this.findHandler(
 			`step-should-start@${event.step.stepUuid}@${event.flow.name}@${event.story.name}`,
 			'step-should-start',
 			`${event.story.name}/${event.flow.name}/${event.step.stepUuid}/step-should-start`
-		).handle!(event, browserHelper);
+		).handle!(event, helpers);
 	}
 	async handleStepOnError(
 		event: WorkspaceExtensions.StepOnErrorEvent,
-		browserHelper: WorkspaceExtensions.IWorkspaceExtensionBrowserHelper
+		helpers: WorkspaceExtensions.HandlerHelpers
 	): Promise<WorkspaceExtensions.FixedStep> {
 		return await this.findHandler(
 			`step-on-error@${event.step.stepUuid}@${event.flow.name}@${event.story.name}`,
 			'step-on-error',
 			`${event.story.name}/${event.flow.name}/${event.step.stepUuid}/step-on-error`
-		).handle!(event, browserHelper);
+		).handle!(event, helpers);
 	}
 	async handleStepAccomplished(
 		event: WorkspaceExtensions.StepAccomplishedEvent,
-		browserHelper: WorkspaceExtensions.IWorkspaceExtensionBrowserHelper
+		helpers: WorkspaceExtensions.HandlerHelpers
 	): Promise<WorkspaceExtensions.AccomplishedStep> {
 		return await this.findHandler(
 			`step-accomplished@${event.step.stepUuid}@${event.flow.name}@${event.story.name}`,
 			'step-accomplished',
 			`${event.story.name}/${event.flow.name}/${event.step.stepUuid}/step-accomplished`
-		).handle!(event, browserHelper);
+		).handle!(event, helpers);
 	}
 
 	handleReloadAllHandlers(event: WorkspaceExtensions.ReloadAllHandlersEvent): Promise<void> {

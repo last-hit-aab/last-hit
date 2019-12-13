@@ -11,7 +11,8 @@ import {
 	IExtensionPoint,
 	IExtensionRegistry,
 	ExtensionRegisteredEvent,
-	ExtensionBrowserOperationEvent
+	ExtensionBrowserOperationEvent,
+	ExtensionTestLogEvent
 } from './types';
 
 export type GenericEventHandler = (...args: any[]) => void;
@@ -153,6 +154,13 @@ class ExtensionRegistry implements IExtensionRegistry {
 					extensionId,
 					data
 				} as ExtensionBrowserOperationEvent);
+			})
+			.on(WorkerEvents.TEST_LOG, (data: any): void => {
+				this.getEmitter().emit(ExtensionEventTypes.TEST_LOG, {
+					type: ExtensionEventTypes.TEST_LOG,
+					extensionId,
+					data
+				} as ExtensionTestLogEvent);
 			});
 		await worker.start(definition);
 		console.log(`Extension[${extensionId}] started successfully by worker.`);

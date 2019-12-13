@@ -122,6 +122,13 @@ var ExtensionRegistry = /** @class */ (function () {
                                 extensionId: extensionId,
                                 data: data
                             });
+                        })
+                            .on("test-log" /* TEST_LOG */, function (data) {
+                            _this.getEmitter().emit(types_1.ExtensionEventTypes.TEST_LOG, {
+                                type: types_1.ExtensionEventTypes.TEST_LOG,
+                                extensionId: extensionId,
+                                data: data
+                            });
                         });
                         return [4 /*yield*/, worker.start(definition)];
                     case 1:

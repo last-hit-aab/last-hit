@@ -1,6 +1,6 @@
 {
 	"name": "last-hit-replayer",
-	"version": "0.7.5-dev.2",
+	"version": "0.7.5-dev.5",
 	"description": "Replayer for last-hit recorded data.",
 	"main": "dist/index.js",
 	"types": "index",
@@ -11,7 +11,9 @@
 		"start": "gulp && node bin/entry.js",
 		"test": "last-hit-replayer",
 		"deploy": "gulp && npm publish --access public",
-		"compile": "gulp"
+		"deploy:dev": "gulp && npm publish --tag dev",
+		"compile": "gulp",
+		"update:dev": "yarn add last-hit-extensions@dev"
 	},
 	"repository": {
 		"type": "git",
@@ -45,8 +47,7 @@
 		"handlebars": "^4.5.3",
 		"image-ssim": "^0.2.0",
 		"jsonfile": "^5.0.0",
-		"last-hit-extensions": "^0.7.5-dev.2",
-		"last-hit-types": "^0.7.5-dev.2",
+		"last-hit-extensions": "^0.7.5-dev.5",
 		"mkdirp": "^0.5.1",
 		"node-resemble-js": "^0.2.0",
 		"nyc": "^14.1.1",

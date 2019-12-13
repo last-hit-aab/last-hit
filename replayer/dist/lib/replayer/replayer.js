@@ -162,6 +162,7 @@ var Replayer = /** @class */ (function () {
         this.coverages = [];
         /** true when switch to record, never turn back to false again */
         this.onRecord = false;
+        this.testLogs = [];
         this.handleExtensionLog = function (event) {
             _this.getLogger().log(event);
         };
@@ -182,6 +183,9 @@ var Replayer = /** @class */ (function () {
                     registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), null);
             }
         };
+        this.handleTestLog = function (event) {
+            _this.testLogs.push(event.data);
+        };
         var storyName = options.storyName, flow = options.flow, env = options.env, logger = options.logger, replayers = options.replayers, registry = options.registry;
         this.storyName = storyName;
         this.flow = (function () {
@@ -196,8 +200,12 @@ var Replayer = /** @class */ (function () {
         this.registry
             .on(last_hit_extensions_1.ExtensionEventTypes.LOG, this.handleExtensionLog)
             .on(last_hit_extensions_1.ExtensionEventTypes.ERROR_LOG, this.handleExtensionErrorLog)
-            .on(last_hit_extensions_1.ExtensionEventTypes.BROWSER_OPERATION, this.handlerBrowserOperation);
+            .on(last_hit_extensions_1.ExtensionEventTypes.BROWSER_OPERATION, this.handlerBrowserOperation)
+            .on(last_hit_extensions_1.ExtensionEventTypes.TEST_LOG, this.handleTestLog);
     }
+    Replayer.prototype.getTestLogs = function () {
+        return this.testLogs;
+    };
     Replayer.prototype.findCurrentPage = function (uuid) {
         return __awaiter(this, void 0, void 0, function () {
             var page, pages;

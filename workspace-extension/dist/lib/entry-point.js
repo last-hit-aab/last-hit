@@ -61,71 +61,71 @@ var AbstractWorkspaceExtensionEntryPoint = /** @class */ (function () {
         }
         return handler;
     };
-    AbstractWorkspaceExtensionEntryPoint.prototype.handleEnvironmentPrepare = function (event) {
+    AbstractWorkspaceExtensionEntryPoint.prototype.handleEnvironmentPrepare = function (event, helpers) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.findHandler('env-prepare', 'env-prepare', 'env-prepare').handle(event)];
+                    case 0: return [4 /*yield*/, this.findHandler('env-prepare', 'env-prepare', 'env-prepare').handle(event, helpers)];
                     case 1: return [2 /*return*/, _a.sent()];
                 }
             });
         });
     };
-    AbstractWorkspaceExtensionEntryPoint.prototype.handleStoryPrepare = function (event) {
+    AbstractWorkspaceExtensionEntryPoint.prototype.handleStoryPrepare = function (event, helpers) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.findHandler("story-prepare@" + event.story.name, 'story-prepare', event.story.name + "/story-prepare").handle(event)];
+                    case 0: return [4 /*yield*/, this.findHandler("story-prepare@" + event.story.name, 'story-prepare', event.story.name + "/story-prepare").handle(event, helpers)];
                     case 1: return [2 /*return*/, _a.sent()];
                 }
             });
         });
     };
-    AbstractWorkspaceExtensionEntryPoint.prototype.handleFlowShouldStart = function (event) {
+    AbstractWorkspaceExtensionEntryPoint.prototype.handleFlowShouldStart = function (event, helpers) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.findHandler("flow-should-start@" + event.flow.name + "@" + event.story.name, 'flow-should-start', event.story.name + "/" + event.flow.name + "/flow-should-start").handle(event)];
+                    case 0: return [4 /*yield*/, this.findHandler("flow-should-start@" + event.flow.name + "@" + event.story.name, 'flow-should-start', event.story.name + "/" + event.flow.name + "/flow-should-start").handle(event, helpers)];
                     case 1: return [2 /*return*/, _a.sent()];
                 }
             });
         });
     };
-    AbstractWorkspaceExtensionEntryPoint.prototype.handleFlowAccomplished = function (event, browserHelper) {
+    AbstractWorkspaceExtensionEntryPoint.prototype.handleFlowAccomplished = function (event, helpers) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.findHandler("flow-accomplished@" + event.flow.name + "@" + event.story.name, 'flow-accomplished', event.story.name + "/" + event.flow.name + "/flow-accomplished").handle(event, browserHelper)];
+                    case 0: return [4 /*yield*/, this.findHandler("flow-accomplished@" + event.flow.name + "@" + event.story.name, 'flow-accomplished', event.story.name + "/" + event.flow.name + "/flow-accomplished").handle(event, helpers)];
                     case 1: return [2 /*return*/, _a.sent()];
                 }
             });
         });
     };
-    AbstractWorkspaceExtensionEntryPoint.prototype.handleStepShouldStart = function (event, browserHelper) {
+    AbstractWorkspaceExtensionEntryPoint.prototype.handleStepShouldStart = function (event, helpers) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.findHandler("step-should-start@" + event.step.stepUuid + "@" + event.flow.name + "@" + event.story.name, 'step-should-start', event.story.name + "/" + event.flow.name + "/" + event.step.stepUuid + "/step-should-start").handle(event, browserHelper)];
+                    case 0: return [4 /*yield*/, this.findHandler("step-should-start@" + event.step.stepUuid + "@" + event.flow.name + "@" + event.story.name, 'step-should-start', event.story.name + "/" + event.flow.name + "/" + event.step.stepUuid + "/step-should-start").handle(event, helpers)];
                     case 1: return [2 /*return*/, _a.sent()];
                 }
             });
         });
     };
-    AbstractWorkspaceExtensionEntryPoint.prototype.handleStepOnError = function (event, browserHelper) {
+    AbstractWorkspaceExtensionEntryPoint.prototype.handleStepOnError = function (event, helpers) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.findHandler("step-on-error@" + event.step.stepUuid + "@" + event.flow.name + "@" + event.story.name, 'step-on-error', event.story.name + "/" + event.flow.name + "/" + event.step.stepUuid + "/step-on-error").handle(event, browserHelper)];
+                    case 0: return [4 /*yield*/, this.findHandler("step-on-error@" + event.step.stepUuid + "@" + event.flow.name + "@" + event.story.name, 'step-on-error', event.story.name + "/" + event.flow.name + "/" + event.step.stepUuid + "/step-on-error").handle(event, helpers)];
                     case 1: return [2 /*return*/, _a.sent()];
                 }
             });
         });
     };
-    AbstractWorkspaceExtensionEntryPoint.prototype.handleStepAccomplished = function (event, browserHelper) {
+    AbstractWorkspaceExtensionEntryPoint.prototype.handleStepAccomplished = function (event, helpers) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.findHandler("step-accomplished@" + event.step.stepUuid + "@" + event.flow.name + "@" + event.story.name, 'step-accomplished', event.story.name + "/" + event.flow.name + "/" + event.step.stepUuid + "/step-accomplished").handle(event, browserHelper)];
+                    case 0: return [4 /*yield*/, this.findHandler("step-accomplished@" + event.step.stepUuid + "@" + event.flow.name + "@" + event.story.name, 'step-accomplished', event.story.name + "/" + event.flow.name + "/" + event.step.stepUuid + "/step-accomplished").handle(event, helpers)];
                     case 1: return [2 /*return*/, _a.sent()];
                 }
             });

@@ -1,3 +1,4 @@
+import EventEmitter from 'events';
 import fs from 'fs';
 import jsonfile from 'jsonfile';
 import { Extensions, WorkspaceExtensions } from 'last-hit-types';
@@ -6,15 +7,15 @@ import path from 'path';
 import {
 	ExtensionBrowserOperationEvent,
 	ExtensionDataTransmittedEvent,
+	ExtensionEvent,
 	ExtensionEventTypes,
 	ExtensionPointId,
+	ExtensionTestLogEvent,
 	IExtensionEntryPointHelper,
-	IExtensionEntryPointWrapper,
-	ExtensionEvent
+	IExtensionEntryPointWrapper
 } from '../types';
 import { URI } from '../utils/uri';
 import { WorkspaceExtensionEntryPointWrapper } from './wrappers/workspace';
-import EventEmitter from 'events';
 
 // With Electron 2.x and node.js 8.x the "natives" module
 // can cause a native crash (see https://github.com/nodejs/node/issues/19891 and
@@ -200,6 +201,26 @@ class ExtensionEntryPointHelper implements IExtensionEntryPointHelper {
 					type: ExtensionEventTypes.BROWSER_OPERATION,
 					data
 				} as ExtensionBrowserOperationEvent,
+				undefined,
+				undefined,
+				(error: Error) => {
+					if (error) {
+						reject(error);
+					} else {
+						resolve();
+					}
+				}
+			);
+		});
+	}
+	sendTestLog(title: string, passed: boolean, level?: number): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			process.send(
+				{
+					extensionId: this.extensionId,
+					type: ExtensionEventTypes.TEST_LOG,
+					data: { title, passed, level }
+				} as ExtensionTestLogEvent,
 				undefined,
 				undefined,
 				(error: Error) => {

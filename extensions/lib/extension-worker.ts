@@ -10,7 +10,8 @@ import {
 	ExtensionRegisteredEvent,
 	ExtensionPointId,
 	ExtensionDataTransmittedIgnoreEvent,
-	ExtensionBrowserOperationEvent
+	ExtensionBrowserOperationEvent,
+	ExtensionTestLogEvent
 } from './types';
 import * as objects from './utils/objects';
 import * as platform from './utils/platform';
@@ -22,7 +23,8 @@ export const enum WorkerEvents {
 	ERROR_LOG = 'error-log',
 	ERROR = 'error',
 	DATA = 'data',
-	BROWSER = 'browser'
+	BROWSER = 'browser',
+	TEST_LOG = 'test-log'
 }
 type GenericListener = (...args: any[]) => void;
 export type ChildProcessRegisteredListener = (error?: Error) => void;
@@ -31,6 +33,7 @@ export type LogListener = (data: any) => void;
 export type ErrorListener = (error: Error) => void;
 export type DataListener = (data: any) => void;
 export type BrowserOperationListener = (data: any) => void;
+export type TestLogListener = (data: any) => void;
 export interface IExtensionWorker {
 	once(event: WorkerEvents.REGISTERED, listener: ChildProcessRegisteredListener): this;
 	once(event: WorkerEvents.EXITED, listener: ChildProcessExistListener): this;
@@ -42,6 +45,8 @@ export interface IExtensionWorker {
 	off(event: WorkerEvents.DATA, listener: DataListener): this;
 	on(event: WorkerEvents.BROWSER, listener: BrowserOperationListener): this;
 	off(event: WorkerEvents.BROWSER, listener: BrowserOperationListener): this;
+	on(event: WorkerEvents.TEST_LOG, listener: TestLogListener): this;
+	off(event: WorkerEvents.TEST_LOG, listener: TestLogListener): this;
 }
 
 class ExtensionWorker implements IExtensionWorker {
@@ -111,8 +116,13 @@ class ExtensionWorker implements IExtensionWorker {
 				this.emitter.emit(WorkerEvents.DATA, (data as ExtensionDataTransmittedEvent).data);
 				break;
 			case data.extensionId && data.type === ExtensionEventTypes.REGISTERED:
-				const event = data as ExtensionRegisteredEvent;
-				this.emitter.emit(WorkerEvents.REGISTERED, event.error);
+				this.emitter.emit(
+					WorkerEvents.REGISTERED,
+					(data as ExtensionRegisteredEvent).error
+				);
+				break;
+			case data.extensionId && data.type === ExtensionEventTypes.TEST_LOG:
+				this.emitter.emit(WorkerEvents.TEST_LOG, (data as ExtensionTestLogEvent).data);
 				break;
 			case data.extensionId && data.type === ExtensionEventTypes.BROWSER_OPERATION:
 				this.emitter.emit(

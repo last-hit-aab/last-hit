@@ -13,6 +13,7 @@ export interface IExtensionEntryPointHelper {
 	sendError(e: Error): Promise<void>;
 	sendIgnore(): Promise<void>;
 	sendBrowserOperation(data: any): Promise<void>;
+	sendTestLog(title: string, passed: boolean, level?: number): Promise<void>;
 	once(eventType: ExtensionEventTypes, handler: (value: any) => void): this;
 	on(eventType: ExtensionEventTypes, handler: (value: any) => void): this;
 	off(eventType: ExtensionEventTypes, handler: (value: any) => void): this;
@@ -25,7 +26,8 @@ export enum ExtensionEventTypes {
 	BROWSER_OPERATION = 'browser-operation',
 	LOG = 'log',
 	ERROR_LOG = 'error-log',
-	ERROR = 'error'
+	ERROR = 'error',
+	TEST_LOG = 'test-log'
 }
 
 export interface ExtensionEvent {
@@ -87,6 +89,12 @@ export interface ExtensionBrowserOperationEvent extends ExtensionEvent {
 }
 export type ExtensionBrowserOperationHandler = (event: ExtensionBrowserOperationEvent) => void;
 
+export interface ExtensionTestLogEvent extends ExtensionEvent {
+	type: ExtensionEventTypes.TEST_LOG;
+	data: { title: string; passed: boolean; level?: number };
+}
+export type ExtensionTestLogHandler = (event: ExtensionTestLogEvent) => void;
+
 export interface ExtensionLogEvent extends ExtensionEvent {
 	type: ExtensionEventTypes.LOG;
 	data: any;
@@ -136,6 +144,10 @@ export interface IExtensionRegistry {
 		event: ExtensionEventTypes.BROWSER_OPERATION,
 		handler: ExtensionBrowserOperationHandler
 	): this;
+
+	once(event: ExtensionEventTypes.TEST_LOG, handler: ExtensionTestLogHandler): this;
+	on(event: ExtensionEventTypes.TEST_LOG, handler: ExtensionTestLogHandler): this;
+	off(event: ExtensionEventTypes.TEST_LOG, handler: ExtensionTestLogHandler): this;
 
 	once(event: ExtensionEventTypes.LOG, handler: ExtensionLogHandler): this;
 	on(event: ExtensionEventTypes.LOG, handler: ExtensionLogHandler): this;

@@ -108,11 +108,42 @@ var BrowserHelper = /** @class */ (function () {
     };
     return BrowserHelper;
 }());
+var TestHelper = /** @class */ (function () {
+    function TestHelper(helper) {
+        this.helper = helper;
+    }
+    TestHelper.prototype.getHelper = function () {
+        return this.helper;
+    };
+    TestHelper.prototype.test = function (title, fn) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _b.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, fn.call(this)];
+                    case 1:
+                        _b.sent();
+                        this.helper.sendTestLog(title, true, 0);
+                        return [3 /*break*/, 3];
+                    case 2:
+                        _a = _b.sent();
+                        this.helper.sendTestLog(title, false, 0);
+                        return [3 /*break*/, 3];
+                    case 3: return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    return TestHelper;
+}());
 var WorkspaceExtensionEntryPointWrapper = /** @class */ (function (_super) {
     __extends(WorkspaceExtensionEntryPointWrapper, _super);
     function WorkspaceExtensionEntryPointWrapper(entrypoint, helper) {
         var _this = _super.call(this, entrypoint, helper) || this;
         _this.browserHelper = new BrowserHelper(helper);
+        _this.testHelper = new TestHelper(helper);
         _this.handlers = {
             'env-prepare': entrypoint.handleEnvironmentPrepare,
             'story-prepare': entrypoint.handleStoryPrepare,
@@ -139,7 +170,10 @@ var WorkspaceExtensionEntryPointWrapper = /** @class */ (function (_super) {
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, handler.call(this.getEntrypoint(), event, this.browserHelper)];
+                        return [4 /*yield*/, handler.call(this.getEntrypoint(), event, {
+                                browser: this.browserHelper,
+                                test: this.testHelper
+                            })];
                     case 2:
                         result = _a.sent();
                         return [2 /*return*/, this.getHelper().sendMessage(result)];

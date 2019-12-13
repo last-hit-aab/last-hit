@@ -84,8 +84,10 @@ var ExtensionWorker = /** @class */ (function () {
                     _this.emitter.emit("data" /* DATA */, data.data);
                     break;
                 case data.extensionId && data.type === types_1.ExtensionEventTypes.REGISTERED:
-                    var event_1 = data;
-                    _this.emitter.emit("registered" /* REGISTERED */, event_1.error);
+                    _this.emitter.emit("registered" /* REGISTERED */, data.error);
+                    break;
+                case data.extensionId && data.type === types_1.ExtensionEventTypes.TEST_LOG:
+                    _this.emitter.emit("test-log" /* TEST_LOG */, data.data);
                     break;
                 case data.extensionId && data.type === types_1.ExtensionEventTypes.BROWSER_OPERATION:
                     _this.emitter.emit("browser" /* BROWSER */, data.data);

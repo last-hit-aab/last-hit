@@ -9,6 +9,7 @@ var ExtensionEventTypes;
     ExtensionEventTypes["LOG"] = "log";
     ExtensionEventTypes["ERROR_LOG"] = "error-log";
     ExtensionEventTypes["ERROR"] = "error";
+    ExtensionEventTypes["TEST_LOG"] = "test-log";
 })(ExtensionEventTypes = exports.ExtensionEventTypes || (exports.ExtensionEventTypes = {}));
 var AbstractExtensionEntryPointWrapper = /** @class */ (function () {
     function AbstractExtensionEntryPointWrapper(entrypoint, helper) {
