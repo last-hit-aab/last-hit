@@ -1265,7 +1265,7 @@ var Replayer = /** @class */ (function () {
                     case 0: return [4 /*yield*/, this.getElementTagName(element)];
                     case 1:
                         tagName = _a.sent();
-                        if (!(tagName === 'INPUT')) return [3 /*break*/, 6];
+                        if (!(tagName === 'INPUT' || tagName === 'TEXTAREA')) return [3 /*break*/, 6];
                         return [4 /*yield*/, this.getElementType(element)];
                     case 2:
                         type = _a.sent();
@@ -1291,6 +1291,11 @@ var Replayer = /** @class */ (function () {
                         _a.sent();
                         return [4 /*yield*/, element.evaluate(function (node) {
                                 // node.value = value;
+                                /*
+                                const inputEvent = document.createEvent('HTMLEvents');
+                                inputEvent.initEvent('input', true, true);
+                                node.dispatchEvent(inputEvent);
+                                */
                                 var event = document.createEvent('HTMLEvents');
                                 event.initEvent('change', true, true);
                                 node.dispatchEvent(event);

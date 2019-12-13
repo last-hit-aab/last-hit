@@ -415,7 +415,7 @@ class Replayer {
 
 			const file_path = `${getTempFolder(process.cwd())}/error-${
 				step.uuid
-			}-${this.getSteps().indexOf(step)}.png`;
+				}-${this.getSteps().indexOf(step)}.png`;
 			if (page) {
 				await page.screenshot({ path: file_path, type: 'png' });
 			} else {
@@ -864,7 +864,7 @@ class Replayer {
 		const tagName = await this.getElementTagName(element);
 
 		// console.log("tagName", tagName)
-		if (tagName === 'INPUT') {
+		if (tagName === 'INPUT' || tagName === 'TEXTAREA') {
 			const type = await this.getElementType(element);
 			if (
 				!type ||
@@ -882,6 +882,11 @@ class Replayer {
 				await element.type(value);
 				await element.evaluate(node => {
 					// node.value = value;
+					/*
+					const inputEvent = document.createEvent('HTMLEvents');
+					inputEvent.initEvent('input', true, true);
+					node.dispatchEvent(inputEvent);
+					*/
 					const event = document.createEvent('HTMLEvents');
 					event.initEvent('change', true, true);
 					node.dispatchEvent(event);
