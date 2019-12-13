@@ -1330,6 +1330,11 @@ kind-of@^6.0.0, kind-of@^6.0.2:
   resolved "https://registry.yarnpkg.com/kind-of/-/kind-of-6.0.2.tgz#01146b36a6218e64e58f3a8d66de5d7fc6f6d051"
   integrity sha512-s5kLOcnH0XqDO+FvuaLX8DDjZ18CGFk7VygH40QoKPUQhW4e2rvM0rwUq0t8IQDOwYSeLK01U90OjzBTme2QqA==
 
+last-hit-types@^0.7.5-dev.2:
+  version "0.7.5-dev.2"
+  resolved "https://registry.yarnpkg.com/last-hit-types/-/last-hit-types-0.7.5-dev.2.tgz#7f769cfef2e70cc3843e977b8013989d309548c9"
+  integrity sha512-zcBCEC3LMIS2k5tHohZuokaCZHHHmnyJcveXjVcpo4eMpBIn4aUpNznqwbt76iGYVS9X7qaIdqV9Xl7eZCgPCQ==
+
 last-run@^1.1.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/last-run/-/last-run-1.1.1.tgz#45b96942c17b1c79c772198259ba943bebf8ca5b"

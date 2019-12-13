@@ -1,6 +1,6 @@
 {
 	"name": "last-hit-replayer",
-	"version": "0.7.5",
+	"version": "0.7.5-dev.2",
 	"description": "Replayer for last-hit recorded data.",
 	"main": "dist/index.js",
 	"types": "index",
@@ -45,8 +45,8 @@
 		"handlebars": "^4.5.3",
 		"image-ssim": "^0.2.0",
 		"jsonfile": "^5.0.0",
-		"last-hit-extensions": "0.7.5",
-		"last-hit-types": "0.7.5",
+		"last-hit-extensions": "^0.7.5-dev.2",
+		"last-hit-types": "^0.7.5-dev.2",
 		"mkdirp": "^0.5.1",
 		"node-resemble-js": "^0.2.0",
 		"nyc": "^14.1.1",
