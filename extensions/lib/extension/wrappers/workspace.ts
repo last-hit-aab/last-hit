@@ -88,12 +88,33 @@ class TestHelper implements WorkspaceExtensions.IWorkspaceExtensionTestHelper {
 	private getHelper(): IExtensionEntryPointHelper {
 		return this.helper;
 	}
+	private readTitle(
+		title: string = 'Untitled test',
+		level: number = 0
+	): { title: string; level: number } {
+		if (title.startsWith('-') && level === 0) {
+			const chars = title.split('');
+			let stop = false;
+			level = chars.reduce((count, char) => {
+				if (char === '-' && !stop) {
+					count++;
+				} else {
+					stop = true;
+				}
+				return count;
+			}, 0);
+			return { title: title.substr(level), level };
+		} else {
+			return { title, level };
+		}
+	}
 	async test(title: string, fn: () => void | Promise<void>): Promise<this> {
+		const { title: newTitle, level } = this.readTitle(title, 0);
 		try {
 			await fn.call(this);
-			this.helper.sendTestLog(title, true, 0);
+			this.getHelper().sendTestLog(newTitle, true, level);
 		} catch {
-			this.helper.sendTestLog(title, false, 0);
+			this.getHelper().sendTestLog(newTitle, false, level);
 		}
 		return this;
 	}

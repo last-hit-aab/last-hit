@@ -1,6 +1,6 @@
 {
 	"name": "last-hit-workspace-extension",
-	"version": "0.7.5-dev.5",
+	"version": "0.7.5-dev.6",
 	"description": "workspace extension abstract implementation",
 	"main": "dist/index.js",
 	"scripts": {

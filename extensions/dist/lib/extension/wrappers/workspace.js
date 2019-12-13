@@ -115,23 +115,47 @@ var TestHelper = /** @class */ (function () {
     TestHelper.prototype.getHelper = function () {
         return this.helper;
     };
+    TestHelper.prototype.readTitle = function (title, level) {
+        if (title === void 0) { title = 'Untitled test'; }
+        if (level === void 0) { level = 0; }
+        if (title.startsWith('-') && level === 0) {
+            var chars = title.split('');
+            var stop_1 = false;
+            level = chars.reduce(function (count, char) {
+                if (char === '-' && !stop_1) {
+                    count++;
+                }
+                else {
+                    stop_1 = true;
+                }
+                return count;
+            }, 0);
+            return { title: title.substr(level), level: level };
+        }
+        else {
+            return { title: title, level: level };
+        }
+    };
     TestHelper.prototype.test = function (title, fn) {
         return __awaiter(this, void 0, void 0, function () {
-            var _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var _a, newTitle, level, _b;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
                     case 0:
-                        _b.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, fn.call(this)];
+                        _a = this.readTitle(title, 0), newTitle = _a.title, level = _a.level;
+                        _c.label = 1;
                     case 1:
-                        _b.sent();
-                        this.helper.sendTestLog(title, true, 0);
-                        return [3 /*break*/, 3];
+                        _c.trys.push([1, 3, , 4]);
+                        return [4 /*yield*/, fn.call(this)];
                     case 2:
-                        _a = _b.sent();
-                        this.helper.sendTestLog(title, false, 0);
-                        return [3 /*break*/, 3];
-                    case 3: return [2 /*return*/, this];
+                        _c.sent();
+                        this.getHelper().sendTestLog(newTitle, true, level);
+                        return [3 /*break*/, 4];
+                    case 3:
+                        _b = _c.sent();
+                        this.getHelper().sendTestLog(newTitle, false, level);
+                        return [3 /*break*/, 4];
+                    case 4: return [2 /*return*/, this];
                 }
             });
         });

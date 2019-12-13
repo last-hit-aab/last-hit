@@ -202,6 +202,7 @@ class Replayer {
 		}
 	};
 	private handleTestLog = (event: ExtensionTestLogEvent): void => {
+		console.log(event);
 		this.testLogs.push(event.data);
 	};
 	getTestLogs() {

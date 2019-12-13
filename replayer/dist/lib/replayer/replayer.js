@@ -184,6 +184,7 @@ var Replayer = /** @class */ (function () {
             }
         };
         this.handleTestLog = function (event) {
+            console.log(event);
             _this.testLogs.push(event.data);
         };
         var storyName = options.storyName, flow = options.flow, env = options.env, logger = options.logger, replayers = options.replayers, registry = options.registry;

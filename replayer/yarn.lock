@@ -1920,10 +1920,10 @@ kind-of@^6.0.0, kind-of@^6.0.2:
   resolved "https://registry.yarnpkg.com/kind-of/-/kind-of-6.0.2.tgz#01146b36a6218e64e58f3a8d66de5d7fc6f6d051"
   integrity sha512-s5kLOcnH0XqDO+FvuaLX8DDjZ18CGFk7VygH40QoKPUQhW4e2rvM0rwUq0t8IQDOwYSeLK01U90OjzBTme2QqA==
 
-last-hit-extensions@^0.7.5-dev.5:
-  version "0.7.5-dev.5"
-  resolved "https://registry.yarnpkg.com/last-hit-extensions/-/last-hit-extensions-0.7.5-dev.5.tgz#7d4e42d336372809422c3cd5e71be6b15bda088e"
-  integrity sha512-rojdoD9YCY/TPKKmpGa/pjrZYiTPhpv5aZ9LWrOxVbUVS7oAfHVzIcI47GCEn4lgxIVInatCIEjn/t3ClskABw==
+last-hit-extensions@^0.7.5-dev.7:
+  version "0.7.5-dev.7"
+  resolved "https://registry.yarnpkg.com/last-hit-extensions/-/last-hit-extensions-0.7.5-dev.7.tgz#7f32000ccb79d938be5e072fa463116ff871936d"
+  integrity sha512-i91rzKNhkCe0QWU//LOmAyKtNKxRlPLwBoO+iZUph47aRvN0Zjb76PdtJugVeRdYej53QksYPQqkjY65U8lQhQ==
   dependencies:
     "@types/jsonfile" "^5.0.0"
     jsonfile "^5.0.0"
