@@ -1,6 +1,7 @@
+import { Flow, Story } from 'last-hit-types';
 import { IUIEventEmitter } from '../../common/context';
 import { EventTypes } from '../../events';
-import { Flow, FlowUIStatus, FlowUIStatusEnum, Story, WorkspaceStructure } from '../../types';
+import { FlowUIStatus, FlowUIStatusEnum, WorkspaceStructure } from '../../types';
 
 const getUIStatusOfFlow = async (
 	emitter: IUIEventEmitter,

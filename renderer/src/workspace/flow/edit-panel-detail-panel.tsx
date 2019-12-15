@@ -1,5 +1,6 @@
 import { Button, FormGroup, InputGroup, MenuItem, Switch } from '@blueprintjs/core';
 import { Select } from '@blueprintjs/select';
+import { AjaxStep, Device, Flow, StartStep, Step, Story } from 'last-hit-types';
 import React from 'react';
 import styled from 'styled-components';
 import uuidv4 from 'uuid/v4';
@@ -7,7 +8,6 @@ import UIContext from '../../common/context';
 import Devices from '../../common/device-descriptors';
 import IDESettings from '../../common/ide-settings';
 import { EventTypes } from '../../events';
-import { AjaxStep, Device, Flow, StartStep, Step, StepType, Story } from '../../types';
 import { getStepTypeText } from '../step/utils';
 import EditPanelBottomBar from './edit-panel-detail-panel-bottom-bar';
 
@@ -70,18 +70,18 @@ const buildStepFieldDefinitions = (flow: Flow, step: Step): Array<FieldDefinitio
 	];
 
 	switch (step.type) {
-		case StepType.CHANGE:
+		case 'change':
 			properties.push({
 				label: 'Value',
 				propName: 'value',
 				writeable: true
 			});
 		// eslint-disable-next-line
-		case StepType.CLICK:
-		case StepType.MOUSE_DOWN:
-		case StepType.KEY_DOWN:
-		case StepType.FOCUS:
-		case StepType.SCROLL:
+		case 'click':
+		case 'mousedown':
+		case 'keydown':
+		case 'focus':
+		case 'scroll':
 			properties.push({
 				label: 'XPath',
 				propName: 'path',
@@ -104,7 +104,7 @@ const buildStepFieldDefinitions = (flow: Flow, step: Step): Array<FieldDefinitio
 				writeable: true
 			});
 			break;
-		case StepType.START:
+		case 'start':
 			if (!forceDependency) {
 				properties.push({
 					label: 'URL',
@@ -123,7 +123,7 @@ const buildStepFieldDefinitions = (flow: Flow, step: Step): Array<FieldDefinitio
 				});
 			}
 			break;
-		case StepType.PAGE_CREATED:
+		case 'page-created':
 			properties.push({
 				label: 'For',
 				propName: 'forStepUuid',
@@ -131,27 +131,25 @@ const buildStepFieldDefinitions = (flow: Flow, step: Step): Array<FieldDefinitio
 				helpText: 'Provide page uuid matching in replayer.'
 			});
 		// eslint-disable-next-line
-		case StepType.END:
-		case StepType.PAGE_CLOSED:
-		case StepType.PAGE_ERROR:
-		case StepType.PAGE_SWITCHED:
-		case StepType.DIALOG_OPEN:
-		case StepType.DIALOG_CLOSE:
+		case 'end':
+		case 'page-closed':
+		case 'page-error':
+		case 'page-switched':
+		case 'dialog-open':
+		case 'dialog-close':
 			break;
-		case StepType.AJAX:
+		case 'ajax':
 			properties.push({
 				label: 'URL',
 				propName: 'url',
 				writeable: false
 			});
 			break;
-		case StepType.DOM_CHANGE:
-		case StepType.SUBMIT:
-		case StepType.RESOURCE_LOAD:
-		case StepType.LOAD:
-		case StepType.UNLOAD:
-		case StepType.VALUE_CHANGE:
-		case StepType.ANIMATION:
+		case 'dom-change':
+		case 'resource-load':
+		case 'load':
+		case 'unload':
+		case 'animation':
 			break;
 	}
 	properties.push({
@@ -186,12 +184,12 @@ const buildStepFieldDefinitions = (flow: Flow, step: Step): Array<FieldDefinitio
 
 const getValueFromStep = (step: Step, propName: string): string | boolean | undefined => {
 	switch (true) {
-		case step.type === StepType.AJAX && propName === 'url':
+		case step.type === 'ajax' && propName === 'url':
 			return (((step as AjaxStep).request || {}) as any).url;
-		case step.type === StepType.START && propName === 'wechat':
+		case step.type === 'start' && propName === 'wechat':
 			const { device: { wechat = false } = {} } = step as StartStep;
 			return wechat;
-		case step.type === StepType.START && propName === 'device':
+		case step.type === 'start' && propName === 'device':
 			const { device: { name = Devices[0].name } = {} } = step as StartStep;
 			return name;
 		default:
@@ -200,7 +198,7 @@ const getValueFromStep = (step: Step, propName: string): string | boolean | unde
 };
 const setValueToStep = (step: Step, propName: string, value: string | boolean): void => {
 	switch (true) {
-		case step.type === StepType.AJAX && propName === 'url':
+		case step.type === 'ajax' && propName === 'url':
 			const ajax = step as AjaxStep;
 			let request = ajax.request;
 			if (!request) {
@@ -209,13 +207,13 @@ const setValueToStep = (step: Step, propName: string, value: string | boolean): 
 				request.url = value as string;
 			}
 			break;
-		case step.type === StepType.START && propName === 'wechat':
+		case step.type === 'start' && propName === 'wechat':
 			{
 				const { device = {} } = step as StartStep;
 				(step as StartStep).device = { ...device, wechat: value as boolean } as Device;
 			}
 			break;
-		case step.type === StepType.START && propName === 'device':
+		case step.type === 'start' && propName === 'device':
 			{
 				const { device: { wechat = false } = {} } = step as StartStep;
 				const device = Devices.find(device => device.name === value);
@@ -281,14 +279,14 @@ export default (props: { story: Story; flow: Flow; step: Step }): JSX.Element =>
 
 	const getPropEditor = (step: Step, field: FieldDefinition): JSX.Element => {
 		switch (true) {
-			case step.type === StepType.START && field.propName === 'wechat':
+			case step.type === 'start' && field.propName === 'wechat':
 				return (
 					<Switch
 						defaultChecked={getValueFromStep(step, field.propName) as boolean}
 						onChange={handleValueChange(field.propName)}
 					/>
 				);
-			case step.type === StepType.START && field.propName === 'device':
+			case step.type === 'start' && field.propName === 'device':
 				return (
 					<DeviceSelect
 						items={Devices}

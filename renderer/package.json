@@ -1,56 +1,57 @@
 {
-  "name": "last-hit-appearance",
-  "version": "0.7.5",
-  "homepage": "./",
-  "dependencies": {
-    "@blueprintjs/core": "^3.17.2",
-    "@blueprintjs/select": "^3.11.2",
-    "@fortawesome/fontawesome-svg-core": "^1.2.25",
-    "@fortawesome/free-brands-svg-icons": "^5.11.2",
-    "@fortawesome/free-regular-svg-icons": "^5.11.2",
-    "@fortawesome/free-solid-svg-icons": "^5.11.2",
-    "@fortawesome/react-fontawesome": "^0.1.7",
-    "@types/fs-extra": "^8.0.0",
-    "@types/jest": "^24.0.17",
-    "@types/jsonfile": "^5.0.0",
-    "@types/node": "^12.7.1",
-    "@types/react": "^16.9.11",
-    "@types/react-dom": "^16.9.4",
-    "@types/react-router-dom": "^5.1.2",
-    "@types/styled-components": "^4.4.0",
-    "@types/uuid": "^3.4.5",
-    "fs-extra": "^8.1.0",
-    "jsonfile": "^5.0.0",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
-    "react-router-dom": "^5.1.2",
-    "styled-components": "^4.4.1",
-    "typescript": "^3.7.2",
-    "uuid": "^3.3.3"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "rescripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "devDependencies": {
-    "@rescripts/cli": "^0.0.11",
-    "react-scripts": "^3.2.0"
-  }
+	"name": "last-hit-appearance",
+	"version": "0.8.0",
+	"homepage": "./",
+	"dependencies": {
+		"@blueprintjs/core": "^3.17.2",
+		"@blueprintjs/select": "^3.11.2",
+		"@fortawesome/fontawesome-svg-core": "^1.2.25",
+		"@fortawesome/free-brands-svg-icons": "^5.11.2",
+		"@fortawesome/free-regular-svg-icons": "^5.11.2",
+		"@fortawesome/free-solid-svg-icons": "^5.11.2",
+		"@fortawesome/react-fontawesome": "^0.1.7",
+		"@types/fs-extra": "^8.0.0",
+		"@types/jest": "^24.0.17",
+		"@types/jsonfile": "^5.0.0",
+		"@types/node": "^12.7.1",
+		"@types/react": "^16.9.11",
+		"@types/react-dom": "^16.9.4",
+		"@types/react-router-dom": "^5.1.2",
+		"@types/styled-components": "^4.4.0",
+		"@types/uuid": "^3.4.5",
+		"fs-extra": "^8.1.0",
+		"jsonfile": "^5.0.0",
+		"last-hit-types": "0.7.5",
+		"react": "^16.12.0",
+		"react-dom": "^16.12.0",
+		"react-router-dom": "^5.1.2",
+		"styled-components": "^4.4.1",
+		"typescript": "^3.7.2",
+		"uuid": "^3.3.3"
+	},
+	"scripts": {
+		"start": "react-scripts start",
+		"build": "rescripts build",
+		"test": "react-scripts test",
+		"eject": "react-scripts eject"
+	},
+	"eslintConfig": {
+		"extends": "react-app"
+	},
+	"browserslist": {
+		"production": [
+			">0.2%",
+			"not dead",
+			"not op_mini all"
+		],
+		"development": [
+			"last 1 chrome version",
+			"last 1 firefox version",
+			"last 1 safari version"
+		]
+	},
+	"devDependencies": {
+		"@rescripts/cli": "^0.0.11",
+		"react-scripts": "^3.2.0"
+	}
 }

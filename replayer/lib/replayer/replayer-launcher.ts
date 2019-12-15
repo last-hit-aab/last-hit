@@ -1,11 +1,12 @@
+import { Flow, Step } from 'last-hit-types';
+import Environment from '../config/env';
 import { generateKeyByString } from '../utils';
 import ReplayEmitter, { CallbackEvent } from './replay-emitter';
 import Replayer from './replayer';
+import { WorkspaceExtensionRegistry } from './replayer-extension-registry';
 import { ReplayerCache } from './replayers-cache';
-import { Flow, Step } from '../types';
-import Environment from '../config/env';
 
-export type ReplayerHandle = { current?: Replayer };
+export type ReplayerHandle = { current?: Replayer; env: Environment };
 export type ReplayerLauncher = () => ReplayerHandle;
 type NextStepHandlerOptions = {
 	storyName: string;
@@ -81,7 +82,7 @@ const createNextStepHandler = (emitter: ReplayEmitter, logger: Console): NextSte
 							logger.error(e);
 							// failed, prepare for next step
 							// send back
-							replayer.getSummary().handleError(step, e);
+							// replayer.getSummary().handleError(step, e);
 							waitForNextStep({
 								event,
 								replayer,
@@ -120,13 +121,24 @@ const launch = (
 ): ReplayerHandle => {
 	const waitForNextStep = createNextStepHandler(emitter, logger);
 
-	const handle: ReplayerHandle = {};
+	const handle: ReplayerHandle = { env };
 	emitter.on(
 		'launch-replay',
 		async (event: CallbackEvent, arg: { storyName: string; flow: Flow; index: number }) => {
 			const { storyName, flow, index } = arg;
-			const replayer = new Replayer({ storyName, flow, logger, replayers, env });
+			const registry = new WorkspaceExtensionRegistry({ env: handle.env });
+			await registry.launch();
+
+			const replayer = new Replayer({
+				storyName,
+				flow,
+				logger,
+				replayers,
+				env: handle.env,
+				registry
+			});
 			handle.current = replayer;
+
 			try {
 				await replayer.start();
 				replayer.getSummary().handle((flow.steps || [])[0] || ({} as Step));

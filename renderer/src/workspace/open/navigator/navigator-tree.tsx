@@ -1,13 +1,14 @@
+import { Flow, Story } from 'last-hit-types';
 import React from 'react';
 import { getActiveWorkspace } from '../../../active';
 import UIContext from '../../../common/context';
 import { EventTypes } from '../../../events';
 import { asFlowKey } from '../../../files';
-import { Flow, Story, WorkspaceStructure } from '../../../types';
+import { WorkspaceStructure } from '../../../types';
+import { getFlowIcon } from '../../flow/utils';
 import ContentTree from './content-tree';
 import NoContentTree from './no-content-tree';
 import { selectNode, TreeNode } from './utils';
-import { getFlowIcon } from '../../flow/utils';
 
 const buildFlowNode = (story: Story, flow: Flow): TreeNode => {
 	return {

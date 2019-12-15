@@ -1,0 +1,1 @@
+{"version":3,"sources":["../lib/replayer/index.ts"],"names":[],"mappings":";;;;;AAAA,oEAA6C;AAGpC,wBAHF,wBAAa,CAGE;AAFtB,uDAAoD;AAE5B,yBAFf,iCAAc,CAEe","file":"index.js","sourcesContent":["import ReplayEmitter from './replay-emitter';\nimport { createReplayer } from './replayer-creator';\n\nexport { ReplayEmitter, createReplayer };\n"]}

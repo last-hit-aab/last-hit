@@ -7,7 +7,6 @@ import { getLogger, getProcessId } from '../utils';
 import { print } from './print';
 import { handleFlow } from './single-flow';
 
-const logger = getLogger();
 const processId = getProcessId();
 
 const createTemporaryFolders = async (
@@ -37,6 +36,7 @@ const createTemporaryFolders = async (
 };
 
 export const doOnSingleProcess = async (flows: FlowFile[], env: Environment): Promise<void> => {
+	const logger = getLogger();
 	const reports: Report[] = [];
 	const allCoverages: Coverages = [];
 	try {

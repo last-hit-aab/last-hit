@@ -1,11 +1,11 @@
 import { Button, ButtonGroup } from '@blueprintjs/core';
+import { remote } from 'electron';
+import { Flow, Step, Story } from 'last-hit-types';
 import React from 'react';
 import styled from 'styled-components';
 import UIContext from '../../common/context';
 import IDESettings from '../../common/ide-settings';
-import { Flow, Step, Story, StepType } from '../../types';
 import { EventTypes } from '../../events';
-import { remote } from 'electron';
 
 const {
 	padding: { body },
@@ -34,9 +34,9 @@ export default (props: { story: Story; flow: Flow; step: Step }): JSX.Element =>
 	// const stepCount = flow.steps!.length;
 
 	// const canFreeMove = stepIndex !== 0 && stepIndex !== stepCount - 1;
-	const canAsBreakpoint = ![StepType.START, StepType.END].includes(step.type);
+	const canAsBreakpoint = !['start', 'end'].includes(step.type);
 	const isBreakpoint = !!step.breakpoint;
-	const canDelete = ![StepType.START, StepType.END].includes(step.type);
+	const canDelete = !['start', 'end'].includes(step.type);
 
 	const onDeleteClicked = (): void => {
 		// do not modify flow, just send event

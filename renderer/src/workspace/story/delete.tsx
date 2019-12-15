@@ -1,9 +1,9 @@
 import { remote } from 'electron';
+import { Story } from 'last-hit-types';
 import React from 'react';
 import UIContext, { IUIEventEmitter } from '../../common/context';
 import { EventTypes } from '../../events';
 import { deleteStory } from '../../files';
-import { Story } from '../../types';
 import { isFlowsAllOnIdle } from '../flow/utils';
 
 const createRemover = (emitter: IUIEventEmitter) => async (story: Story): Promise<void> => {

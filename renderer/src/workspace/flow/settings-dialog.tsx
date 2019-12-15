@@ -1,10 +1,10 @@
 import { Button, Classes, FormGroup, InputGroup, Overlay } from '@blueprintjs/core';
 import { remote } from 'electron';
+import { Flow, Story } from 'last-hit-types';
 import React from 'react';
 import { getActiveWorkspace } from '../../active';
 import UIContext from '../../common/context';
 import { EventTypes } from '../../events';
-import { Flow, Story } from '../../types';
 import { loopCheck } from './utils';
 
 const TheDialog = (props: { story: Story; flow: Flow }): JSX.Element => {

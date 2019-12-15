@@ -1,7 +1,8 @@
 import fs from 'fs';
+import { Flow, Story } from 'last-hit-types';
 import path from 'path';
 import Environment from '../config/env';
-import { FlowFile, Story, Flow } from '../types';
+import { FlowFile } from '../types';
 
 export const inElectron = !!process.versions.electron;
 
@@ -61,6 +62,7 @@ export const findFlows = (env: Environment): FlowFile[] => {
 	return fs
 		.readdirSync(workspace)
 		.filter(dir => fs.statSync(path.join(workspace, dir)).isDirectory())
+		.filter(dir => !['.scripts'].includes(dir))
 		.map(storyName => {
 			return fs
 				.readdirSync(path.join(workspace, storyName))

@@ -1,12 +1,12 @@
+import cssesc from 'cssesc';
 import { BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
-import puppeteer, { Browser, Page } from 'puppeteer';
+import { Device } from 'last-hit-types';
+import puppeteer, { Browser } from 'puppeteer';
 import { ReplayerHelper } from '../replayer/types';
-import { Device } from '../types';
 import BrowserHelper from './browser-helper';
 import PageHelper from './page-helper';
 import AllPagesCache from './pages-cache';
 import { BrowsersCache, CDPNode, CDPNodePseudoType } from './types';
-import cssesc from 'cssesc';
 
 class MyNode {
 	nodeId: number;
@@ -123,7 +123,7 @@ class Recorder {
 	private getChromiumExecPath(): string {
 		return puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked');
 	}
-	private generateKeyByString(storyName, flowName) {
+	private generateKeyByString(storyName: string, flowName: string) {
 		return `[${flowName}@${storyName}]`;
 	}
 	private getReplayer(): ReplayerHelper {

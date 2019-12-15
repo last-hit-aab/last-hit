@@ -1,0 +1,35 @@
+{
+	"name": "last-hit-extensions",
+	"version": "0.7.5-dev.7",
+	"description": "extensions for last-hit",
+	"main": "dist/index.js",
+	"scripts": {
+		"compile": "gulp",
+		"test": "npm run compile && node dist/test/test-one.test.js",
+		"deploy": "npm run compile && npm publish --access public",
+		"deploy:dev": "npm run compile && npm publish --tag dev",
+		"update:dev": "yarn add last-hit-types@dev"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/last-hit-aab/last-hit.git"
+	},
+	"bugs": {
+		"url": "https://github.com/last-hit-aab/last-hit/issues"
+	},
+	"homepage": "https://www.last-hit.com",
+	"author": "last-hit-team",
+	"license": "UNLICENSED",
+	"private": false,
+	"dependencies": {
+		"@types/jsonfile": "^5.0.0",
+		"jsonfile": "^5.0.0",
+		"last-hit-types": "^0.7.5-dev.5",
+		"typescript": "^3.7.2"
+	},
+	"devDependencies": {
+		"gulp": "^4.0.2",
+		"gulp-sourcemaps": "^2.6.5",
+		"gulp-typescript": "^6.0.0-alpha.1"
+	}
+}
