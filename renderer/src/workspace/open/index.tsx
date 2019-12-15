@@ -8,6 +8,7 @@ import FlowDelete from '../flow/delete';
 import FlowRecordDialog from '../flow/record-dialog';
 import FlowRenameDialog from '../flow/rename-dialog';
 import FlowReplayDialog from '../flow/replay-dialog';
+import FlowParamsDialog from '../flow/params-dialog';
 import ReplaySummaryDrawer from '../flow/replay-summary-drawer';
 import FlowSettingsDialog from '../flow/settings-dialog';
 import StepSearchDrawer from '../step/step-search-drawer';
@@ -68,6 +69,7 @@ export default (): JSX.Element => {
 			<FlowRenameDialog />
 			<FlowDelete />
 			<FlowSettingsDialog />
+			<FlowParamsDialog />
 			<FlowReplayDialog />
 			<FlowRecordDialog />
 			<StepScreenshotDialog />

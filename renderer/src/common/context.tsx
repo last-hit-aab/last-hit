@@ -44,6 +44,7 @@ export interface IUIEventEmitter {
 	emit(event: EventTypes.ASK_OPEN_FLOW, story: Story, flow: Flow): boolean;
 	emit(event: EventTypes.ASK_SAVE_FLOW, story: Story, flow: Flow): boolean;
 	emit(event: EventTypes.ASK_FLOW_SETTINGS, story: Story, flow: Flow): boolean;
+	emit(event: EventTypes.ASK_FLOW_PARAMS, story: Story, flow: Flow): boolean;
 	emit(
 		event: EventTypes.ASK_FLOW_REPLAY,
 		story: Story,
@@ -62,6 +63,7 @@ export interface IUIEventEmitter {
 	emit(event: EventTypes.CLOSE_FLOW_CREATE_DIALOG): boolean;
 	emit(event: EventTypes.CLOSE_FLOW_RENAME_DIALOG): boolean;
 	emit(event: EventTypes.CLOSE_FLOW_SETTINGS_DIALOG, story: Story, flow: Flow): boolean;
+	emit(event: EventTypes.CLOSE_FLOW_PARAMS_DIALOG, story: Story, flow: Flow): boolean;
 	emit(event: EventTypes.CLOSE_FLOW_REPLAY_DIALOG, story: Story, flow: Flow): boolean;
 	emit(event: EventTypes.CLOSE_FLOW_RECORD_DIALOG, story: Story, flow: Flow): boolean;
 	emit(event: EventTypes.CLOSE_REPLAY_SUMMARY_DRAWER): boolean;
@@ -126,6 +128,7 @@ export interface IUIEventEmitter {
 	on(event: EventTypes.ASK_OPEN_FLOW, listener: FlowListener): this;
 	on(event: EventTypes.ASK_SAVE_FLOW, listener: FlowListener): this;
 	on(event: EventTypes.ASK_FLOW_SETTINGS, listener: FlowListener): this;
+	on(event: EventTypes.ASK_FLOW_PARAMS, listener: FlowListener): this;
 	on(event: EventTypes.ASK_FLOW_REPLAY, listener: FlowReplayListener): this;
 	on(event: EventTypes.ASK_FLOW_RECORD, listener: FlowRecordListener): this;
 	on(event: EventTypes.ASK_FLOW_RELOAD, listener: FlowListener): this;
@@ -133,6 +136,7 @@ export interface IUIEventEmitter {
 	on(event: EventTypes.CLOSE_FLOW_CREATE_DIALOG, listener: NoArgListener): this;
 	on(event: EventTypes.CLOSE_FLOW_RENAME_DIALOG, listener: NoArgListener): this;
 	on(event: EventTypes.CLOSE_FLOW_SETTINGS_DIALOG, listener: FlowListener): this;
+	on(event: EventTypes.CLOSE_FLOW_PARAMS_DIALOG, listener: FlowListener): this;
 	on(event: EventTypes.CLOSE_FLOW_REPLAY_DIALOG, listener: FlowListener): this;
 	on(event: EventTypes.CLOSE_FLOW_RECORD_DIALOG, listener: FlowListener): this;
 	on(event: EventTypes.CLOSE_REPLAY_SUMMARY_DRAWER, listener: NoArgListener): this;
@@ -175,6 +179,7 @@ export interface IUIEventEmitter {
 	off(event: EventTypes.ASK_OPEN_FLOW, listener: FlowListener): this;
 	off(event: EventTypes.ASK_SAVE_FLOW, listener: FlowListener): this;
 	off(event: EventTypes.ASK_FLOW_SETTINGS, listener: FlowListener): this;
+	off(event: EventTypes.ASK_FLOW_PARAMS, listener: FlowListener): this;
 	off(event: EventTypes.ASK_FLOW_REPLAY, listener: FlowReplayListener): this;
 	off(event: EventTypes.ASK_FLOW_RECORD, listener: FlowRecordListener): this;
 	off(event: EventTypes.ASK_FLOW_RELOAD, listener: FlowListener): this;
@@ -182,6 +187,7 @@ export interface IUIEventEmitter {
 	off(event: EventTypes.CLOSE_FLOW_CREATE_DIALOG, listener: NoArgListener): this;
 	off(event: EventTypes.CLOSE_FLOW_RENAME_DIALOG, listener: NoArgListener): this;
 	off(event: EventTypes.CLOSE_FLOW_SETTINGS_DIALOG, listener: FlowListener): this;
+	off(event: EventTypes.CLOSE_FLOW_PARAMS_DIALOG, listener: FlowListener): this;
 	off(event: EventTypes.CLOSE_FLOW_REPLAY_DIALOG, listener: FlowListener): this;
 	off(event: EventTypes.CLOSE_FLOW_RECORD_DIALOG, listener: FlowListener): this;
 	off(event: EventTypes.CLOSE_REPLAY_SUMMARY_DRAWER, listener: NoArgListener): this;

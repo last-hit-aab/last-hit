@@ -145,11 +145,19 @@ declare module 'last-hit-types' {
 	export type DomChangeStep = Step & { type: 'dom-change' };
 	export type AnimationStep = Step & { type: 'animation'; duration: number };
 
+	export type FlowParameterType = 'in' | 'out' | 'both';
+	export type FlowParameterValueType = null | string | number | boolean;
+	export type FlowParameter = {
+		name: string;
+		value: FlowParameterValueType;
+		type: FlowParameterType;
+	};
+	export type FlowParameters = Array<FlowParameter>;
 	export type Flow = {
 		name: string;
 		description: string;
 		steps?: Step[];
-		params?: { [key in string]: null | string | number | boolean };
+		params?: FlowParameters;
 		settings?: {
 			forceDepends?: {
 				story: string;
@@ -173,7 +181,6 @@ declare module 'last-hit-types' {
 		/** threshold of slow ajax, in millisecond */
 		slowAjaxTime?: number;
 	};
-	export type FlowParameters = { [key in string]: any };
 
 	export namespace Extensions {
 		export type ExtensionTypes = 'workspace' | 'tbd';
@@ -268,11 +275,12 @@ declare module 'last-hit-types' {
 		export interface PreparedEnvironment extends ReturnedData, Environment {}
 		export interface PreparedStory extends ReturnedData, Omit<Story, 'flows'> {}
 		export interface ReturnedFlow extends ReturnedData, Omit<Flow, 'steps' | 'settings'> {}
+		export type FlowParameterValues = { [key in string]: FlowParameterValueType };
 		export interface PreparedFlow extends ReturnedFlow {
-			_?: { input: FlowParameters };
+			_?: { input: FlowParameterValues };
 		}
 		export interface AccomplishedFlow extends ReturnedFlow {
-			_?: { output: FlowParameters };
+			_?: { output: FlowParameterValues };
 		}
 		export interface ReturnedStep extends ReturnedData, Step {
 			_?: object;

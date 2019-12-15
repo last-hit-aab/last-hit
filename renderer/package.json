@@ -21,7 +21,7 @@
 		"@types/uuid": "^3.4.5",
 		"fs-extra": "^8.1.0",
 		"jsonfile": "^5.0.0",
-		"last-hit-types": "0.7.5",
+		"last-hit-types": "^0.7.5-dev.7",
 		"react": "^16.12.0",
 		"react-dom": "^16.12.0",
 		"react-router-dom": "^5.1.2",
@@ -33,7 +33,8 @@
 		"start": "react-scripts start",
 		"build": "rescripts build",
 		"test": "react-scripts test",
-		"eject": "react-scripts eject"
+		"eject": "react-scripts eject",
+		"update:dev": "yarn add last-hit-types@dev"
 	},
 	"eslintConfig": {
 		"extends": "react-app"

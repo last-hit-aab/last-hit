@@ -51,7 +51,7 @@
 		"@types/puppeteer": "^1.20.2",
 		"@types/uuid": "^3.4.6",
 		"cssesc": "^3.0.0",
-		"last-hit-replayer": "^0.7.5-dev.6",
+		"last-hit-replayer": "^0.7.5-dev.7",
 		"pino": "^5.13.4",
 		"pino-pretty": "^3.2.1",
 		"puppeteer": "^2.0.0",

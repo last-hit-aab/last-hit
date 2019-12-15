@@ -162,6 +162,8 @@ var Replayer = /** @class */ (function () {
         this.coverages = [];
         /** true when switch to record, never turn back to false again */
         this.onRecord = false;
+        this.flowInput = {};
+        this.flowOutput = {};
         this.testLogs = [];
         this.handleExtensionLog = function (event) {
             _this.getLogger().log(event);
@@ -204,6 +206,12 @@ var Replayer = /** @class */ (function () {
             .on(last_hit_extensions_1.ExtensionEventTypes.BROWSER_OPERATION, this.handlerBrowserOperation)
             .on(last_hit_extensions_1.ExtensionEventTypes.TEST_LOG, this.handleTestLog);
     }
+    Replayer.prototype.getFlowInput = function () {
+        return this.flowInput;
+    };
+    Replayer.prototype.getFlowOutput = function () {
+        return this.flowOutput;
+    };
     Replayer.prototype.getTestLogs = function () {
         return this.testLogs;
     };
@@ -498,17 +506,43 @@ var Replayer = /** @class */ (function () {
             });
         });
     };
+    Replayer.prototype.prepareFlow = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var preparedFlow, _a, _b, input, _c, params;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
+                    case 0: return [4 /*yield*/, this.getRegistry().flowShouldStart(this.getStoryName(), simplifyFlow(this.getFlow()))];
+                    case 1:
+                        preparedFlow = _d.sent();
+                        _a = (preparedFlow || { _: { input: {} } })._, _b = (_a === void 0 ? { input: {} } : _a).input, input = _b === void 0 ? {} : _b;
+                        if (Object.keys(input).length === 0) {
+                            _c = this.getFlow().params, params = _c === void 0 ? [] : _c;
+                            this.flowInput = params
+                                .filter(function (param) { return ['in', 'both'].includes(param.type); })
+                                .reduce(function (input, param) {
+                                input[param.name] = param.value;
+                                return input;
+                            }, {});
+                        }
+                        else {
+                            this.flowInput = input;
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
     Replayer.prototype.start = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var preparedStory, preparedFlow, page;
+            var preparedStory, page;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, this.getRegistry().prepareStory(this.getStoryName())];
                     case 1:
                         preparedStory = _a.sent();
-                        return [4 /*yield*/, this.getRegistry().flowShouldStart(this.getStoryName(), simplifyFlow(this.getFlow()))];
+                        return [4 /*yield*/, this.prepareFlow()];
                     case 2:
-                        preparedFlow = _a.sent();
+                        _a.sent();
                         return [4 /*yield*/, launchBrowser(this)];
                     case 3:
                         page = _a.sent();
@@ -520,54 +554,84 @@ var Replayer = /** @class */ (function () {
             });
         });
     };
+    Replayer.prototype.accomplishFlow = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var accomplishedFlow, _a, _b, output, _c, params;
+            var _this = this;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
+                    case 0: return [4 /*yield*/, this.getRegistry().flowAccomplished(this.getStoryName(), simplifyFlow(this.getFlow()))];
+                    case 1:
+                        accomplishedFlow = _d.sent();
+                        _a = (accomplishedFlow || { _: { output: {} } })._, _b = (_a === void 0 ? { output: {} } : _a).output, output = _b === void 0 ? {} : _b;
+                        if (Object.keys(output).length === 0) {
+                            _c = this.getFlow().params, params = _c === void 0 ? [] : _c;
+                            this.flowOutput = params
+                                .filter(function (param) { return ['out', 'both'].includes(param.type); })
+                                .reduce(function (output, param) {
+                                output[param.name] = _this.flowInput[param.name];
+                                if (typeof output[param.name] === 'undefined') {
+                                    // not found in flow input, find in definition
+                                    output[param.name] = param.value;
+                                }
+                                return output;
+                            }, {});
+                        }
+                        else {
+                            this.flowOutput = output;
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
     /**
      * only called in CI
      */
     Replayer.prototype.end = function (close) {
         return __awaiter(this, void 0, void 0, function () {
-            var browser, accomplishedFlow, pages, _a, e_3, e_4;
+            var browser, pages, _a, e_3, e_4;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
                         browser = this.getBrowser();
                         if (!(browser == null)) return [3 /*break*/, 1];
-                        return [3 /*break*/, 11];
-                    case 1: return [4 /*yield*/, this.getRegistry().flowAccomplished(this.getStoryName(), simplifyFlow(this.getFlow()))];
+                        return [3 /*break*/, 10];
+                    case 1:
+                        this.accomplishFlow();
+                        _b.label = 2;
                     case 2:
-                        accomplishedFlow = _b.sent();
-                        _b.label = 3;
-                    case 3:
-                        _b.trys.push([3, 6, , 7]);
+                        _b.trys.push([2, 5, , 6]);
                         return [4 /*yield*/, browser.pages()];
-                    case 4:
+                    case 3:
                         pages = _b.sent();
                         _a = this;
                         return [4 /*yield*/, ci_helper_1.default.gatherCoverage(pages)];
-                    case 5:
+                    case 4:
                         _a.coverages = _b.sent();
                         browser.disconnect();
-                        return [3 /*break*/, 7];
-                    case 6:
+                        return [3 /*break*/, 6];
+                    case 5:
                         e_3 = _b.sent();
                         this.getLogger().error('Failed to disconnect from brwoser.');
                         this.getLogger().error(e_3);
-                        return [3 /*break*/, 7];
+                        return [3 /*break*/, 6];
+                    case 6:
+                        if (!close) return [3 /*break*/, 10];
+                        _b.label = 7;
                     case 7:
-                        if (!close) return [3 /*break*/, 11];
-                        _b.label = 8;
-                    case 8:
-                        _b.trys.push([8, 10, , 11]);
+                        _b.trys.push([7, 9, , 10]);
                         return [4 /*yield*/, browser.close()];
-                    case 9:
+                    case 8:
                         _b.sent();
                         delete this.replayers[this.getIdentity()];
-                        return [3 /*break*/, 11];
-                    case 10:
+                        return [3 /*break*/, 10];
+                    case 9:
                         e_4 = _b.sent();
                         this.getLogger().error('Failed to close browser.');
                         this.getLogger().error(e_4);
-                        return [3 /*break*/, 11];
-                    case 11:
+                        return [3 /*break*/, 10];
+                    case 10:
                         this.registry
                             .off(last_hit_extensions_1.ExtensionEventTypes.LOG, this.handleExtensionLog)
                             .off(last_hit_extensions_1.ExtensionEventTypes.ERROR_LOG, this.handleExtensionErrorLog);
@@ -575,6 +639,21 @@ var Replayer = /** @class */ (function () {
                 }
             });
         });
+    };
+    Replayer.prototype.replaceWithFlowParams = function (step) {
+        var _this = this;
+        var newStep = __assign({}, step);
+        ['checked', 'value'].forEach(function (propName) {
+            var value = step[propName];
+            if (!value || typeof value !== 'string') {
+                return;
+            }
+            var flowInput = _this.getFlowInput();
+            newStep[propName] = Object.keys(flowInput).reduce(function (value, key) {
+                return value.replace("${" + key + "}", "" + (flowInput[key] || ''));
+            }, value);
+        });
+        return newStep;
     };
     /**
      * do next step
@@ -592,6 +671,7 @@ var Replayer = /** @class */ (function () {
                         if (step.type === 'end') {
                             return [2 /*return*/];
                         }
+                        step = this.replaceWithFlowParams(step);
                         return [4 /*yield*/, this.getRegistry().stepShouldStart(this.getStoryName(), simplifyFlow(this.getFlow()), step)];
                     case 1:
                         // send step-should-start to extension, replace step when successfully return

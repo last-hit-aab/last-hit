@@ -6767,6 +6767,11 @@ last-call-webpack-plugin@^3.0.0:
     lodash "^4.17.5"
     webpack-sources "^1.1.0"
 
+last-hit-types@^0.7.5-dev.7:
+  version "0.7.5-dev.7"
+  resolved "https://registry.yarnpkg.com/last-hit-types/-/last-hit-types-0.7.5-dev.7.tgz#369516724f188e40535f7bc99e4e311c07035e21"
+  integrity sha512-QrGLdDw9a3M+rnywPOBxYGI/lvb1aINMrtIrum5BorDECCkEMBXXpKo8TUq+VoZxdyhI/T3eBEkcJ6q0eFY6Xg==
+
 lazy-cache@^0.2.3:
   version "0.2.7"
   resolved "https://registry.yarnpkg.com/lazy-cache/-/lazy-cache-0.2.7.tgz#7feddf2dcb6edb77d11ef1d117ab5ffdf0ab1b65"

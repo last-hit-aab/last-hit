@@ -158,6 +158,8 @@ class Replayer {
 	private env: Environment;
 
 	private registry: WorkspaceExtensionRegistry;
+	private flowInput: WorkspaceExtensions.FlowParameterValues = {};
+	private flowOutput: WorkspaceExtensions.FlowParameterValues = {};
 	private testLogs: Array<{ title: string; passed: boolean; level?: number }> = [];
 
 	constructor(options: ReplayerOptions) {
@@ -205,6 +207,12 @@ class Replayer {
 		console.log(event);
 		this.testLogs.push(event.data);
 	};
+	private getFlowInput(): WorkspaceExtensions.FlowParameterValues {
+		return this.flowInput;
+	}
+	getFlowOutput(): WorkspaceExtensions.FlowParameterValues {
+		return this.flowOutput;
+	}
 	getTestLogs() {
 		return this.testLogs;
 	}
@@ -431,19 +439,59 @@ class Replayer {
 			await wait(sleep);
 		}
 	}
+	private async prepareFlow(): Promise<void> {
+		const preparedFlow: WorkspaceExtensions.PreparedFlow | null = await this.getRegistry().flowShouldStart(
+			this.getStoryName(),
+			simplifyFlow(this.getFlow())
+		);
+		const { _: { input = {} } = { input: {} } } = preparedFlow || { _: { input: {} } };
+		if (Object.keys(input).length === 0) {
+			// no input given by scripts
+			// use definition
+			const { params = [] } = this.getFlow();
+			this.flowInput = params
+				.filter(param => ['in', 'both'].includes(param.type))
+				.reduce((input, param) => {
+					input[param.name] = param.value;
+					return input;
+				}, {} as WorkspaceExtensions.FlowParameterValues);
+		} else {
+			this.flowInput = input;
+		}
+	}
 	async start() {
 		// TODO how to use prepared story? currently ignored
 		const preparedStory: WorkspaceExtensions.PreparedStory = await this.getRegistry().prepareStory(
 			this.getStoryName()
 		);
-		// TODO how to use prepared flow? currently ignored
-		const preparedFlow: WorkspaceExtensions.PreparedFlow | null = await this.getRegistry().flowShouldStart(
-			this.getStoryName(),
-			simplifyFlow(this.getFlow())
-		);
+		await this.prepareFlow();
 
 		const page = await launchBrowser(this);
 		await this.isRemoteFinsihed(page);
+	}
+	private async accomplishFlow(): Promise<void> {
+		const accomplishedFlow: WorkspaceExtensions.AccomplishedFlow | null = await this.getRegistry().flowAccomplished(
+			this.getStoryName(),
+			simplifyFlow(this.getFlow())
+		);
+		const { _: { output = {} } = { output: {} } } = accomplishedFlow || { _: { output: {} } };
+		if (Object.keys(output).length === 0) {
+			// no output given by scripts
+			// read out/both from flow input
+			const { params = [] } = this.getFlow();
+			this.flowOutput = params
+				.filter(param => ['out', 'both'].includes(param.type))
+				.reduce((output, param) => {
+					output[param.name] = this.flowInput[param.name];
+					if (typeof output[param.name] === 'undefined') {
+						// not found in flow input, find in definition
+						output[param.name] = param.value;
+					}
+					return output;
+				}, {} as WorkspaceExtensions.FlowParameterValues);
+		} else {
+			this.flowOutput = output;
+		}
 	}
 	/**
 	 * only called in CI
@@ -453,11 +501,7 @@ class Replayer {
 		if (browser == null) {
 			// do nothing, seems not start
 		} else {
-			// TODO how to use accomplised flow? currently ignored
-			const accomplishedFlow: WorkspaceExtensions.AccomplishedFlow | null = await this.getRegistry().flowAccomplished(
-				this.getStoryName(),
-				simplifyFlow(this.getFlow())
-			);
+			this.accomplishFlow();
 			try {
 				const pages = await browser.pages();
 				this.coverages = await ci.gatherCoverage(pages);
@@ -480,6 +524,22 @@ class Replayer {
 			.off(ExtensionEventTypes.LOG, this.handleExtensionLog)
 			.off(ExtensionEventTypes.ERROR_LOG, this.handleExtensionErrorLog);
 	}
+	private replaceWithFlowParams(step: Step): Step {
+		const newStep = { ...step } as any;
+
+		['checked', 'value'].forEach(propName => {
+			const value = step[propName];
+			if (!value || typeof value !== 'string') {
+				return;
+			}
+			const flowInput = this.getFlowInput();
+			newStep[propName] = Object.keys(flowInput).reduce((value, key) => {
+				return value.replace(`\${${key}}`, `${flowInput[key] || ''}`);
+			}, value);
+		});
+
+		return newStep as Step;
+	}
 	/**
 	 * do next step
 	 */
@@ -490,6 +550,8 @@ class Replayer {
 		if (step.type === 'end') {
 			return;
 		}
+
+		step = this.replaceWithFlowParams(step);
 
 		// send step-should-start to extension, replace step when successfully return
 		step = await this.getRegistry().stepShouldStart(
