@@ -1449,7 +1449,7 @@ var Replayer = /** @class */ (function () {
                     case 0: return [4 /*yield*/, this.getElementTagName(element)];
                     case 1:
                         tagName = _a.sent();
-                        if (!(tagName === 'INPUT')) return [3 /*break*/, 6];
+                        if (!(tagName === 'INPUT' || tagName === 'TEXTAREA')) return [3 /*break*/, 6];
                         return [4 /*yield*/, this.getElementType(element)];
                     case 2:
                         type = _a.sent();

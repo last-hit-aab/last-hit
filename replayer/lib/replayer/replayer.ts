@@ -1054,7 +1054,7 @@ class Replayer {
 		const tagName = await this.getElementTagName(element);
 
 		// console.log("tagName", tagName)
-		if (tagName === 'INPUT') {
+		if (tagName === 'INPUT' || tagName === 'TEXTAREA') {
 			const type = await this.getElementType(element);
 			if (
 				!type ||
