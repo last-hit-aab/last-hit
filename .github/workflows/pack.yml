@@ -3,7 +3,7 @@ name: Package-And-Release-App
 on:
   push:
     branches:
-      - master
+      - never
 
 jobs:
   build:

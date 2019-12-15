@@ -1,7 +1,7 @@
 # Last Hit Replayer
 ![Last Hit logo](icons/128x128.png)
 
-![Travis (.org) branch](https://img.shields.io/travis/last-hit-aab/last-hit/master)
+<!-- ![Travis (.org) branch](https://img.shields.io/travis/last-hit-aab/last-hit/master) -->
 [![codebeat badge](https://codebeat.co/badges/f3316c83-a06b-4307-b50a-3af48fab9ac3)](https://codebeat.co/projects/github-com-last-hit-aab-last-hit-master)
 ![GitHub last commit](https://img.shields.io/github/last-commit/last-hit-aab/last-hit)
 ![GitHub package.json version](https://img.shields.io/github/package-json/v/last-hit-aab/last-hit)
