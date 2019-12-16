@@ -1,12 +1,12 @@
 name: Pulibsh-NPM
 
 on:
-  push:
-    branches:
-      - never
+  create:
+    tags:
+      - v*
 
 jobs:
-  build:
+  deploy-npm:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -19,9 +19,64 @@ jobs:
           path: replayer/node_modules
           key: ${{ runner.OS }}-build-${{ hashFiles('replayer/package.json') }}
       - run: |
-          cd replayer 
-          yarn install
           npm config set //registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN
+          cd types 
+          npm run deploy
+          cd ../extensions
+          yarn install
+          npm run deploy
+          cd ../workspace-extension
+          yarn install
+          npm run deploy
+          cd ../replayer
+          yarn install
           npm run deploy
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+  build-app:
+    name: Pack@${{ matrix.os }}&Node${{ matrix.node_version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node_version: [12]
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup Node Env
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node_version }}
+      - name: Cache Renderer Node Modules
+        uses: actions/cache@v1
+        with:
+          path: renderer/node_modules
+          key: ${{ runner.OS }}-build-${{ hashFiles('renderer/package.json') }}
+      - name: Install Renderer Node Modules
+        run: |
+          cd renderer
+          yarn install
+      - name: Cache App Node Modules
+        uses: actions/cache@v1
+        with:
+          path: node_modules
+          key: ${{ runner.OS }}-build-${{ hashFiles('package.json') }}
+      - name: Install App Node Modules
+        run: yarn install
+      - name: Package for Windows
+        if: runner.os == 'Windows'
+        run: |
+          yarn run publish:windows
+        env:
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Package For OSX
+        if: runner.os == 'macOS'
+        run: |
+          yarn run publish:osx
+        env:
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Package For Linux
+        if: runner.os == 'Linux'
+        run: |
+          yarn run publish:linux
+        env:
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
