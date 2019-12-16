@@ -390,7 +390,7 @@ const ScriptTestsPanel = (props: { summary: any }): JSX.Element => {
 	if (testLogs.length === 0) {
 		return (
 			<ScriptTestsContainer>
-				<h2 className="bp3-heading">No slow ajax requests.</h2>
+				<h2 className="bp3-heading">No tests from scripts.</h2>
 			</ScriptTestsContainer>
 		);
 	} else {
@@ -425,7 +425,7 @@ const ParamsPanel = (props: { summary: any }): JSX.Element => {
 	if (flowParams.length === 0) {
 		return (
 			<ParamsContainer>
-				<h2 className="bp3-heading">No slow ajax requests.</h2>
+				<h2 className="bp3-heading">No flow parameter.</h2>
 			</ParamsContainer>
 		);
 	} else {

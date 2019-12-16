@@ -19,15 +19,21 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node_version }}
-      - name: Install Renderer Node Modules
+      - name: Install Extensions Dependencies
         run: |
           cd extensions
           yarn install
-          cd ../workspace-extension
+      - name: Install Workspace Extension Dependencies
+        run: |
+          cd workspace-extension
           yarn install
-          cd ../replayer
+      - name: Install Replayer Dependencies
+        run: |
+          cd replayer
           yarn install
-          cd ../renderer
+      - name: Install Renderer Dependencies
+        run: |
+          cd renderer
           yarn install
       - name: Install App Node Modules
         run: yarn install
