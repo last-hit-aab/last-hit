@@ -19,20 +19,16 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node_version }}
-      - name: Cache Renderer Node Modules
-        uses: actions/cache@v1
-        with:
-          path: renderer/node_modules
-          key: ${{ runner.OS }}-build-${{ hashFiles('renderer/package.json') }}
       - name: Install Renderer Node Modules
         run: |
-          cd renderer
+          cd extensions
           yarn install
-      - name: Cache App Node Modules
-        uses: actions/cache@v1
-        with:
-          path: node_modules
-          key: ${{ runner.OS }}-build-${{ hashFiles('package.json') }}
+          cd ../workspace-extensions
+          yarn install
+          cd ../replayer
+          yarn install
+          cd ../renderer
+          yarn install
       - name: Install App Node Modules
         run: yarn install
       - name: Package for Windows
