@@ -213,13 +213,13 @@ class ExtensionEntryPointHelper implements IExtensionEntryPointHelper {
 			);
 		});
 	}
-	sendTestLog(title: string, passed: boolean, level?: number): Promise<void> {
+	sendTestLog(title: string, passed: boolean, level: number, message?: string): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			process.send(
 				{
 					extensionId: this.extensionId,
 					type: ExtensionEventTypes.TEST_LOG,
-					data: { title, passed, level }
+					data: { title, passed, level, message }
 				} as ExtensionTestLogEvent,
 				undefined,
 				undefined,

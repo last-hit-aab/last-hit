@@ -220,13 +220,13 @@ var ExtensionEntryPointHelper = /** @class */ (function () {
             });
         });
     };
-    ExtensionEntryPointHelper.prototype.sendTestLog = function (title, passed, level) {
+    ExtensionEntryPointHelper.prototype.sendTestLog = function (title, passed, level, message) {
         var _this = this;
         return new Promise(function (resolve, reject) {
             process.send({
                 extensionId: _this.extensionId,
                 type: types_1.ExtensionEventTypes.TEST_LOG,
-                data: { title: title, passed: passed, level: level }
+                data: { title: title, passed: passed, level: level, message: message }
             }, undefined, undefined, function (error) {
                 if (error) {
                     reject(error);

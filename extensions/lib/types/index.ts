@@ -13,7 +13,7 @@ export interface IExtensionEntryPointHelper {
 	sendError(e: Error): Promise<void>;
 	sendIgnore(): Promise<void>;
 	sendBrowserOperation(data: any): Promise<void>;
-	sendTestLog(title: string, passed: boolean, level?: number): Promise<void>;
+	sendTestLog(title: string, passed: boolean, level: number, message?: string): Promise<void>;
 	once(eventType: ExtensionEventTypes, handler: (value: any) => void): this;
 	on(eventType: ExtensionEventTypes, handler: (value: any) => void): this;
 	off(eventType: ExtensionEventTypes, handler: (value: any) => void): this;
@@ -91,7 +91,7 @@ export type ExtensionBrowserOperationHandler = (event: ExtensionBrowserOperation
 
 export interface ExtensionTestLogEvent extends ExtensionEvent {
 	type: ExtensionEventTypes.TEST_LOG;
-	data: { title: string; passed: boolean; level?: number };
+	data: { title: string; passed: boolean; level: number; message?: string };
 }
 export type ExtensionTestLogHandler = (event: ExtensionTestLogEvent) => void;
 

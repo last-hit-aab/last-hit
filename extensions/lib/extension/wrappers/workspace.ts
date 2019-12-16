@@ -81,6 +81,7 @@ class BrowserHelper implements WorkspaceExtensions.IWorkspaceExtensionBrowserHel
 
 class TestNode {
 	private title: string;
+	private message?: string;
 	private passed: boolean = false;
 	private level: number = -1;
 	private children: Array<TestNode> = [];
@@ -96,6 +97,12 @@ class TestNode {
 	}
 	getTitle(): string {
 		return this.title;
+	}
+	getMessage(): string {
+		return this.message || '';
+	}
+	setMessage(message: string) {
+		this.message = message;
 	}
 	getLevel(): number {
 		return this.level;
@@ -126,7 +133,7 @@ class TestHelper implements WorkspaceExtensions.IWorkspaceExtensionTestHelper {
 	}
 	private async sendTestLog(node: TestNode, sendAnyway: boolean = false): Promise<void> {
 		if (node.getLevel() === 0 || sendAnyway) {
-			await this.getHelper().sendTestLog(node.getTitle(), node.isPassed(), node.getLevel());
+			await this.getHelper().sendTestLog(node.getTitle(), node.isPassed(), node.getLevel(), node.getMessage());
 			await Promise.all(
 				(node.getChildren() || []).map(async child => await this.sendTestLog(child, true))
 			);
@@ -142,6 +149,7 @@ class TestHelper implements WorkspaceExtensions.IWorkspaceExtensionTestHelper {
 			this.currentTestNode = node.getParent();
 		} catch (e) {
 			node.setPassed(false);
+			node.setMessage(e.message);
 			await this.sendTestLog(node);
 			this.currentTestNode = node.getParent();
 			throw e;

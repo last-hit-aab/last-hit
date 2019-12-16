@@ -125,6 +125,12 @@ var TestNode = /** @class */ (function () {
     TestNode.prototype.getTitle = function () {
         return this.title;
     };
+    TestNode.prototype.getMessage = function () {
+        return this.message || '';
+    };
+    TestNode.prototype.setMessage = function (message) {
+        this.message = message;
+    };
     TestNode.prototype.getLevel = function () {
         return this.level;
     };
@@ -159,7 +165,7 @@ var TestHelper = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!(node.getLevel() === 0 || sendAnyway)) return [3 /*break*/, 3];
-                        return [4 /*yield*/, this.getHelper().sendTestLog(node.getTitle(), node.isPassed(), node.getLevel())];
+                        return [4 /*yield*/, this.getHelper().sendTestLog(node.getTitle(), node.isPassed(), node.getLevel(), node.getMessage())];
                     case 1:
                         _a.sent();
                         return [4 /*yield*/, Promise.all((node.getChildren() || []).map(function (child) { return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_a) {
@@ -199,6 +205,7 @@ var TestHelper = /** @class */ (function () {
                     case 4:
                         e_1 = _a.sent();
                         node.setPassed(false);
+                        node.setMessage(e_1.message);
                         return [4 /*yield*/, this.sendTestLog(node)];
                     case 5:
                         _a.sent();
