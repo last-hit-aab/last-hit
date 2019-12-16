@@ -23,6 +23,10 @@ jobs:
         run: |
           cd extensions
           yarn install
+      - name: Install Test One Extension Dependencies
+        run: |
+          cd test-one-extension
+          yarn install
       - name: Install Workspace Extension Dependencies
         run: |
           cd workspace-extension
