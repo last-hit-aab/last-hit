@@ -108,54 +108,103 @@ var BrowserHelper = /** @class */ (function () {
     };
     return BrowserHelper;
 }());
+var TestNode = /** @class */ (function () {
+    function TestNode(title, passed, parent) {
+        this.passed = false;
+        this.level = -1;
+        this.children = [];
+        this.parent = null;
+        this.title = title;
+        this.passed = passed;
+        if (parent) {
+            this.parent = parent;
+            this.parent.children.push(this);
+            this.level = parent.level + 1;
+        }
+    }
+    TestNode.prototype.getTitle = function () {
+        return this.title;
+    };
+    TestNode.prototype.getLevel = function () {
+        return this.level;
+    };
+    TestNode.prototype.isPassed = function () {
+        return this.passed;
+    };
+    TestNode.prototype.setPassed = function (passed) {
+        this.passed = passed;
+    };
+    TestNode.prototype.getChildren = function () {
+        return this.children;
+    };
+    TestNode.prototype.getParent = function () {
+        return this.parent;
+    };
+    return TestNode;
+}());
 var TestHelper = /** @class */ (function () {
     function TestHelper(helper) {
+        this.rootTestNode = new TestNode('root', true);
+        this.currentTestNode = this.rootTestNode;
         this.helper = helper;
     }
     TestHelper.prototype.getHelper = function () {
         return this.helper;
     };
-    TestHelper.prototype.readTitle = function (title, level) {
-        if (title === void 0) { title = 'Untitled test'; }
-        if (level === void 0) { level = 0; }
-        if (title.startsWith('-') && level === 0) {
-            var chars = title.split('');
-            var stop_1 = false;
-            level = chars.reduce(function (count, char) {
-                if (char === '-' && !stop_1) {
-                    count++;
+    TestHelper.prototype.sendTestLog = function (node, sendAnyway) {
+        if (sendAnyway === void 0) { sendAnyway = false; }
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!(node.getLevel() === 0 || sendAnyway)) return [3 /*break*/, 3];
+                        return [4 /*yield*/, this.getHelper().sendTestLog(node.getTitle(), node.isPassed(), node.getLevel())];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, Promise.all((node.getChildren() || []).map(function (child) { return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0: return [4 /*yield*/, this.sendTestLog(child, true)];
+                                    case 1: return [2 /*return*/, _a.sent()];
+                                }
+                            }); }); }))];
+                    case 2:
+                        _a.sent();
+                        _a.label = 3;
+                    case 3: return [2 /*return*/];
                 }
-                else {
-                    stop_1 = true;
-                }
-                return count;
-            }, 0);
-            return { title: title.substr(level), level: level };
-        }
-        else {
-            return { title: title, level: level };
-        }
+            });
+        });
     };
     TestHelper.prototype.test = function (title, fn) {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, newTitle, level, _b;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
+            var node, e_1;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
-                        _a = this.readTitle(title, 0), newTitle = _a.title, level = _a.level;
-                        _c.label = 1;
+                        node = new TestNode(title, false, this.currentTestNode);
+                        _a.label = 1;
                     case 1:
-                        _c.trys.push([1, 3, , 4]);
+                        _a.trys.push([1, 4, , 6]);
+                        this.currentTestNode = node;
                         return [4 /*yield*/, fn.call(this)];
                     case 2:
-                        _c.sent();
-                        this.getHelper().sendTestLog(newTitle, true, level);
-                        return [3 /*break*/, 4];
+                        _a.sent();
+                        node.setPassed(true);
+                        return [4 /*yield*/, this.sendTestLog(node)];
                     case 3:
-                        _b = _c.sent();
-                        this.getHelper().sendTestLog(newTitle, false, level);
-                        return [3 /*break*/, 4];
-                    case 4: return [2 /*return*/, this];
+                        _a.sent();
+                        this.currentTestNode = node.getParent();
+                        return [3 /*break*/, 6];
+                    case 4:
+                        e_1 = _a.sent();
+                        node.setPassed(false);
+                        return [4 /*yield*/, this.sendTestLog(node)];
+                    case 5:
+                        _a.sent();
+                        this.currentTestNode = node.getParent();
+                        throw e_1;
+                    case 6: return [2 /*return*/, this];
                 }
             });
         });
@@ -185,7 +234,7 @@ var WorkspaceExtensionEntryPointWrapper = /** @class */ (function (_super) {
     }
     WorkspaceExtensionEntryPointWrapper.prototype.handle = function (event) {
         return __awaiter(this, void 0, void 0, function () {
-            var handler, result, e_1;
+            var handler, result, e_2;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -202,8 +251,8 @@ var WorkspaceExtensionEntryPointWrapper = /** @class */ (function (_super) {
                         result = _a.sent();
                         return [2 /*return*/, this.getHelper().sendMessage(result)];
                     case 3:
-                        e_1 = _a.sent();
-                        return [2 /*return*/, this.getHelper().sendError(e_1)];
+                        e_2 = _a.sent();
+                        return [2 /*return*/, this.getHelper().sendError(e_2)];
                     case 4: return [3 /*break*/, 6];
                     case 5: 
                     // console.error(`Handler not found for event[${event.type}]`);

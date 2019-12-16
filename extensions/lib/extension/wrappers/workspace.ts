@@ -79,8 +79,44 @@ class BrowserHelper implements WorkspaceExtensions.IWorkspaceExtensionBrowserHel
 	}
 }
 
+class TestNode {
+	private title: string;
+	private passed: boolean = false;
+	private level: number = -1;
+	private children: Array<TestNode> = [];
+	private parent: TestNode | null = null;
+	constructor(title: string, passed: boolean, parent?: TestNode) {
+		this.title = title;
+		this.passed = passed;
+		if (parent) {
+			this.parent = parent;
+			this.parent.children.push(this);
+			this.level = parent.level + 1;
+		}
+	}
+	getTitle(): string {
+		return this.title;
+	}
+	getLevel(): number {
+		return this.level;
+	}
+	isPassed(): boolean {
+		return this.passed;
+	}
+	setPassed(passed: boolean): void {
+		this.passed = passed;
+	}
+	getChildren(): Array<TestNode> {
+		return this.children;
+	}
+	getParent(): TestNode | null {
+		return this.parent;
+	}
+}
 class TestHelper implements WorkspaceExtensions.IWorkspaceExtensionTestHelper {
 	private helper: IExtensionEntryPointHelper;
+	private rootTestNode = new TestNode('root', true);
+	private currentTestNode: TestNode = this.rootTestNode;
 
 	constructor(helper: IExtensionEntryPointHelper) {
 		this.helper = helper;
@@ -88,33 +124,27 @@ class TestHelper implements WorkspaceExtensions.IWorkspaceExtensionTestHelper {
 	private getHelper(): IExtensionEntryPointHelper {
 		return this.helper;
 	}
-	private readTitle(
-		title: string = 'Untitled test',
-		level: number = 0
-	): { title: string; level: number } {
-		if (title.startsWith('-') && level === 0) {
-			const chars = title.split('');
-			let stop = false;
-			level = chars.reduce((count, char) => {
-				if (char === '-' && !stop) {
-					count++;
-				} else {
-					stop = true;
-				}
-				return count;
-			}, 0);
-			return { title: title.substr(level), level };
-		} else {
-			return { title, level };
+	private async sendTestLog(node: TestNode, sendAnyway: boolean = false): Promise<void> {
+		if (node.getLevel() === 0 || sendAnyway) {
+			await this.getHelper().sendTestLog(node.getTitle(), node.isPassed(), node.getLevel());
+			await Promise.all(
+				(node.getChildren() || []).map(async child => await this.sendTestLog(child, true))
+			);
 		}
 	}
 	async test(title: string, fn: () => void | Promise<void>): Promise<this> {
-		const { title: newTitle, level } = this.readTitle(title, 0);
+		const node = new TestNode(title, false, this.currentTestNode);
 		try {
+			this.currentTestNode = node;
 			await fn.call(this);
-			this.getHelper().sendTestLog(newTitle, true, level);
-		} catch {
-			this.getHelper().sendTestLog(newTitle, false, level);
+			node.setPassed(true);
+			await this.sendTestLog(node);
+			this.currentTestNode = node.getParent();
+		} catch (e) {
+			node.setPassed(false);
+			await this.sendTestLog(node);
+			this.currentTestNode = node.getParent();
+			throw e;
 		}
 		return this;
 	}
