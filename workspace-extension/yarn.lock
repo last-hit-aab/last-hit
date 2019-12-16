@@ -1321,10 +1321,10 @@ kind-of@^6.0.0, kind-of@^6.0.2:
   resolved "https://registry.yarnpkg.com/kind-of/-/kind-of-6.0.2.tgz#01146b36a6218e64e58f3a8d66de5d7fc6f6d051"
   integrity sha512-s5kLOcnH0XqDO+FvuaLX8DDjZ18CGFk7VygH40QoKPUQhW4e2rvM0rwUq0t8IQDOwYSeLK01U90OjzBTme2QqA==
 
-last-hit-types@^0.7.5-dev.7:
-  version "0.7.5-dev.7"
-  resolved "https://registry.yarnpkg.com/last-hit-types/-/last-hit-types-0.7.5-dev.7.tgz#369516724f188e40535f7bc99e4e311c07035e21"
-  integrity sha512-QrGLdDw9a3M+rnywPOBxYGI/lvb1aINMrtIrum5BorDECCkEMBXXpKo8TUq+VoZxdyhI/T3eBEkcJ6q0eFY6Xg==
+last-hit-types@0.8.0:
+  version "0.8.0"
+  resolved "https://registry.npmjs.org/last-hit-types/-/last-hit-types-0.8.0.tgz#38e9150e45cb9a6887235cfa70111ed0dd8410a8"
+  integrity sha512-P76l2aSxCUOb5xtbPsbmYyf9T0MA4UbQ2qTHurWmq9Q17j6kO/XzN0ZXbxtkdm0prpJi16wrH5y/QYErFUT3kg==
 
 last-run@^1.1.0:
   version "1.1.1"
