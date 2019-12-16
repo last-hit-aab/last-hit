@@ -23,7 +23,7 @@ jobs:
         run: |
           cd extensions
           yarn install
-          cd ../workspace-extensions
+          cd ../workspace-extension
           yarn install
           cd ../replayer
           yarn install
