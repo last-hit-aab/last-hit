@@ -1,4 +1,4 @@
-name: Pulibsh-NPM
+name: Formal-Release
 
 on:
   create:
@@ -10,25 +10,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
+      - name: Setup Node Env
+        uses: actions/setup-node@v1
         with:
           node-version: 12
           registry-url: https://registry.npmjs.org/
-      - uses: actions/cache@v1
-        with:
-          path: replayer/node_modules
-          key: ${{ runner.OS }}-build-${{ hashFiles('replayer/package.json') }}
-      - run: |
+      - name: Setup NPM config
+        run: |
           npm config set //registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN
+      - name: Deploy Types
+        run: |
           cd types 
           npm run deploy
-          cd ../extensions
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - name: Deploy Extensions
+        run: |
+          cd extensions
           yarn install
           npm run deploy
-          cd ../workspace-extension
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - name: Deploy Workspace Extension
+        run: |
+          cd workspace-extension
           yarn install
           npm run deploy
-          cd ../replayer
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - name: Deploy Replayer
+        run: |
+          cd replayer
           yarn install
           npm run deploy
         env:
@@ -46,20 +58,26 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node_version }}
-      - name: Cache Renderer Node Modules
-        uses: actions/cache@v1
-        with:
-          path: renderer/node_modules
-          key: ${{ runner.OS }}-build-${{ hashFiles('renderer/package.json') }}
-      - name: Install Renderer Node Modules
+      - name: Install Extensions Dependencies
+        run: |
+          cd extensions
+          yarn install
+      - name: Install Test One Extension Dependencies
+        run: |
+          cd test-one-extension
+          yarn install
+      - name: Install Workspace Extension Dependencies
+        run: |
+          cd workspace-extension
+          yarn install
+      - name: Install Replayer Dependencies
+        run: |
+          cd replayer
+          yarn install
+      - name: Install Renderer Dependencies
         run: |
           cd renderer
           yarn install
-      - name: Cache App Node Modules
-        uses: actions/cache@v1
-        with:
-          path: node_modules
-          key: ${{ runner.OS }}-build-${{ hashFiles('package.json') }}
       - name: Install App Node Modules
         run: yarn install
       - name: Package for Windows

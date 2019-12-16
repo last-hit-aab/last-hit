@@ -1,6 +1,6 @@
 {
 	"name": "last-hit-extensions",
-	"version": "0.7.5-dev.11",
+	"version": "0.8.0",
 	"description": "extensions for last-hit",
 	"main": "dist/index.js",
 	"scripts": {
@@ -19,12 +19,12 @@
 	},
 	"homepage": "https://www.last-hit.com",
 	"author": "last-hit-team",
-	"license": "UNLICENSED",
+	"license": "MIT",
 	"private": false,
 	"dependencies": {
 		"@types/jsonfile": "^5.0.0",
 		"jsonfile": "^5.0.0",
-		"last-hit-types": "^0.7.5-dev.7",
+		"last-hit-types": "0.8.0",
 		"typescript": "^3.7.2"
 	},
 	"devDependencies": {
