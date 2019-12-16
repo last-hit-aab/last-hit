@@ -1,9 +1,9 @@
 name: Formal-Release
 
 on:
-  create:
-    tags:
-      - v*
+  push:
+    branches:
+      - never
 
 jobs:
   deploy-npm:
