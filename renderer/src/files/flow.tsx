@@ -143,7 +143,8 @@ export const findAndMergeForceDependencyFlows = (
 	const forceDependencyFlow: Flow = {
 		name: flow.name,
 		description: `Merged force dependency flows`,
-		steps: []
+		steps: [],
+		params: []
 	};
 
 	let currentFlow = flow;
@@ -173,6 +174,7 @@ export const findAndMergeForceDependencyFlows = (
 				}
 			}))
 		);
+		mergeFlowInput(dependsFlow, forceDependencyFlow);
 		currentFlow = dependsFlow;
 	}
 
@@ -183,4 +185,18 @@ export const findAndMergeForceDependencyFlows = (
 	forceDependencyFlow.steps.forEach((step, index) => (step.stepIndex = index));
 
 	return forceDependencyFlow;
+};
+
+export const mergeFlowInput = (source: Flow, target: Flow): void => {
+	if (source.params && source.params.length !== 0) {
+		target.params = target.params || [];
+		const existsParamNames = target.params!.reduce((names, param) => {
+			names[param.name] = true;
+			return names;
+		}, {} as { [key in string]: true });
+		source.params
+			.filter(param => param.type !== 'out')
+			.filter(param => existsParamNames[param.name] !== true)
+			.forEach(param => target.params!.push(param));
+	}
 };

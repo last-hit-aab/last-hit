@@ -1,13 +1,14 @@
 import { Button, Classes, Overlay } from '@blueprintjs/core';
 import { ipcRenderer, remote } from 'electron';
-import { Flow, Story } from 'last-hit-types';
+import { Flow, FlowParameters, Story } from 'last-hit-types';
 import React from 'react';
 import styled from 'styled-components';
 import { getActiveWorkspace } from '../../active';
 import UIContext, { asFlowKeyByName } from '../../common/context';
 import { EventTypes } from '../../events';
-import { asFlowKey, findAndMergeForceDependencyFlows } from '../../files';
+import { asFlowKey, findAndMergeForceDependencyFlows, mergeFlowInput } from '../../files';
 import { getStepTypeText } from '../step/utils';
+import ParamsDialog from './replay-params-dialog';
 import { loopCheck } from './utils';
 
 const Placeholder = styled.div`
@@ -53,6 +54,8 @@ const buildReplayFlow = async (
 					} as any
 				})
 			);
+			// merge flow input from me to replay flow
+			mergeFlowInput(flow, replayFlow);
 		}
 	} else {
 		replayFlow = flow;
@@ -60,7 +63,7 @@ const buildReplayFlow = async (
 	return replayFlow;
 };
 
-const TheDialog = (props: {
+const ReplayDialog = (props: {
 	story: Story;
 	flow: Flow;
 	stepping: boolean;
@@ -72,6 +75,7 @@ const TheDialog = (props: {
 	const close = () => {
 		emitter.emit(EventTypes.CLOSE_FLOW_REPLAY_DIALOG, story, flow);
 	};
+	const [paramsFlow, setParamsFlow] = React.useState(null as null | Flow);
 	const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
 	const [paused, setPaused] = React.useState(false);
 	const [replayFlow, setReplayFlow] = React.useState(null as null | Flow);
@@ -236,16 +240,24 @@ const TheDialog = (props: {
 			}
 		});
 	};
+	const doStartReplay = (replayFlow: Flow): void => {
+		setReplayFlow(replayFlow);
+		handleReplayStepEnd(story, replayFlow);
+		ipcRenderer.send('launch-replay', {
+			flow: replayFlow,
+			index: currentStepIndex,
+			storyName: story.name
+		});
+	};
 	const startReplay = async () => {
 		try {
-			const replayFlow = await buildReplayFlow(story, flow, forRecordForceDependency);
-			setReplayFlow(replayFlow);
-			handleReplayStepEnd(story, replayFlow);
-			ipcRenderer.send('launch-replay', {
-				flow: replayFlow,
-				index: currentStepIndex,
-				storyName: story.name
-			});
+			const replayFlow: Flow = await buildReplayFlow(story, flow, forRecordForceDependency);
+			if (replayFlow.params && replayFlow.params.length !== 0) {
+				// has inputs
+				setParamsFlow(replayFlow);
+			} else {
+				doStartReplay(replayFlow);
+			}
 		} catch {
 			await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
 				type: 'error',
@@ -326,6 +338,18 @@ const TheDialog = (props: {
 		})();
 	};
 
+	const onParamsDialogConfirmed = (params: FlowParameters): void => {
+		const flow = paramsFlow!;
+		flow.params = params;
+		setParamsFlow(null);
+		doStartReplay(flow);
+	};
+	if (paramsFlow != null) {
+		return (
+			<ParamsDialog flow={paramsFlow} onConfirm={onParamsDialogConfirmed} onCancel={close} />
+		);
+	}
+
 	return (
 		<Overlay
 			isOpen={true}
@@ -391,7 +415,7 @@ export default (): JSX.Element => {
 	});
 
 	if (data != null) {
-		return <TheDialog {...data} />;
+		return <ReplayDialog {...data} />;
 	} else {
 		return <React.Fragment />;
 	}
