@@ -186,7 +186,7 @@ var Replayer = /** @class */ (function () {
             }
         };
         this.handleTestLog = function (event) {
-            console.log(event);
+            // console.log(event);
             _this.testLogs.push(event.data);
         };
         var storyName = options.storyName, flow = options.flow, env = options.env, logger = options.logger, replayers = options.replayers, registry = options.registry;
@@ -596,42 +596,45 @@ var Replayer = /** @class */ (function () {
                     case 0:
                         browser = this.getBrowser();
                         if (!(browser == null)) return [3 /*break*/, 1];
-                        return [3 /*break*/, 10];
-                    case 1:
-                        this.accomplishFlow();
-                        _b.label = 2;
+                        return [3 /*break*/, 11];
+                    case 1: return [4 /*yield*/, this.accomplishFlow()];
                     case 2:
-                        _b.trys.push([2, 5, , 6]);
-                        return [4 /*yield*/, browser.pages()];
+                        _b.sent();
+                        this.getSummary().handleFlowParameters(this.getFlowInput(), this.getFlowOutput());
+                        this.getSummary().handleScriptTests(this.getTestLogs());
+                        _b.label = 3;
                     case 3:
+                        _b.trys.push([3, 6, , 7]);
+                        return [4 /*yield*/, browser.pages()];
+                    case 4:
                         pages = _b.sent();
                         _a = this;
                         return [4 /*yield*/, ci_helper_1.default.gatherCoverage(pages)];
-                    case 4:
+                    case 5:
                         _a.coverages = _b.sent();
                         browser.disconnect();
-                        return [3 /*break*/, 6];
-                    case 5:
+                        return [3 /*break*/, 7];
+                    case 6:
                         e_3 = _b.sent();
                         this.getLogger().error('Failed to disconnect from brwoser.');
                         this.getLogger().error(e_3);
-                        return [3 /*break*/, 6];
-                    case 6:
-                        if (!close) return [3 /*break*/, 10];
-                        _b.label = 7;
+                        return [3 /*break*/, 7];
                     case 7:
-                        _b.trys.push([7, 9, , 10]);
-                        return [4 /*yield*/, browser.close()];
+                        if (!close) return [3 /*break*/, 11];
+                        _b.label = 8;
                     case 8:
+                        _b.trys.push([8, 10, , 11]);
+                        return [4 /*yield*/, browser.close()];
+                    case 9:
                         _b.sent();
                         delete this.replayers[this.getIdentity()];
-                        return [3 /*break*/, 10];
-                    case 9:
+                        return [3 /*break*/, 11];
+                    case 10:
                         e_4 = _b.sent();
                         this.getLogger().error('Failed to close browser.');
                         this.getLogger().error(e_4);
-                        return [3 /*break*/, 10];
-                    case 10:
+                        return [3 /*break*/, 11];
+                    case 11:
                         this.registry
                             .off(last_hit_extensions_1.ExtensionEventTypes.LOG, this.handleExtensionLog)
                             .off(last_hit_extensions_1.ExtensionEventTypes.ERROR_LOG, this.handleExtensionErrorLog);

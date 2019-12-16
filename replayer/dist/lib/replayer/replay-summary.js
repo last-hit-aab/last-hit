@@ -54,7 +54,9 @@ var ReplaySummary = /** @class */ (function () {
             numberOfAjax: 0,
             slowAjaxRequest: [],
             screenCompareList: [],
-            errorStack: ''
+            errorStack: '',
+            testLogs: [],
+            flowParams: []
         };
     }
     ReplaySummary.prototype.getEnvironment = function () {
@@ -124,6 +126,33 @@ var ReplaySummary = /** @class */ (function () {
                 }
                 return [2 /*return*/];
             });
+        });
+    };
+    ReplaySummary.prototype.handleScriptTests = function (testLogs) {
+        this.summary.testLogs = testLogs || [];
+    };
+    ReplaySummary.prototype.handleFlowParameters = function (input, output) {
+        if (input === void 0) { input = {}; }
+        if (output === void 0) { output = {}; }
+        var params = [];
+        Object.keys(input).forEach(function (name) {
+            var value = input[name];
+            params.push({ name: name, value: value, type: 'in' });
+        });
+        Object.keys(output).forEach(function (name) {
+            var value = output[name];
+            params.push({ name: name, value: value, type: 'out' });
+        });
+        this.summary.flowParams = params.sort(function (a, b) {
+            if (a.type === b.type) {
+                return a.name.localeCompare(b.name);
+            }
+            else if (a.type === 'in') {
+                return -1;
+            }
+            else {
+                return 1;
+            }
         });
     };
     ReplaySummary.prototype.print = function () {

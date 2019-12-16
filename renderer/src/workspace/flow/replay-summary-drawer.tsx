@@ -10,7 +10,7 @@ import {
 } from '@blueprintjs/core';
 import { remote } from 'electron';
 import fs from 'fs';
-import { Flow, Step, Story } from 'last-hit-types';
+import { Flow, Step, Story, FlowParameterValueType } from 'last-hit-types';
 import path from 'path';
 import React from 'react';
 import styled from 'styled-components';
@@ -22,7 +22,9 @@ enum TabIds {
 	SUMMARY = 'summary',
 	ERROR = 'error',
 	SCREENSHOT = 'screenshot',
-	SLOW_AJAX = 'slow-ajax'
+	SLOW_AJAX = 'slow-ajax',
+	SCRIPT_TESTS = 'script-tests',
+	PARAMS = 'params'
 }
 
 const {
@@ -138,6 +140,57 @@ const SlowAjaxItem = styled.div`
 	}
 	> span:last-child {
 		white-space: nowrap;
+	}
+`;
+const ScriptTestsContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+`;
+const ScriptTestsItem = styled.div`
+	min-height: 30px;
+	height: auto;
+	padding-top: ${() => `${vertical}px`};
+	padding-bottom: ${() => `${vertical}px`};
+	> span:first-child {
+		flex-grow: 1;
+		margin-right: ${() => `${body}px`};
+		white-space: nowrap;
+		overflow-x: hidden;
+		text-overflow: ellipsis;
+		${(): string => {
+			return new Array(20)
+				.fill(1)
+				.map(index => {
+					return `
+					&[data-indent=${index}] {
+						padding-left: ${20 * index}px;
+					}
+				`;
+				})
+				.join();
+		}}
+	}
+	> span:last-child {
+		white-space: nowrap;
+	}
+`;
+const ParamsContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+`;
+const ParamsItem = styled.div`
+	min-height: 30px;
+	height: auto;
+	padding-top: ${() => `${vertical}px`};
+	padding-bottom: ${() => `${vertical}px`};
+	> span {
+		flex-grow: 1;
+		margin-right: ${() => `${body}px`};
+		white-space: nowrap;
+		overflow-x: hidden;
+		text-overflow: ellipsis;
 	}
 `;
 
@@ -329,6 +382,79 @@ const SlowAjaxPanel = (props: { summary: any }): JSX.Element => {
 	}
 };
 
+const ScriptTestsPanel = (props: { summary: any }): JSX.Element => {
+	const {
+		summary: { testLogs = [] }
+	} = props;
+
+	if (testLogs.length === 0) {
+		return (
+			<ScriptTestsContainer>
+				<h2 className="bp3-heading">No slow ajax requests.</h2>
+			</ScriptTestsContainer>
+		);
+	} else {
+		return (
+			<ScriptTestsContainer>
+				{testLogs.map(
+					(
+						item: { title: string; passed: boolean; level: number; message: string },
+						index: number
+					) => {
+						const { title, passed, level, message } = item;
+						return (
+							<ScriptTestsItem
+								key={`${title}-${index}`}
+								className="bp3-tree-node-content">
+								<span data-indent={level}>{`${title}, ${message || ''}`}</span>
+								<span>{passed ? 'PASS' : 'FAIL'}</span>
+							</ScriptTestsItem>
+						);
+					}
+				)}
+			</ScriptTestsContainer>
+		);
+	}
+};
+
+const ParamsPanel = (props: { summary: any }): JSX.Element => {
+	const {
+		summary: { flowParams = [] }
+	} = props;
+
+	if (flowParams.length === 0) {
+		return (
+			<ParamsContainer>
+				<h2 className="bp3-heading">No slow ajax requests.</h2>
+			</ParamsContainer>
+		);
+	} else {
+		const asValueText = (value: FlowParameterValueType): string => {
+			return !value ? '' : `${value}`;
+		};
+
+		return (
+			<ParamsContainer>
+				{flowParams.map(
+					(
+						item: { name: string; value: FlowParameterValueType; type: 'in' | 'out' },
+						index: number
+					) => {
+						const { name, value, type } = item;
+						return (
+							<ParamsItem key={`${name}-${index}`} className="bp3-tree-node-content">
+								<span>{`[${(type || 'IN').toUpperCase()}] ${name}: [${asValueText(
+									value
+								)}]`}</span>
+							</ParamsItem>
+						);
+					}
+				)}
+			</ParamsContainer>
+		);
+	}
+};
+
 const TheDialog = (props: {
 	story: Story;
 	flow: Flow;
@@ -404,6 +530,16 @@ const TheDialog = (props: {
 						id={TabIds.SLOW_AJAX}
 						title="Slow Ajax"
 						panel={<SlowAjaxPanel summary={summary} />}
+					/>
+					<Tab
+						id={TabIds.SCRIPT_TESTS}
+						title="Script Tests"
+						panel={<ScriptTestsPanel summary={summary} />}
+					/>
+					<Tab
+						id={TabIds.PARAMS}
+						title="Flow Parameters"
+						panel={<ParamsPanel summary={summary} />}
 					/>
 					<Tabs.Expander />
 				</SummaryTabs>

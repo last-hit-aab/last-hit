@@ -2575,20 +2575,20 @@ kind-of@^6.0.0, kind-of@^6.0.2:
   resolved "https://registry.yarnpkg.com/kind-of/-/kind-of-6.0.2.tgz#01146b36a6218e64e58f3a8d66de5d7fc6f6d051"
   integrity sha512-s5kLOcnH0XqDO+FvuaLX8DDjZ18CGFk7VygH40QoKPUQhW4e2rvM0rwUq0t8IQDOwYSeLK01U90OjzBTme2QqA==
 
-last-hit-extensions@^0.7.5-dev.8:
-  version "0.7.5-dev.8"
-  resolved "https://registry.yarnpkg.com/last-hit-extensions/-/last-hit-extensions-0.7.5-dev.8.tgz#3584b1a241fceae916b2100e4cb0f56ff3f8ce5e"
-  integrity sha512-KycB+F+UR5bXqEBdL7culzIyB+kHkjxw09fELuLxQUwWdD5elKhcQTUuTkZ9khcRgQkDJ1mIF7YuYrYYEmv0WA==
+last-hit-extensions@^0.7.5-dev.11:
+  version "0.7.5-dev.11"
+  resolved "https://registry.yarnpkg.com/last-hit-extensions/-/last-hit-extensions-0.7.5-dev.11.tgz#4985e188d3c9cf514de37dce87ac0c07ef1350f1"
+  integrity sha512-FHVfsjfYWUCb5OhcKzqr2o9+LKBw61ReDIk20WKuTjutlm3ss1wAIOgOvSx233jhX+9Arlkd1Fnv2cad5aR9Uw==
   dependencies:
     "@types/jsonfile" "^5.0.0"
     jsonfile "^5.0.0"
-    last-hit-types "^0.7.5-dev.6"
+    last-hit-types "^0.7.5-dev.7"
     typescript "^3.7.2"
 
-last-hit-replayer@^0.7.5-dev.7:
-  version "0.7.5-dev.7"
-  resolved "https://registry.yarnpkg.com/last-hit-replayer/-/last-hit-replayer-0.7.5-dev.7.tgz#23a863ba96cfe4167c9662c1bb18c5a70e3240ab"
-  integrity sha512-UyKBTKfz2HflgQsDKtQnFWn63/eSVhj7/zdtbejD4ePJsklT1VnR/VGa9KBQ6ANNjwauDQEYSVP8Is5u+oy7bA==
+last-hit-replayer@^0.7.5-dev.11:
+  version "0.7.5-dev.11"
+  resolved "https://registry.yarnpkg.com/last-hit-replayer/-/last-hit-replayer-0.7.5-dev.11.tgz#89216a9e51f9e634eafd6453db48723487e33587"
+  integrity sha512-q+YvH4ABoyGIJsrHgk4JV8Z5u/SftLj7J3Cvbrx42CoZWqOnJyZMH/fF1U/6lJlhxOPBdbd3jWluHFJiBt9x3A==
   dependencies:
     "@types/atob" "^2.1.2"
     "@types/clone" "^0.1.30"
@@ -2606,7 +2606,7 @@ last-hit-replayer@^0.7.5-dev.7:
     handlebars "^4.5.3"
     image-ssim "^0.2.0"
     jsonfile "^5.0.0"
-    last-hit-extensions "^0.7.5-dev.8"
+    last-hit-extensions "^0.7.5-dev.11"
     mkdirp "^0.5.1"
     node-resemble-js "^0.2.0"
     nyc "^14.1.1"
@@ -2617,10 +2617,10 @@ last-hit-replayer@^0.7.5-dev.7:
     uuid "^3.3.3"
     yargs "^14.0.0"
 
-last-hit-types@^0.7.5-dev.6:
-  version "0.7.5-dev.6"
-  resolved "https://registry.yarnpkg.com/last-hit-types/-/last-hit-types-0.7.5-dev.6.tgz#661a6d84fb20b0bcf7c017b366f92a3d3c1c51a0"
-  integrity sha512-TxmWohrY6WCvox1Jt9Nby2vTUThdYInKzzD4BSYMKQKNyZU0zKiNR2dRCPM+rd/yy4zZtwF9Yg063jHFDO3lGw==
+last-hit-types@^0.7.5-dev.7:
+  version "0.7.5-dev.7"
+  resolved "https://registry.yarnpkg.com/last-hit-types/-/last-hit-types-0.7.5-dev.7.tgz#369516724f188e40535f7bc99e4e311c07035e21"
+  integrity sha512-QrGLdDw9a3M+rnywPOBxYGI/lvb1aINMrtIrum5BorDECCkEMBXXpKo8TUq+VoZxdyhI/T3eBEkcJ6q0eFY6Xg==
 
 last-run@^1.1.0:
   version "1.1.1"

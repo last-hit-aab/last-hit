@@ -160,7 +160,12 @@ class Replayer {
 	private registry: WorkspaceExtensionRegistry;
 	private flowInput: WorkspaceExtensions.FlowParameterValues = {};
 	private flowOutput: WorkspaceExtensions.FlowParameterValues = {};
-	private testLogs: Array<{ title: string; passed: boolean; level?: number }> = [];
+	private testLogs: Array<{
+		title: string;
+		passed: boolean;
+		level: number;
+		message?: string;
+	}> = [];
 
 	constructor(options: ReplayerOptions) {
 		const { storyName, flow, env, logger, replayers, registry } = options;
@@ -204,16 +209,16 @@ class Replayer {
 		}
 	};
 	private handleTestLog = (event: ExtensionTestLogEvent): void => {
-		console.log(event);
+		// console.log(event);
 		this.testLogs.push(event.data);
 	};
 	private getFlowInput(): WorkspaceExtensions.FlowParameterValues {
 		return this.flowInput;
 	}
-	getFlowOutput(): WorkspaceExtensions.FlowParameterValues {
+	private getFlowOutput(): WorkspaceExtensions.FlowParameterValues {
 		return this.flowOutput;
 	}
-	getTestLogs() {
+	private getTestLogs() {
 		return this.testLogs;
 	}
 	private async findCurrentPage(uuid?: string): Promise<Page> {
@@ -501,7 +506,9 @@ class Replayer {
 		if (browser == null) {
 			// do nothing, seems not start
 		} else {
-			this.accomplishFlow();
+			await this.accomplishFlow();
+			this.getSummary().handleFlowParameters(this.getFlowInput(), this.getFlowOutput());
+			this.getSummary().handleScriptTests(this.getTestLogs());
 			try {
 				const pages = await browser.pages();
 				this.coverages = await ci.gatherCoverage(pages);

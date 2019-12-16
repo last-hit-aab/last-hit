@@ -1,5 +1,5 @@
 import { CoverageEntry } from 'puppeteer';
-import { Environment } from 'last-hit-types';
+import { FlowParameters } from 'last-hit-types';
 
 export type IncludingFilter = { story: string; flow?: string };
 export type IncludingFilters = IncludingFilter[];
@@ -54,6 +54,8 @@ export type Summary = {
 		human: string;
 		type: string;
 	}>;
+	testLogs?: Array<{ title: string; passed: boolean; level?: number }>;
+	flowParams: FlowParameters;
 };
 
 export type Report = Summary & {

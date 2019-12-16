@@ -64,6 +64,19 @@ var stream_1 = __importDefault(require("stream"));
 var replayer_1 = require("../replayer");
 var utils_1 = require("../utils");
 var processId = utils_1.getProcessId();
+exports.mergeFlowInput = function (source, target) {
+    if (source.params && source.params.length !== 0) {
+        target.params = target.params || [];
+        var existsParamNames_1 = target.params.reduce(function (names, param) {
+            names[param.name] = true;
+            return names;
+        }, {});
+        source.params
+            .filter(function (param) { return param.type !== 'out'; })
+            .filter(function (param) { return existsParamNames_1[param.name] !== true; })
+            .forEach(function (param) { return target.params.push(param); });
+    }
+};
 /**
  * find all force dependencies, and merge steps to one flow
  */
@@ -71,7 +84,8 @@ var findAndMergeForceDependencyFlows = function (flow, env) {
     var forceDependencyFlow = {
         name: flow.name,
         description: "Merged force dependency flows",
-        steps: []
+        steps: [],
+        params: []
     };
     var currentFlow = flow;
     var _loop_1 = function () {
@@ -91,6 +105,7 @@ var findAndMergeForceDependencyFlows = function (flow, env) {
                     stepIndex: step.stepIndex
                 } }));
         })));
+        exports.mergeFlowInput(dependsFlow, forceDependencyFlow);
         currentFlow = dependsFlow;
     };
     while (currentFlow.settings && currentFlow.settings.forceDepends) {
@@ -242,6 +257,7 @@ exports.handleFlow = function (flowFile, env) {
                     stepIndex: step.stepIndex
                 } }));
         });
+        exports.mergeFlowInput(flow, forceDependsFlow_1);
         flow = forceDependsFlow_1;
     }
     var startStep = flow.steps[0];

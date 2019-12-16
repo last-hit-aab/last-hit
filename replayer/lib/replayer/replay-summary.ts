@@ -1,4 +1,4 @@
-import { Flow, Step } from 'last-hit-types';
+import { Flow, FlowParameters, Step, WorkspaceExtensions } from 'last-hit-types';
 import Environment from '../config/env';
 import { Summary } from '../types';
 
@@ -25,7 +25,9 @@ class ReplaySummary {
 			numberOfAjax: 0,
 			slowAjaxRequest: [],
 			screenCompareList: [],
-			errorStack: ''
+			errorStack: '',
+			testLogs: [],
+			flowParams: [] as FlowParameters
 		};
 	}
 	getEnvironment() {
@@ -76,6 +78,34 @@ class ReplaySummary {
 		if (usedTime >= this.getEnvironment().getSlowAjaxTime()) {
 			this.summary.slowAjaxRequest!.push({ url, time: usedTime });
 		}
+	}
+	handleScriptTests(
+		testLogs: Array<{ title: string; passed: boolean; level: number; message?: string }>
+	) {
+		this.summary.testLogs = testLogs || [];
+	}
+	handleFlowParameters(
+		input: WorkspaceExtensions.FlowParameterValues = {},
+		output: WorkspaceExtensions.FlowParameterValues = {}
+	) {
+		const params = [] as FlowParameters;
+		Object.keys(input).forEach(name => {
+			const value = input[name];
+			params.push({ name, value, type: 'in' });
+		});
+		Object.keys(output).forEach(name => {
+			const value = output[name];
+			params.push({ name, value, type: 'out' });
+		});
+		this.summary.flowParams = params.sort((a, b) => {
+			if (a.type === b.type) {
+				return a.name.localeCompare(b.name);
+			} else if (a.type === 'in') {
+				return -1;
+			} else {
+				return 1;
+			}
+		});
 	}
 	print() {
 		console.table(

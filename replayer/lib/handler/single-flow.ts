@@ -1,6 +1,6 @@
 import fs from 'fs';
 import jsonfile from 'jsonfile';
-import { Flow, Step, Story, StartStep } from 'last-hit-types';
+import { Flow, Step, Story, StartStep, FlowParameters } from 'last-hit-types';
 import path from 'path';
 import stream from 'stream';
 import Environment from '../config/env';
@@ -11,6 +11,19 @@ import { generateKeyByObject, getLogger, getProcessId } from '../utils';
 
 const processId = getProcessId();
 
+export const mergeFlowInput = (source: Flow, target: Flow): void => {
+	if (source.params && source.params.length !== 0) {
+		target.params = target.params || [];
+		const existsParamNames = target.params!.reduce((names, param) => {
+			names[param.name] = true;
+			return names;
+		}, {} as { [key in string]: true });
+		source.params
+			.filter(param => param.type !== 'out')
+			.filter(param => existsParamNames[param.name] !== true)
+			.forEach(param => target.params!.push(param));
+	}
+};
 /**
  * find all force dependencies, and merge steps to one flow
  */
@@ -18,7 +31,8 @@ const findAndMergeForceDependencyFlows = (flow: Flow, env: Environment): Flow =>
 	const forceDependencyFlow = {
 		name: flow.name,
 		description: `Merged force dependency flows`,
-		steps: [] as Array<Step>
+		steps: [] as Array<Step>,
+		params: [] as FlowParameters
 	};
 
 	let currentFlow = flow;
@@ -51,6 +65,7 @@ const findAndMergeForceDependencyFlows = (flow: Flow, env: Environment): Flow =>
 					} as Step)
 			)
 		);
+		mergeFlowInput(dependsFlow, forceDependencyFlow);
 		currentFlow = dependsFlow;
 	}
 
@@ -242,6 +257,7 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 					}
 				} as Step)
 			);
+		mergeFlowInput(flow, forceDependsFlow);
 		flow = forceDependsFlow;
 	}
 
