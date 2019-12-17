@@ -140,8 +140,8 @@ var ExtensionRegistry = /** @class */ (function () {
         }); };
         process
             .once('exit', function () { return _this.shutdownAllExtensions(); })
-            .once('SIGINT', function () { return _this.shutdownAllExtensions(); });
-        // .once('SIGTERM', () => this.shutdownAllExtensions());
+            .once('SIGINT', function () { return _this.shutdownAllExtensions(); })
+            .once('SIGTERM', function () { return _this.shutdownAllExtensions(); });
     }
     ExtensionRegistry.prototype.getEmitter = function () {
         return this.emitter;

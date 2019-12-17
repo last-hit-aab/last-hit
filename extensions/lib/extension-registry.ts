@@ -28,8 +28,8 @@ class ExtensionRegistry implements IExtensionRegistry {
 	constructor() {
 		process
 			.once('exit', () => this.shutdownAllExtensions())
-			.once('SIGINT', () => this.shutdownAllExtensions());
-		// .once('SIGTERM', () => this.shutdownAllExtensions());
+			.once('SIGINT', () => this.shutdownAllExtensions())
+			.once('SIGTERM', () => this.shutdownAllExtensions());
 	}
 	protected getEmitter(): Emitter {
 		return this.emitter;
