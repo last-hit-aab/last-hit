@@ -76,6 +76,18 @@ const buildStepFieldDefinitions = (flow: Flow, step: Step): Array<FieldDefinitio
 				propName: 'value',
 				writeable: true
 			});
+			properties.push({
+				label: 'Checked',
+				propName: 'checked',
+				writeable: true,
+				helpText: 'Only on checkbox and radio button.'
+			});
+			properties.push({
+				label: 'Force Blur',
+				propName: 'forceBlur',
+				writeable: true,
+				helpText: 'Force trigger blur after change done.'
+			});
 		// eslint-disable-next-line
 		case 'click':
 		case 'mousedown':
@@ -226,7 +238,8 @@ const setValueToStep = (step: Step, propName: string, value: string | boolean): 
 	}
 };
 
-const isBooleanProperty = (propName: string): boolean => ['wechat'].includes(propName);
+const isBooleanProperty = (propName: string): boolean =>
+	['wechat', 'forceBlur', 'checked'].includes(propName);
 const DeviceSelect = Select.ofType<Device>();
 const DeviceSelectRenderer = (item: Device, props: any): JSX.Element | null => {
 	const { handleClick, modifiers } = props;
@@ -279,7 +292,8 @@ export default (props: { story: Story; flow: Flow; step: Step }): JSX.Element =>
 
 	const getPropEditor = (step: Step, field: FieldDefinition): JSX.Element => {
 		switch (true) {
-			case step.type === 'start' && field.propName === 'wechat':
+			case (step.type === 'start' && field.propName === 'wechat') ||
+				(step.type === 'change' && ['forceBlur', 'checked'].includes(field.propName)):
 				return (
 					<Switch
 						defaultChecked={getValueFromStep(step, field.propName) as boolean}

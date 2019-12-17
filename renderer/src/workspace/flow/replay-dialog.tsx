@@ -126,10 +126,15 @@ const ReplayDialog = (props: {
 			command: 'switch-to-record'
 		});
 	};
-	const replayNextStep = (story: Story, replayFlow: Flow, index: number): void => {
+	const replayNextStep = (
+		story: Story,
+		replayFlow: Flow,
+		index: number,
+		pauseOnDone: boolean = false
+	): void => {
 		setPaused(false);
 		setCurrentStepIndex(index + 1);
-		handleReplayStepEnd(story, replayFlow);
+		handleReplayStepEnd(story, replayFlow, pauseOnDone);
 		ipcRenderer.send(`continue-replay-step-${asFlowKey(replayFlow, story)}`, {
 			storyName: story.name,
 			flow: replayFlow,
@@ -180,7 +185,7 @@ const ReplayDialog = (props: {
 		}
 		emitter.emit(EventTypes.CLOSE_FLOW_REPLAY_DIALOG, story, flow);
 	};
-	const handleReplayStepEnd = (story: Story, flow: Flow): void => {
+	const handleReplayStepEnd = (story: Story, flow: Flow, pauseOnDone: boolean = false): void => {
 		const flowKey = asFlowKey(flow, story);
 		ipcRenderer.once(`replay-step-end-${flowKey}`, (event, arg) => {
 			const { error, errorStack, index } = arg;
@@ -214,7 +219,7 @@ const ReplayDialog = (props: {
 					// leave the start step
 					doSwitchToRecord(1);
 				}
-			} else if (stepping) {
+			} else if (stepping || pauseOnDone) {
 				// check is force dependency or not
 				const step = flow.steps![index]!;
 				// when has force dependency, all step has origin field.
@@ -288,6 +293,9 @@ const ReplayDialog = (props: {
 	};
 	const onContinueClicked = () => {
 		replayNextStep(story, replayFlow!, currentStepIndex);
+	};
+	const onRunOneStepClicked = () => {
+		replayNextStep(story, replayFlow!, currentStepIndex, true);
 	};
 	const onSwitchToRecordClicked = async () => {
 		let ret: Electron.MessageBoxReturnValue = await remote.dialog.showMessageBox(
@@ -376,6 +384,9 @@ const ReplayDialog = (props: {
 						Switch to record
 					</Button>
 					<Placeholder />
+					<Button onClick={onRunOneStepClicked} intent="primary" disabled={!paused}>
+						Run one step
+					</Button>
 					<Button onClick={onContinueClicked} intent="primary" disabled={!paused}>
 						Continue
 					</Button>
