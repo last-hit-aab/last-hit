@@ -2,7 +2,7 @@ name: Formal-Release
 
 on:
   push:
-    master:
+    branches:
       - never
 
 jobs:
