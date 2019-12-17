@@ -743,6 +743,14 @@ class Replayer {
 				const wait = util.promisify(setTimeout);
 				await wait(env.getSleepAfterChange()!);
 			}
+			if (step.forceBlur) {
+				await element.evaluate((node: Element) => {
+					(node as any).focus && (node as HTMLElement).focus();
+					const event = document.createEvent('HTMLEvents');
+					event.initEvent('blur', true, true);
+					node.dispatchEvent(event);
+				});
+			}
 		}
 	}
 	private async executeClickStep(step: ClickStep): Promise<void> {

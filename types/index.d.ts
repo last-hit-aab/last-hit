@@ -141,6 +141,7 @@ declare module 'last-hit-types' {
 		value: string;
 		file?: string;
 		checked?: boolean;
+		forceBlur?: boolean;
 	};
 	export type DomChangeStep = Step & { type: 'dom-change' };
 	export type AnimationStep = Step & { type: 'animation'; duration: number };

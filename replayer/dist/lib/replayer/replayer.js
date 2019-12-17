@@ -908,7 +908,7 @@ var Replayer = /** @class */ (function () {
                         return [4 /*yield*/, fileChooser.accept([filepath])];
                     case 6:
                         _a.sent();
-                        return [3 /*break*/, 10];
+                        return [3 /*break*/, 12];
                     case 7: 
                     // change is change only, cannot use type
                     return [4 /*yield*/, this.setValueToElement(element, step.value)];
@@ -922,7 +922,18 @@ var Replayer = /** @class */ (function () {
                     case 9:
                         _a.sent();
                         _a.label = 10;
-                    case 10: return [2 /*return*/];
+                    case 10:
+                        if (!step.forceBlur) return [3 /*break*/, 12];
+                        return [4 /*yield*/, element.evaluate(function (node) {
+                                node.focus && node.focus();
+                                var event = document.createEvent('HTMLEvents');
+                                event.initEvent('blur', true, true);
+                                node.dispatchEvent(event);
+                            })];
+                    case 11:
+                        _a.sent();
+                        _a.label = 12;
+                    case 12: return [2 /*return*/];
                 }
             });
         });
