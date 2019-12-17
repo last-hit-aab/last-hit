@@ -201,11 +201,7 @@ var ExtensionWorker = /** @class */ (function () {
             else {
                 // child process not found, generate an ignore reply
                 resolve();
-                _this.getEmitter().emit("data" /* DATA */, {
-                    type: types_1.ExtensionEventTypes.DATA_TRANSMITTED,
-                    extensionId: extensionId,
-                    data: { ignore: true }
-                });
+                _this.getEmitter().emit("data" /* DATA */, { ignore: true });
             }
         });
     };

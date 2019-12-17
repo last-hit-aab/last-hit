@@ -203,11 +203,7 @@ class ExtensionWorker implements IExtensionWorker {
 			} else {
 				// child process not found, generate an ignore reply
 				resolve();
-				this.getEmitter().emit(WorkerEvents.DATA, {
-					type: ExtensionEventTypes.DATA_TRANSMITTED,
-					extensionId,
-					data: { ignore: true }
-				} as ExtensionDataTransmittedIgnoreEvent);
+				this.getEmitter().emit(WorkerEvents.DATA, { ignore: true });
 			}
 		});
 	}
