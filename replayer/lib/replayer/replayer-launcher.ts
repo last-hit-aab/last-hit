@@ -72,8 +72,8 @@ const createNextStepHandler = (emitter: ReplayEmitter, logger: Console): NextSte
 									flowName
 								)}.`
 							);
-							replayer.getSummary().handle(step);
 							await replayer.next(flow, index, storyName);
+							replayer.getSummary().handle(step);
 
 							waitForNextStep({ event, replayer, storyName, flowName, index });
 						} catch (e) {

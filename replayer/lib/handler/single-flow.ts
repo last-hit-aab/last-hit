@@ -166,11 +166,12 @@ const handleReplayStepEnd = (
 	emitter.once(
 		`replay-step-end-${key}`,
 		(event: CallbackEvent, arg: { error?: any; index: number }): void => {
+			// index: index of the finished step, starts from 0
 			const { error, index } = arg;
 			if (error) {
 				(async () => {
 					console.error(
-						(`Process[${processId}] Replay flow ${key} failed on step ${index}.`
+						(`Process[${processId}] Replay flow ${key} failed on step ${index + 1}.`
 							.bold as any).red,
 						error
 					);

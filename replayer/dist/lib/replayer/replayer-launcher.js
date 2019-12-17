@@ -81,10 +81,10 @@ var createNextStepHandler = function (emitter, logger) {
                     case 6:
                         _b.trys.push([6, 8, , 9]);
                         logger.log("Continue step[" + index + "]@" + utils_1.generateKeyByString(storyName, flowName) + ".");
-                        replayer.getSummary().handle(step);
                         return [4 /*yield*/, replayer.next(flow, index, storyName)];
                     case 7:
                         _b.sent();
+                        replayer.getSummary().handle(step);
                         waitForNextStep({ event: event, replayer: replayer, storyName: storyName, flowName: flowName, index: index });
                         return [3 /*break*/, 9];
                     case 8:

@@ -560,14 +560,14 @@ class Replayer {
 
 		step = this.replaceWithFlowParams(step);
 
-		// send step-should-start to extension, replace step when successfully return
-		step = await this.getRegistry().stepShouldStart(
-			this.getStoryName(),
-			simplifyFlow(this.getFlow()),
-			step
-		);
-
 		try {
+			// send step-should-start to extension, replace step when successfully return
+			step = await this.getRegistry().stepShouldStart(
+				this.getStoryName(),
+				simplifyFlow(this.getFlow()),
+				step
+			);
+
 			const ret = await (async () => {
 				switch (step.type) {
 					case 'change':
@@ -668,15 +668,19 @@ class Replayer {
 
 		// send step-accomplished to extension
 		// accomplished only triggerred when step has not error on replaying
-		const accomplishedStep = await this.getRegistry().stepAccomplished(
-			this.getStoryName(),
-			simplifyFlow(this.getFlow()),
-			step
-		);
-		if (!accomplishedStep._.passed) {
-			// extension says failed
-			await this.handleStepError(step, accomplishedStep._.error!);
-			throw accomplishedStep._.error!;
+		try {
+			const accomplishedStep = await this.getRegistry().stepAccomplished(
+				this.getStoryName(),
+				simplifyFlow(this.getFlow()),
+				step
+			);
+			if (!accomplishedStep._.passed) {
+				// extension says failed
+				throw accomplishedStep._.error!;
+			}
+		} catch (e) {
+			await this.handleStepError(step, e);
+			throw e;
 		}
 	}
 	private async handleStepError(step: Step, e: any) {

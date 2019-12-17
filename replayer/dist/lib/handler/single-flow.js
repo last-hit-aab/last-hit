@@ -174,11 +174,12 @@ var replayNextStep = function (emitter, story, flow, index, resolve) {
 var handleReplayStepEnd = function (emitter, story, flow, resolve) {
     var key = utils_1.generateKeyByObject(story, flow);
     emitter.once("replay-step-end-" + key, function (event, arg) {
+        // index: index of the finished step, starts from 0
         var error = arg.error, index = arg.index;
         if (error) {
             (function () { return __awaiter(void 0, void 0, void 0, function () {
                 return __generator(this, function (_a) {
-                    console.error(("Process[" + processId + "] Replay flow " + key + " failed on step " + index + ".")
+                    console.error(("Process[" + processId + "] Replay flow " + key + " failed on step " + (index + 1) + ".")
                         .bold.red, error);
                     emitter.once("replay-browser-abolish-" + key, function () { return resolve(); });
                     // abolish anyway
