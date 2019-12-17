@@ -1,6 +1,6 @@
 {
 	"name": "last-hit-workspace-extension",
-	"version": "0.8.0",
+	"version": "0.8.1-dev.1",
 	"description": "workspace extension abstract implementation",
 	"main": "dist/index.js",
 	"scripts": {
@@ -22,7 +22,7 @@
 	"private": false,
 	"dependencies": {
 		"decache": "^4.5.1",
-		"last-hit-types": "0.8.0",
+		"last-hit-types": "^0.8.1-dev.2",
 		"typescript": "^3.7.3"
 	},
 	"devDependencies": {
