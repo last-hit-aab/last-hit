@@ -127,6 +127,7 @@ const ReplayDialog = (props: {
 		});
 	};
 	const replayNextStep = (story: Story, replayFlow: Flow, index: number): void => {
+		setPaused(false);
 		setCurrentStepIndex(index + 1);
 		handleReplayStepEnd(story, replayFlow);
 		ipcRenderer.send(`continue-replay-step-${asFlowKey(replayFlow, story)}`, {
