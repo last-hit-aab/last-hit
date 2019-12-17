@@ -1012,24 +1012,36 @@ class Replayer {
 	private async findElement(step: Step, page: Page): Promise<ElementHandle> {
 		const xpath = this.transformStepPathToXPath(step.path!);
 		const elements = await page.$x(xpath);
-		if (elements && elements.length > 0) {
+		if (elements && elements.length === 1) {
 			return elements[0];
 		}
 
 		// fallback to css path
 		const csspath = step.csspath;
 		if (csspath) {
-			const element = await page.$(csspath);
-			if (element) {
-				return element;
+			const count = await page.evaluate(
+				csspath => document.querySelectorAll(csspath).length,
+				csspath
+			);
+			if (count === 1) {
+				const element = await page.$(csspath);
+				if (element) {
+					return element;
+				}
 			}
 		}
 
 		const custompath = step.custompath;
 		if (custompath) {
-			const element = await page.$(custompath);
-			if (element) {
-				return element;
+			const count = await page.evaluate(
+				csspath => document.querySelectorAll(csspath).length,
+				custompath
+			);
+			if (count === 1) {
+				const element = await page.$(custompath);
+				if (element) {
+					return element;
+				}
 			}
 		}
 
@@ -1039,7 +1051,7 @@ class Replayer {
 			for (let index = 0; index < frames.length; index++) {
 				const frame = frames[index];
 				const element = await frame.$x(xpath);
-				if (element.length > 0) {
+				if (element.length === 1) {
 					return element[0];
 				}
 			}

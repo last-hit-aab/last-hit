@@ -1326,7 +1326,7 @@ var Replayer = /** @class */ (function () {
     };
     Replayer.prototype.findElement = function (step, page) {
         return __awaiter(this, void 0, void 0, function () {
-            var xpath, elements, csspath, element, custompath, element, frames, index, frame, element, paths;
+            var xpath, elements, csspath, count, element, custompath, count, element, frames, index, frame, element, paths;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -1334,47 +1334,55 @@ var Replayer = /** @class */ (function () {
                         return [4 /*yield*/, page.$x(xpath)];
                     case 1:
                         elements = _a.sent();
-                        if (elements && elements.length > 0) {
+                        if (elements && elements.length === 1) {
                             return [2 /*return*/, elements[0]];
                         }
                         csspath = step.csspath;
-                        if (!csspath) return [3 /*break*/, 3];
-                        return [4 /*yield*/, page.$(csspath)];
+                        if (!csspath) return [3 /*break*/, 4];
+                        return [4 /*yield*/, page.evaluate(function (csspath) { return document.querySelectorAll(csspath).length; }, csspath)];
                     case 2:
-                        element = _a.sent();
-                        if (element) {
-                            return [2 /*return*/, element];
-                        }
-                        _a.label = 3;
+                        count = _a.sent();
+                        if (!(count === 1)) return [3 /*break*/, 4];
+                        return [4 /*yield*/, page.$(csspath)];
                     case 3:
-                        custompath = step.custompath;
-                        if (!custompath) return [3 /*break*/, 5];
-                        return [4 /*yield*/, page.$(custompath)];
-                    case 4:
                         element = _a.sent();
                         if (element) {
                             return [2 /*return*/, element];
                         }
-                        _a.label = 5;
+                        _a.label = 4;
+                    case 4:
+                        custompath = step.custompath;
+                        if (!custompath) return [3 /*break*/, 7];
+                        return [4 /*yield*/, page.evaluate(function (csspath) { return document.querySelectorAll(csspath).length; }, custompath)];
                     case 5:
-                        frames = page.frames();
-                        if (!(frames.length > 0)) return [3 /*break*/, 9];
-                        index = 0;
-                        _a.label = 6;
+                        count = _a.sent();
+                        if (!(count === 1)) return [3 /*break*/, 7];
+                        return [4 /*yield*/, page.$(custompath)];
                     case 6:
-                        if (!(index < frames.length)) return [3 /*break*/, 9];
-                        frame = frames[index];
-                        return [4 /*yield*/, frame.$x(xpath)];
-                    case 7:
                         element = _a.sent();
-                        if (element.length > 0) {
-                            return [2 /*return*/, element[0]];
+                        if (element) {
+                            return [2 /*return*/, element];
                         }
+                        _a.label = 7;
+                    case 7:
+                        frames = page.frames();
+                        if (!(frames.length > 0)) return [3 /*break*/, 11];
+                        index = 0;
                         _a.label = 8;
                     case 8:
-                        index++;
-                        return [3 /*break*/, 6];
+                        if (!(index < frames.length)) return [3 /*break*/, 11];
+                        frame = frames[index];
+                        return [4 /*yield*/, frame.$x(xpath)];
                     case 9:
+                        element = _a.sent();
+                        if (element.length === 1) {
+                            return [2 /*return*/, element[0]];
+                        }
+                        _a.label = 10;
+                    case 10:
+                        index++;
+                        return [3 /*break*/, 8];
+                    case 11:
                         paths = (function () {
                             var paths = { xpath: xpath, csspath: csspath, custompath: custompath };
                             return Object.keys(paths)
