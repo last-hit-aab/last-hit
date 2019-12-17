@@ -1,9 +1,9 @@
 name: Formal-Release
 
 on:
-  push:
-    branches:
-      - never
+  create:
+    tags:
+      - v*
 
 jobs:
   deploy-npm:
@@ -49,6 +49,7 @@ jobs:
   build-app:
     name: Pack@${{ matrix.os }}&Node${{ matrix.node_version }}
     runs-on: ${{ matrix.os }}
+    needs: deploy-npm
     strategy:
       matrix:
         node_version: [12]
