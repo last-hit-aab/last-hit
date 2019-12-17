@@ -164,7 +164,6 @@ var ExtensionWorker = /** @class */ (function () {
         this.clean();
     };
     ExtensionWorker.prototype.clean = function () {
-        this.emitter.removeAllListeners();
         if (this.childProcess) {
             this.childProcess.kill();
             this.childProcess = null;

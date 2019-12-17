@@ -164,7 +164,6 @@ class ExtensionWorker implements IExtensionWorker {
 		this.clean();
 	}
 	private clean(): void {
-		this.emitter.removeAllListeners();
 		if (this.childProcess) {
 			this.childProcess.kill();
 			this.childProcess = null;

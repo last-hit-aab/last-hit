@@ -1,6 +1,6 @@
 {
 	"name": "last-hit-extensions",
-	"version": "0.8.0",
+	"version": "0.8.1-dev.1",
 	"description": "extensions for last-hit",
 	"main": "dist/index.js",
 	"scripts": {
