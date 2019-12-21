@@ -78,7 +78,7 @@ var ssim_1 = __importDefault(require("./ssim"));
 var getChromiumExecPath = function () {
     return puppeteer_1.default.executablePath().replace('app.asar', 'app.asar.unpacked');
 };
-var launchBrowser = function (replayer) { return __awaiter(void 0, void 0, void 0, function () {
+var launchBrowser = function (replayer, input) { return __awaiter(void 0, void 0, void 0, function () {
     var step, _a, url, device, uuid, _b, width, height, browserArgs, browser, pages, page, accomplishedStep;
     return __generator(this, function (_c) {
         switch (_c.label) {
@@ -86,7 +86,7 @@ var launchBrowser = function (replayer) { return __awaiter(void 0, void 0, void 
                 step = replayer.getCurrentStep();
                 return [4 /*yield*/, replayer
                         .getRegistry()
-                        .stepShouldStart(replayer.getStoryName(), simplifyFlow(replayer.getFlow()), step)];
+                        .stepShouldStart(replayer.getStoryName(), simplifyFlow(replayer.getFlow(), input), step)];
             case 1:
                 // send step-should-start to extension, replace step when successfully return
                 step = _c.sent();
@@ -134,7 +134,7 @@ var launchBrowser = function (replayer) { return __awaiter(void 0, void 0, void 
                 _c.sent();
                 return [4 /*yield*/, replayer
                         .getRegistry()
-                        .stepAccomplished(replayer.getStoryName(), simplifyFlow(replayer.getFlow()), step)];
+                        .stepAccomplished(replayer.getStoryName(), simplifyFlow(replayer.getFlow(), input), step)];
             case 9:
                 accomplishedStep = _c.sent();
                 if (!accomplishedStep._.passed) {
@@ -145,9 +145,17 @@ var launchBrowser = function (replayer) { return __awaiter(void 0, void 0, void 
         }
     });
 }); };
-var simplifyFlow = function (flow) {
-    var name = flow.name, description = flow.description;
-    return { name: name, description: description };
+var simplifyFlow = function (flow, input) {
+    var name = flow.name, description = flow.description, params = flow.params;
+    return {
+        name: name,
+        description: description,
+        params: !input
+            ? params
+            : Object.keys(input).map(function (key) {
+                return { name: key, type: 'in', value: input[key] };
+            })
+    };
 };
 var Replayer = /** @class */ (function () {
     function Replayer(options) {
@@ -543,7 +551,7 @@ var Replayer = /** @class */ (function () {
                         return [4 /*yield*/, this.prepareFlow()];
                     case 2:
                         _a.sent();
-                        return [4 /*yield*/, launchBrowser(this)];
+                        return [4 /*yield*/, launchBrowser(this, this.getFlowInput())];
                     case 3:
                         page = _a.sent();
                         return [4 /*yield*/, this.isRemoteFinsihed(page)];
@@ -560,7 +568,25 @@ var Replayer = /** @class */ (function () {
             var _this = this;
             return __generator(this, function (_d) {
                 switch (_d.label) {
-                    case 0: return [4 /*yield*/, this.getRegistry().flowAccomplished(this.getStoryName(), simplifyFlow(this.getFlow()))];
+                    case 0: return [4 /*yield*/, this.getRegistry().flowAccomplished(this.getStoryName(), (function () {
+                            var flow = simplifyFlow(_this.getFlow());
+                            var _a = flow.params, params = _a === void 0 ? [] : _a;
+                            // clone
+                            params = JSON.parse(JSON.stringify(params));
+                            var input = _this.getFlowInput() || {};
+                            // put instance data into params, and pass to extension
+                            Object.keys(input).forEach(function (key) {
+                                var param = params.find(function (param) { return param.name === key; });
+                                if (!param) {
+                                    params.push({ name: key, type: 'in', value: input[key] });
+                                }
+                                else {
+                                    param.value = input[key];
+                                }
+                            });
+                            flow.params = params;
+                            return flow;
+                        })())];
                     case 1:
                         accomplishedFlow = _d.sent();
                         _a = (accomplishedFlow || { _: { output: {} } })._, _b = (_a === void 0 ? { output: {} } : _a).output, output = _b === void 0 ? {} : _b;
@@ -678,7 +704,7 @@ var Replayer = /** @class */ (function () {
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 10, , 13]);
-                        return [4 /*yield*/, this.getRegistry().stepShouldStart(this.getStoryName(), simplifyFlow(this.getFlow()), step)];
+                        return [4 /*yield*/, this.getRegistry().stepShouldStart(this.getStoryName(), simplifyFlow(this.getFlow(), this.getFlowInput()), step)];
                     case 2:
                         // send step-should-start to extension, replace step when successfully return
                         step = _a.sent();
@@ -808,7 +834,7 @@ var Replayer = /** @class */ (function () {
                     case 11:
                         // console.error(e);
                         _a.sent();
-                        return [4 /*yield*/, this.getRegistry().stepOnError(this.getStoryName(), simplifyFlow(this.getFlow()), step, e_5)];
+                        return [4 /*yield*/, this.getRegistry().stepOnError(this.getStoryName(), simplifyFlow(this.getFlow(), this.getFlowInput()), step, e_5)];
                     case 12:
                         stepOnError = _a.sent();
                         if (!stepOnError._.fixed) {
@@ -822,12 +848,13 @@ var Replayer = /** @class */ (function () {
                         return [3 /*break*/, 13];
                     case 13:
                         _a.trys.push([13, 15, , 17]);
-                        return [4 /*yield*/, this.getRegistry().stepAccomplished(this.getStoryName(), simplifyFlow(this.getFlow()), step)];
+                        return [4 /*yield*/, this.getRegistry().stepAccomplished(this.getStoryName(), simplifyFlow(this.getFlow(), this.getFlowInput()), step)];
                     case 14:
                         accomplishedStep = _a.sent();
                         if (!accomplishedStep._.passed) {
                             // extension says failed
-                            throw accomplishedStep._.error;
+                            throw accomplishedStep._.error ||
+                                new Error("Fail on step cause by step accomplished extension.");
                         }
                         return [3 /*break*/, 17];
                     case 15:

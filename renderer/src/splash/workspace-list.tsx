@@ -20,8 +20,8 @@ const List = styled.div`
 const ListItem = styled.div`
 	flex-shrink: 0;
 	display: grid;
-	grid-template-columns: '1fr auto';
-	grid-template-rows: 'auto auto';
+	grid-template-columns: 1fr auto;
+	grid-template-rows: auto auto;
 	overflow: hidden;
 	padding: ${() => `${vertical}px 0 ${vertical}px ${horizontal}px`};
 	cursor: pointer;
@@ -78,7 +78,10 @@ export default (): JSX.Element => {
 								className="round"
 								icon="cross"
 								minimal={true}
-								onClick={() => onRemoveWorkspaceClicked(workspace)}
+								onClick={(event: React.MouseEvent<any, MouseEvent>) => {
+									event.stopPropagation();
+									onRemoveWorkspaceClicked(workspace);
+								}}
 							/>
 						</ListItem>
 					);

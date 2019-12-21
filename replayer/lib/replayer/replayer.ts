@@ -18,6 +18,8 @@ import {
 	DialogCloseStep,
 	DialogOpenStep,
 	Flow,
+	FlowParameter,
+	FlowParameters,
 	FocusStep,
 	KeydownStep,
 	MousedownStep,
@@ -62,12 +64,15 @@ const getChromiumExecPath = () => {
 	return puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked');
 };
 
-const launchBrowser = async (replayer: Replayer) => {
+const launchBrowser = async (
+	replayer: Replayer,
+	input: WorkspaceExtensions.FlowParameterValues
+) => {
 	let step = replayer.getCurrentStep();
 	// send step-should-start to extension, replace step when successfully return
 	step = await replayer
 		.getRegistry()
-		.stepShouldStart(replayer.getStoryName(), simplifyFlow(replayer.getFlow()), step);
+		.stepShouldStart(replayer.getStoryName(), simplifyFlow(replayer.getFlow(), input), step);
 
 	const { url, device, uuid } = step as StartStep;
 	const {
@@ -122,7 +127,7 @@ const launchBrowser = async (replayer: Replayer) => {
 	// accomplished only triggerred when step has not error on replaying
 	const accomplishedStep = await replayer
 		.getRegistry()
-		.stepAccomplished(replayer.getStoryName(), simplifyFlow(replayer.getFlow()), step);
+		.stepAccomplished(replayer.getStoryName(), simplifyFlow(replayer.getFlow(), input), step);
 	if (!accomplishedStep._.passed) {
 		// extension says failed
 		throw accomplishedStep._.error!;
@@ -130,9 +135,20 @@ const launchBrowser = async (replayer: Replayer) => {
 	return page;
 };
 
-const simplifyFlow = (flow: Flow): WorkspaceExtensions.SimpleFlow => {
-	const { name, description } = flow;
-	return { name, description };
+const simplifyFlow = (
+	flow: Flow,
+	input?: WorkspaceExtensions.FlowParameterValues
+): WorkspaceExtensions.SimpleFlow => {
+	const { name, description, params } = flow;
+	return {
+		name,
+		description,
+		params: !input
+			? params
+			: (Object.keys(input).map(key => {
+					return { name: key, type: 'in', value: input[key] } as FlowParameter;
+			  }) as FlowParameters)
+	};
 };
 
 class Replayer {
@@ -471,13 +487,30 @@ class Replayer {
 		);
 		await this.prepareFlow();
 
-		const page = await launchBrowser(this);
+		const page = await launchBrowser(this, this.getFlowInput());
 		await this.isRemoteFinsihed(page);
 	}
 	private async accomplishFlow(): Promise<void> {
 		const accomplishedFlow: WorkspaceExtensions.AccomplishedFlow | null = await this.getRegistry().flowAccomplished(
 			this.getStoryName(),
-			simplifyFlow(this.getFlow())
+			(() => {
+				const flow = simplifyFlow(this.getFlow());
+				let { params = [] } = flow;
+				// clone
+				params = JSON.parse(JSON.stringify(params));
+				const input = this.getFlowInput() || {};
+				// put instance data into params, and pass to extension
+				Object.keys(input).forEach(key => {
+					const param = params.find(param => param.name === key);
+					if (!param) {
+						params.push({ name: key, type: 'in', value: input[key] } as FlowParameter);
+					} else {
+						param.value = input[key];
+					}
+				});
+				flow.params = params;
+				return flow;
+			})()
 		);
 		const { _: { output = {} } = { output: {} } } = accomplishedFlow || { _: { output: {} } };
 		if (Object.keys(output).length === 0) {
@@ -564,7 +597,7 @@ class Replayer {
 			// send step-should-start to extension, replace step when successfully return
 			step = await this.getRegistry().stepShouldStart(
 				this.getStoryName(),
-				simplifyFlow(this.getFlow()),
+				simplifyFlow(this.getFlow(), this.getFlowInput()),
 				step
 			);
 
@@ -653,7 +686,7 @@ class Replayer {
 			// send step-on-error to extension
 			const stepOnError = await this.getRegistry().stepOnError(
 				this.getStoryName(),
-				simplifyFlow(this.getFlow()),
+				simplifyFlow(this.getFlow(), this.getFlowInput()),
 				step,
 				e
 			);
@@ -671,12 +704,13 @@ class Replayer {
 		try {
 			const accomplishedStep = await this.getRegistry().stepAccomplished(
 				this.getStoryName(),
-				simplifyFlow(this.getFlow()),
+				simplifyFlow(this.getFlow(), this.getFlowInput()),
 				step
 			);
 			if (!accomplishedStep._.passed) {
 				// extension says failed
-				throw accomplishedStep._.error!;
+				throw accomplishedStep._.error ||
+					new Error(`Fail on step cause by step accomplished extension.`);
 			}
 		} catch (e) {
 			await this.handleStepError(step, e);
