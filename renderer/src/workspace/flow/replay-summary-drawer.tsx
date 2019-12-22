@@ -136,7 +136,10 @@ const SlowAjaxItem = styled.div`
 	> span:first-child {
 		flex-grow: 1;
 		margin-right: ${() => `${body}px`};
-		word-break: break-all;
+		white-space: nowrap;
+		overflow-x: hidden;
+		text-overflow: ellipsis;
+		width: calc(100vw - 120px);
 	}
 	> span:last-child {
 		white-space: nowrap;
