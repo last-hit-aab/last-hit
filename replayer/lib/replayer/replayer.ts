@@ -567,7 +567,7 @@ class Replayer {
 	private replaceWithFlowParams(step: Step): Step {
 		const newStep = { ...step } as any;
 
-		['checked', 'value'].forEach(propName => {
+		['value'].forEach(propName => {
 			const value = step[propName];
 			if (!value || typeof value !== 'string') {
 				return;
