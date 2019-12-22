@@ -1,6 +1,6 @@
 {
 	"name": "last-hit-extensions",
-	"version": "0.8.3",
+	"version": "0.8.4",
 	"description": "extensions for last-hit",
 	"main": "dist/index.js",
 	"scripts": {
@@ -24,7 +24,7 @@
 	"dependencies": {
 		"@types/jsonfile": "^5.0.0",
 		"jsonfile": "^5.0.0",
-		"last-hit-types": "0.8.3",
+		"last-hit-types": "0.8.4",
 		"typescript": "^3.7.2"
 	},
 	"devDependencies": {
