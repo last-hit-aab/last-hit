@@ -315,7 +315,6 @@ declare module 'last-hit-types' {
 				propName: string,
 				pageUuid?: string
 			): Promise<string | null>;
-			wait(time: number): Promise<void>;
 			waitForElement(
 				selector: string,
 				time: number,
