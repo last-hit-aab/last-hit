@@ -314,6 +314,11 @@ declare module 'last-hit-types' {
 				pageUuid?: string
 			): Promise<string | null>;
 			wait(time: number): Promise<void>;
+			waitForElement(
+				selector: string,
+				timeout: number,
+				options?: { visible: boolean; hidden: boolean }
+			): Promise<void>;
 			isInIDE(): boolean;
 		}
 
