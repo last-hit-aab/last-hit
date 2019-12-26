@@ -1,6 +1,6 @@
 {
 	"name": "last-hit-types",
-	"version": "0.8.5-dev.2",
+	"version": "0.8.5-dev.3",
 	"description": "types declaration of last-hit packages",
 	"main": "index.js",
 	"types": "index",
