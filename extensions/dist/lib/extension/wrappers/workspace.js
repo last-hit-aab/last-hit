@@ -60,6 +60,14 @@ var BrowserHelper = /** @class */ (function () {
     BrowserHelper.prototype.isInIDE = function () {
         return this.getHelper().isInIDE();
     };
+    BrowserHelper.prototype.buildTimeout = function (time, handler, reject) {
+        var _this = this;
+        if (time === void 0) { time = 5000; }
+        return setTimeout(function () {
+            _this.helper.off(types_1.ExtensionEventTypes.BROWSER_OPERATION, handler);
+            reject(new Error('Timeout'));
+        }, time);
+    };
     BrowserHelper.prototype.getElementAttrValue = function (csspath, attrName, pageUuid) {
         var _this = this;
         return new Promise(function (resolve, reject) {
@@ -77,10 +85,7 @@ var BrowserHelper = /** @class */ (function () {
                 attrName: attrName,
                 pageUuid: pageUuid
             });
-            timeout = setTimeout(function () {
-                _this.helper.off(types_1.ExtensionEventTypes.BROWSER_OPERATION, onValue);
-                reject(new Error('Timeout'));
-            }, 5000);
+            timeout = _this.buildTimeout(5000, onValue, reject);
         });
     };
     BrowserHelper.prototype.getElementPropValue = function (csspath, propName, pageUuid) {
@@ -100,10 +105,43 @@ var BrowserHelper = /** @class */ (function () {
                 propName: propName,
                 pageUuid: pageUuid
             });
-            timeout = setTimeout(function () {
-                _this.helper.off(types_1.ExtensionEventTypes.BROWSER_OPERATION, onValue);
-                reject(new Error('Timeout'));
-            }, 5000);
+            timeout = _this.buildTimeout(5000, onValue, reject);
+        });
+    };
+    BrowserHelper.prototype.wait = function (time) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            var timeout;
+            var onValue = function () {
+                if (timeout) {
+                    clearTimeout(timeout);
+                }
+                resolve();
+            };
+            _this.helper.once(types_1.ExtensionEventTypes.BROWSER_OPERATION, onValue);
+            _this.helper.sendBrowserOperation({ type: 'wait', time: time });
+            timeout = _this.buildTimeout(5000, onValue, reject);
+        });
+    };
+    BrowserHelper.prototype.waitForElement = function (selector, time, pageUuid, options) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            var timeout;
+            var onValue = function () {
+                if (timeout) {
+                    clearTimeout(timeout);
+                }
+                resolve();
+            };
+            _this.helper.once(types_1.ExtensionEventTypes.BROWSER_OPERATION, onValue);
+            _this.helper.sendBrowserOperation({
+                type: 'wait-element',
+                csspath: selector,
+                pageUuid: pageUuid,
+                time: time,
+                options: options
+            });
+            timeout = _this.buildTimeout(time + 1000, onValue, reject);
         });
     };
     return BrowserHelper;

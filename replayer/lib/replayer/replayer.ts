@@ -7,7 +7,9 @@ import {
 	ExtensionLogEvent,
 	ExtensionTestLogEvent,
 	GetElementAttrValueData,
-	GetElementPropValueData
+	GetElementPropValueData,
+	WaitData,
+	WaitForElementData
 } from 'last-hit-extensions';
 import {
 	AjaxStep,
@@ -219,6 +221,12 @@ class Replayer {
 			case 'get-element-prop-value':
 				this.tryToGetElementPropValue(data as GetElementPropValueData);
 				break;
+			case 'wait':
+				this.tryToWait(data as WaitData);
+				break;
+			case 'wait-element':
+				this.tryToWaitForElement(data as WaitForElementData);
+				break;
 			default:
 				const registry = this.getRegistry();
 				registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), null);
@@ -288,6 +296,30 @@ class Replayer {
 				propName
 			);
 			registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), value);
+		} catch (e) {
+			registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), e);
+		}
+	}
+	private async tryToWait(data: WaitData): Promise<void> {
+		const { time } = data;
+		const wait = util.promisify(setTimeout);
+		await wait(time);
+		const registry = this.getRegistry();
+		registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), null);
+	}
+	private async tryToWaitForElement(data: WaitForElementData): Promise<void> {
+		const {
+			csspath,
+			time,
+			pageUuid,
+			options: { visible = false, hidden = false } = { visible: false, hidden: false }
+		} = data;
+		const registry = this.getRegistry();
+
+		try {
+			const page = await this.findCurrentPage(pageUuid);
+			await page.waitForSelector(csspath, { visible, hidden, timeout: time });
+			registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), null);
 		} catch (e) {
 			registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), e);
 		}

@@ -100,6 +100,8 @@ export interface ExtensionBrowserOperationEvent extends ExtensionEvent {
 	data: // from extension to replayer
 	| GetElementAttrValueData
 		| GetElementPropValueData
+		| WaitData
+		| WaitForElementData
 		// from replayer to extension
 		| BrowserOperationReturnData
 		| BrowserOperationError;

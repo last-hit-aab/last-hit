@@ -188,6 +188,12 @@ var Replayer = /** @class */ (function () {
                 case 'get-element-prop-value':
                     _this.tryToGetElementPropValue(data);
                     break;
+                case 'wait':
+                    _this.tryToWait(data);
+                    break;
+                case 'wait-element':
+                    _this.tryToWaitForElement(data);
+                    break;
                 default:
                     var registry = _this.getRegistry();
                     registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), null);
@@ -314,6 +320,52 @@ var Replayer = /** @class */ (function () {
                         registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), e_2);
                         return [3 /*break*/, 6];
                     case 6: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    Replayer.prototype.tryToWait = function (data) {
+        return __awaiter(this, void 0, void 0, function () {
+            var time, wait, registry;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        time = data.time;
+                        wait = util_1.default.promisify(setTimeout);
+                        return [4 /*yield*/, wait(time)];
+                    case 1:
+                        _a.sent();
+                        registry = this.getRegistry();
+                        registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), null);
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    Replayer.prototype.tryToWaitForElement = function (data) {
+        return __awaiter(this, void 0, void 0, function () {
+            var csspath, time, pageUuid, _a, _b, _c, visible, _d, hidden, registry, page, e_3;
+            return __generator(this, function (_e) {
+                switch (_e.label) {
+                    case 0:
+                        csspath = data.csspath, time = data.time, pageUuid = data.pageUuid, _a = data.options, _b = _a === void 0 ? { visible: false, hidden: false } : _a, _c = _b.visible, visible = _c === void 0 ? false : _c, _d = _b.hidden, hidden = _d === void 0 ? false : _d;
+                        registry = this.getRegistry();
+                        _e.label = 1;
+                    case 1:
+                        _e.trys.push([1, 4, , 5]);
+                        return [4 /*yield*/, this.findCurrentPage(pageUuid)];
+                    case 2:
+                        page = _e.sent();
+                        return [4 /*yield*/, page.waitForSelector(csspath, { visible: visible, hidden: hidden, timeout: time })];
+                    case 3:
+                        _e.sent();
+                        registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), null);
+                        return [3 /*break*/, 5];
+                    case 4:
+                        e_3 = _e.sent();
+                        registry.sendBrowserOperation(registry.getWorkspaceExtensionId(), e_3);
+                        return [3 /*break*/, 5];
+                    case 5: return [2 /*return*/];
                 }
             });
         });
@@ -616,7 +668,7 @@ var Replayer = /** @class */ (function () {
      */
     Replayer.prototype.end = function (close) {
         return __awaiter(this, void 0, void 0, function () {
-            var browser, pages, _a, e_3, e_4;
+            var browser, pages, _a, e_4, e_5;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -641,9 +693,9 @@ var Replayer = /** @class */ (function () {
                         browser.disconnect();
                         return [3 /*break*/, 7];
                     case 6:
-                        e_3 = _b.sent();
+                        e_4 = _b.sent();
                         this.getLogger().error('Failed to disconnect from brwoser.');
-                        this.getLogger().error(e_3);
+                        this.getLogger().error(e_4);
                         return [3 /*break*/, 7];
                     case 7:
                         if (!close) return [3 /*break*/, 11];
@@ -656,9 +708,9 @@ var Replayer = /** @class */ (function () {
                         delete this.replayers[this.getIdentity()];
                         return [3 /*break*/, 11];
                     case 10:
-                        e_4 = _b.sent();
+                        e_5 = _b.sent();
                         this.getLogger().error('Failed to close browser.');
-                        this.getLogger().error(e_4);
+                        this.getLogger().error(e_5);
                         return [3 /*break*/, 11];
                     case 11:
                         this.registry
@@ -672,7 +724,7 @@ var Replayer = /** @class */ (function () {
     Replayer.prototype.replaceWithFlowParams = function (step) {
         var _this = this;
         var newStep = __assign({}, step);
-        ['checked', 'value'].forEach(function (propName) {
+        ['value'].forEach(function (propName) {
             var value = step[propName];
             if (!value || typeof value !== 'string') {
                 return;
@@ -689,7 +741,7 @@ var Replayer = /** @class */ (function () {
      */
     Replayer.prototype.next = function (flow, index, storyName) {
         return __awaiter(this, void 0, void 0, function () {
-            var step, ret, page, screenshotPath, flowPath, replayImage, replayImageFilename, currentImageFilename, ssimData, diffImage, diffImageFilename_1, e_5, stepOnError, accomplishedStep, e_6;
+            var step, ret, page, screenshotPath, flowPath, replayImage, replayImageFilename, currentImageFilename, ssimData, diffImage, diffImageFilename_1, e_6, stepOnError, accomplishedStep, e_7;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -828,18 +880,18 @@ var Replayer = /** @class */ (function () {
                         _a.label = 9;
                     case 9: return [3 /*break*/, 13];
                     case 10:
-                        e_5 = _a.sent();
+                        e_6 = _a.sent();
                         // console.error(e);
-                        return [4 /*yield*/, this.handleStepError(step, e_5)];
+                        return [4 /*yield*/, this.handleStepError(step, e_6)];
                     case 11:
                         // console.error(e);
                         _a.sent();
-                        return [4 /*yield*/, this.getRegistry().stepOnError(this.getStoryName(), simplifyFlow(this.getFlow(), this.getFlowInput()), step, e_5)];
+                        return [4 /*yield*/, this.getRegistry().stepOnError(this.getStoryName(), simplifyFlow(this.getFlow(), this.getFlowInput()), step, e_6)];
                     case 12:
                         stepOnError = _a.sent();
                         if (!stepOnError._.fixed) {
                             // extension says not fixed, throw error
-                            throw e_5;
+                            throw e_6;
                         }
                         else {
                             // extension says fixed, ignore error and continue replay
@@ -858,11 +910,11 @@ var Replayer = /** @class */ (function () {
                         }
                         return [3 /*break*/, 17];
                     case 15:
-                        e_6 = _a.sent();
-                        return [4 /*yield*/, this.handleStepError(step, e_6)];
+                        e_7 = _a.sent();
+                        return [4 /*yield*/, this.handleStepError(step, e_7)];
                     case 16:
                         _a.sent();
-                        throw e_6;
+                        throw e_7;
                     case 17: return [2 /*return*/];
                 }
             });
