@@ -107,6 +107,8 @@ export interface IUIEventEmitter {
 	): boolean;
 	emit(event: EventTypes.CLOSE_THUMBNAIL_DIALOG, story: Story, flow: Flow, step: Step): boolean;
 	emit(event: EventTypes.CLOSE_STEP_SEARCH_DRAWER): boolean;
+	emit(event: EventTypes.ASK_SCRIPTS_HELP_SHOW): boolean;
+	emit(event: EventTypes.CLOSE_SCRIPTS_HELP_DRAWER): boolean;
 
 	on(event: EventTypes.ASK_TOGGLE_NAVIGATOR, listener: NoArgListener): this;
 	on(event: EventTypes.NAVIGATOR_TOGGLED, listener: BooleanListener): this;
@@ -158,6 +160,8 @@ export interface IUIEventEmitter {
 	on(event: EventTypes.ASK_REPLACE_STEP_SEARCH_ITEM, listener: StepSearchItemListener): this;
 	on(event: EventTypes.CLOSE_THUMBNAIL_DIALOG, listener: StepListener): this;
 	on(event: EventTypes.CLOSE_STEP_SEARCH_DRAWER, listener: NoArgListener): this;
+	on(event: EventTypes.ASK_SCRIPTS_HELP_SHOW, listener: NoArgListener): this;
+	on(event: EventTypes.CLOSE_SCRIPTS_HELP_DRAWER, listener: NoArgListener): this;
 
 	off(event: EventTypes.ASK_TOGGLE_NAVIGATOR, listener: NoArgListener): this;
 	off(event: EventTypes.NAVIGATOR_TOGGLED, listener: BooleanListener): this;
@@ -209,6 +213,8 @@ export interface IUIEventEmitter {
 	off(event: EventTypes.ASK_REPLACE_STEP_SEARCH_ITEM, listener: StepSearchItemListener): this;
 	off(event: EventTypes.CLOSE_THUMBNAIL_DIALOG, listener: StepListener): this;
 	off(event: EventTypes.CLOSE_STEP_SEARCH_DRAWER, listener: NoArgListener): this;
+	off(event: EventTypes.ASK_SCRIPTS_HELP_SHOW, listener: NoArgListener): this;
+	off(event: EventTypes.CLOSE_SCRIPTS_HELP_DRAWER, listener: NoArgListener): this;
 }
 
 export const asFlowKeyByName = (flowName: string, storyName: string): string => {

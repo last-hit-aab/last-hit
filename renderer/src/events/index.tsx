@@ -16,6 +16,7 @@ export enum EventTypes {
 	CLOSE_THUMBNAIL_DIALOG = 'close-thumbnail-dialog',
 	CLOSE_REPLAY_SUMMARY_DRAWER = 'close-replay-summary-drawer',
 	CLOSE_STEP_SEARCH_DRAWER = 'close-step-search-drawer',
+	CLOSE_SCRIPTS_HELP_DRAWER = 'close-scripts-help-drawer',
 
 	ASK_CREATE_STORY = 'ask-create-story',
 	ASK_RENAME_STORY = 'ask-rename-story',
@@ -31,6 +32,7 @@ export enum EventTypes {
 	ASK_FLOW_RELOAD = 'ask-flow-reload',
 	ASK_FLOW_RECORD = 'ask-flow-record',
 	ASK_REPLAY_SUMMARY_SHOW = 'ask-replay-summary-show',
+	ASK_SCRIPTS_HELP_SHOW = 'ask-show-scripts-help',
 
 	STORY_CREATED = 'story-created',
 	STORY_RENAMED = 'story-renamed',

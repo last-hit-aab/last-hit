@@ -5,11 +5,12 @@ import { getActiveWorkspace } from '../../active';
 import { closeCurrentWorkspace } from '../../files';
 import FlowCreateDialog from '../flow/create-dialog';
 import FlowDelete from '../flow/delete';
+import FlowParamsDialog from '../flow/params-dialog';
 import FlowRecordDialog from '../flow/record-dialog';
 import FlowRenameDialog from '../flow/rename-dialog';
 import FlowReplayDialog from '../flow/replay-dialog';
-import FlowParamsDialog from '../flow/params-dialog';
 import ReplaySummaryDrawer from '../flow/replay-summary-drawer';
+import ScriptsHelperDrawer from '../flow/scripts-helper-drawer';
 import FlowSettingsDialog from '../flow/settings-dialog';
 import StepSearchDrawer from '../step/step-search-drawer';
 import StepScreenshotDialog from '../step/thumbnail-dialog';
@@ -74,6 +75,7 @@ export default (): JSX.Element => {
 			<FlowRecordDialog />
 			<StepScreenshotDialog />
 			<ReplaySummaryDrawer />
+			<ScriptsHelperDrawer />
 			<StepSearchDrawer />
 			<EnvDialog />
 		</Container>

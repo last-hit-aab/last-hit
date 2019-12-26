@@ -1,5 +1,4 @@
 import { Button, ButtonGroup } from '@blueprintjs/core';
-import { remote } from 'electron';
 import { Flow, Step, Story } from 'last-hit-types';
 import React from 'react';
 import styled from 'styled-components';
@@ -51,11 +50,7 @@ export default (props: { story: Story; flow: Flow; step: Step }): JSX.Element =>
 		emitter.emit(EventTypes.ASK_SHOW_THUMBNAIL, story, flow, step);
 	};
 	const onScriptsClicked = (): void => {
-		remote.dialog.showMessageBox(remote.getCurrentWindow(), {
-			type: 'info',
-			title: 'Coming soon',
-			message: `Coming soon.`
-		});
+		emitter.emit(EventTypes.ASK_SCRIPTS_HELP_SHOW);
 	};
 
 	const deleteButton = canDelete ? (
