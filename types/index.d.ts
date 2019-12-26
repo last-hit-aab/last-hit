@@ -187,7 +187,9 @@ declare module 'last-hit-types' {
 		export type ExtensionTypes = 'workspace' | 'tbd';
 		export type BrowserOperationEventTypes =
 			| 'get-element-attr-value'
-			| 'get-element-prop-value';
+			| 'get-element-prop-value'
+			| 'wait'
+			| 'wait-element';
 
 		export interface IExtensionEntryPoint {
 			activate(): Promise<void>;
