@@ -25,13 +25,23 @@ class BrowserHelper implements WorkspaceExtensions.IWorkspaceExtensionBrowserHel
 	isInIDE(): boolean {
 		return this.getHelper().isInIDE();
 	}
+	private buildTimeout(
+		time: number = 5000,
+		handler: (value: any) => void,
+		reject: (error: Error) => void
+	): NodeJS.Timeout {
+		return setTimeout(() => {
+			this.helper.off(ExtensionEventTypes.BROWSER_OPERATION, handler);
+			reject(new Error('Timeout'));
+		}, time);
+	}
 	getElementAttrValue(
 		csspath: string,
 		attrName: string,
 		pageUuid?: string
 	): Promise<string | null> {
 		return new Promise((resolve, reject) => {
-			let timeout;
+			let timeout: NodeJS.Timeout;
 			const onValue = (value: string | null) => {
 				if (timeout) {
 					clearTimeout(timeout);
@@ -45,10 +55,7 @@ class BrowserHelper implements WorkspaceExtensions.IWorkspaceExtensionBrowserHel
 				attrName,
 				pageUuid
 			});
-			timeout = setTimeout(() => {
-				this.helper.off(ExtensionEventTypes.BROWSER_OPERATION, onValue);
-				reject(new Error('Timeout'));
-			}, 5000);
+			timeout = this.buildTimeout(5000, onValue, reject);
 		});
 	}
 	getElementPropValue(
@@ -57,7 +64,7 @@ class BrowserHelper implements WorkspaceExtensions.IWorkspaceExtensionBrowserHel
 		pageUuid?: string
 	): Promise<string | null> {
 		return new Promise((resolve, reject) => {
-			let timeout;
+			let timeout: NodeJS.Timeout;
 			const onValue = (value: string | null) => {
 				if (timeout) {
 					clearTimeout(timeout);
@@ -71,10 +78,46 @@ class BrowserHelper implements WorkspaceExtensions.IWorkspaceExtensionBrowserHel
 				propName,
 				pageUuid
 			});
-			timeout = setTimeout(() => {
-				this.helper.off(ExtensionEventTypes.BROWSER_OPERATION, onValue);
-				reject(new Error('Timeout'));
-			}, 5000);
+			timeout = this.buildTimeout(5000, onValue, reject);
+		});
+	}
+	wait(time: number): Promise<void> {
+		return new Promise((resolve, reject) => {
+			let timeout: NodeJS.Timeout;
+			const onValue = () => {
+				if (timeout) {
+					clearTimeout(timeout);
+				}
+				resolve();
+			};
+			this.helper.once(ExtensionEventTypes.BROWSER_OPERATION, onValue);
+			this.helper.sendBrowserOperation({ type: 'wait', time });
+			timeout = this.buildTimeout(5000, onValue, reject);
+		});
+	}
+	waitForElement(
+		selector: string,
+		time: number,
+		pageUuid?: string,
+		options?: { visible: boolean; hidden: boolean }
+	): Promise<void> {
+		return new Promise((resolve, reject) => {
+			let timeout: NodeJS.Timeout;
+			const onValue = () => {
+				if (timeout) {
+					clearTimeout(timeout);
+				}
+				resolve();
+			};
+			this.helper.once(ExtensionEventTypes.BROWSER_OPERATION, onValue);
+			this.helper.sendBrowserOperation({
+				type: 'wait-element',
+				csspath: selector,
+				pageUuid,
+				time,
+				options
+			});
+			timeout = this.buildTimeout(time + 1000, onValue, reject);
 		});
 	}
 }
@@ -133,7 +176,12 @@ class TestHelper implements WorkspaceExtensions.IWorkspaceExtensionTestHelper {
 	}
 	private async sendTestLog(node: TestNode, sendAnyway: boolean = false): Promise<void> {
 		if (node.getLevel() === 0 || sendAnyway) {
-			await this.getHelper().sendTestLog(node.getTitle(), node.isPassed(), node.getLevel(), node.getMessage());
+			await this.getHelper().sendTestLog(
+				node.getTitle(),
+				node.isPassed(),
+				node.getLevel(),
+				node.getMessage()
+			);
 			await Promise.all(
 				(node.getChildren() || []).map(async child => await this.sendTestLog(child, true))
 			);

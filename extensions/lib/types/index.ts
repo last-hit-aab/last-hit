@@ -12,7 +12,11 @@ export interface IExtensionEntryPointHelper {
 	sendMessage(data: any): Promise<void>;
 	sendError(e: Error): Promise<void>;
 	sendIgnore(): Promise<void>;
-	sendBrowserOperation(data: any): Promise<void>;
+	sendBrowserOperation(
+		data: {
+			type: Extensions.BrowserOperationEventTypes;
+		} & { [key in string]: any }
+	): Promise<void>;
 	sendTestLog(title: string, passed: boolean, level: number, message?: string): Promise<void>;
 	once(eventType: ExtensionEventTypes, handler: (value: any) => void): this;
 	on(eventType: ExtensionEventTypes, handler: (value: any) => void): this;
@@ -63,14 +67,27 @@ export type ExtensionDataTransmittedHandler = (event: ExtensionDataTransmittedEv
 
 export type ExtensionBrowserOperationData = { type: Extensions.BrowserOperationEventTypes };
 export type GetElementAttrValueData = ExtensionBrowserOperationData & {
+	type: 'get-element-attr-value';
 	csspath: string;
 	attrName: string;
 	pageUuid?: string;
 };
 export type GetElementPropValueData = ExtensionBrowserOperationData & {
+	type: 'get-element-prop-value';
 	csspath: string;
 	propName: string;
 	pageUuid?: string;
+};
+export type WaitData = ExtensionBrowserOperationData & {
+	type: 'wait';
+	time: number;
+};
+export type WaitForElementData = ExtensionBrowserOperationData & {
+	type: 'wait-element';
+	csspath: string;
+	pageUuid?: string;
+	time: number;
+	options?: { visible: boolean; hidden: boolean };
 };
 export type BrowserOperationReturnData = string | null;
 export type BrowserOperationError = {

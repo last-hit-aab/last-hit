@@ -193,7 +193,11 @@ class ExtensionEntryPointHelper implements IExtensionEntryPointHelper {
 				throw new Error(`Extension type[${entrypoint.getType()}] is not supported.`);
 		}
 	}
-	sendBrowserOperation(data: any): Promise<void> {
+	sendBrowserOperation(
+		data: {
+			type: Extensions.BrowserOperationEventTypes;
+		} & { [key in string]: any }
+	): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			process.send(
 				{
