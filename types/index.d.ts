@@ -164,6 +164,12 @@ declare module 'last-hit-types' {
 				story: string;
 				flow: string;
 			};
+			dataDepends?: [
+				{
+					story: string;
+					flow: string;
+				}
+			];
 		};
 	};
 	export type Story = {
