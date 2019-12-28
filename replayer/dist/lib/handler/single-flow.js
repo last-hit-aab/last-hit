@@ -297,7 +297,7 @@ exports.handleFlow = function (flowFile, env) {
     }
     if (flow.settings && flow.settings.dataDepends) {
         // has data dependency
-        var depends = flow.settings.dataDepends;
+        var depends = flow.settings.dataDepends.filter(function (depend) { return depend.story && depend.flow; });
         var root = {
             children: [],
             parent: null,
@@ -309,7 +309,7 @@ exports.handleFlow = function (flowFile, env) {
         }
         catch (e) {
             logger.error(e);
-            console.info(("Process[" + processId + "] Flow " + flowKey + " failed on force dependency loop check, ignored.")
+            console.info(("Process[" + processId + "] Flow " + flowKey + " failed on data dependency loop check, ignored.")
                 .red.bold);
             return Promise.reject();
         }

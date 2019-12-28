@@ -148,7 +148,7 @@ type DataLoopCheckNode = {
 	flow: string;
 };
 const dataLoopCheck = (
-	depends: [{ story: string; flow: string }],
+	depends: Array<{ story: string; flow: string }>,
 	node: DataLoopCheckNode,
 	env: Environment
 ): boolean => {
@@ -314,7 +314,9 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 
 	if (flow.settings && flow.settings.dataDepends) {
 		// has data dependency
-		const depends = flow.settings.dataDepends;
+		const depends: Array<{ story: string; flow: string }> = flow.settings.dataDepends.filter(
+			depend => depend.story && depend.flow
+		);
 		const root: DataLoopCheckNode = {
 			children: [],
 			parent: null,
@@ -326,7 +328,7 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 		} catch (e) {
 			logger.error(e);
 			console.info(
-				(`Process[${processId}] Flow ${flowKey} failed on force dependency loop check, ignored.` as any)
+				(`Process[${processId}] Flow ${flowKey} failed on data dependency loop check, ignored.` as any)
 					.red.bold
 			);
 			return Promise.reject();

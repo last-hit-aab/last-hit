@@ -107,6 +107,7 @@ const TheDialog = (props: { story: Story; flow: Flow }): JSX.Element => {
 		}
 		const data = dataDependencyRef!.value
 			.split(',')
+			.filter(str => !!str)
 			.map(data => checkDependency(data, 'data', dataDependencyRef!));
 		if (data.some(item => !item.passed)) {
 			return;

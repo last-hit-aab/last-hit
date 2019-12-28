@@ -168,7 +168,7 @@ const doLoopCheckDataDependency = (
 
 		let parent: DataLoopCheckNode | null = node;
 		while (parent != null) {
-			if (dependsStoryName === parent.story && dependsStoryName === parent.flow) {
+			if (dependsStoryName === parent.story && dependsFlowName === parent.flow) {
 				return false;
 			}
 			parent = parent.parent;
