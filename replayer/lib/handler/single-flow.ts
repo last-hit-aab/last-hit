@@ -1,12 +1,12 @@
 import fs from 'fs';
 import jsonfile from 'jsonfile';
-import { Flow, Step, Story, StartStep, FlowParameters } from 'last-hit-types';
+import { Flow, Step, Story, StartStep, FlowParameters, FlowParameter } from 'last-hit-types';
 import path from 'path';
 import stream from 'stream';
 import Environment from '../config/env';
 import { createReplayer, ReplayEmitter } from '../replayer';
 import { CallbackEvent } from '../replayer/replay-emitter';
-import { FlowFile, FlowResult } from '../types';
+import { FlowFile, FlowResult, Summary } from '../types';
 import { generateKeyByObject, getLogger, getProcessId } from '../utils';
 
 const processId = getProcessId();
@@ -86,7 +86,7 @@ const findInDependencyChain = (
 	return dependsChain.some(node => node.story === story && node.flow === flow);
 };
 
-const doLoopCheck = (
+const doForceLoopCheck = (
 	dependsStoryName: string,
 	dependsFlowName: string,
 	dependsChain: { story: string; flow: string }[],
@@ -117,7 +117,7 @@ const doLoopCheck = (
 		} else {
 			// push dependency to chain
 			dependsChain.push({ story: dependsStoryName, flow: dependsFlowName });
-			return doLoopCheck(forceDepends.story, forceDepends.flow, dependsChain, env);
+			return doForceLoopCheck(forceDepends.story, forceDepends.flow, dependsChain, env);
 		}
 	}
 	return true;
@@ -126,19 +126,65 @@ const doLoopCheck = (
 /**
  * only check loop. return true even dependency flow not found.
  */
-const loopCheck = (
+const forceLoopCheck = (
 	dependsStoryName: string,
 	dependsFlowName: string,
 	myStoryName: string,
 	myFlowName: string,
 	env: Environment
 ): boolean => {
-	return doLoopCheck(
+	return doForceLoopCheck(
 		dependsStoryName,
 		dependsFlowName,
 		[{ story: myStoryName, flow: myFlowName }],
 		env
 	);
+};
+
+type DataLoopCheckNode = {
+	children: Array<DataLoopCheckNode>;
+	parent: null | DataLoopCheckNode;
+	story: string;
+	flow: string;
+};
+const dataLoopCheck = (
+	depends: [{ story: string; flow: string }],
+	node: DataLoopCheckNode,
+	env: Environment
+): boolean => {
+	return depends.every(depend => {
+		const { story, flow } = depend;
+		if (story === node.story && flow === node.flow) {
+			throw new Error(`Loop dependency[${flow}@${story} -> ${flow}@${story}] found.`);
+		}
+
+		const chain: Array<DataLoopCheckNode> = [node];
+		let parent = node.parent;
+		while (parent != null) {
+			chain.push(parent);
+			if (story === parent.story && flow === parent.flow) {
+				const chained = chain.map(({ story, flow }) => `${flow}@${story}`).join(' -> ');
+				throw new Error(`Loop dependency[${flow}@${story} -> ${chained}] found.`);
+			}
+			parent = parent.parent;
+		}
+
+		const dependsStoryFolder = path.join(env.getWorkspace(), story);
+		if (!fs.existsSync(dependsStoryFolder) || !fs.statSync(dependsStoryFolder).isDirectory()) {
+			throw new Error(`Dependency story[${story}] not found.`);
+		}
+		const dependsFlowFilename = path.join(dependsStoryFolder, `${flow}.flow.json`);
+		if (!fs.existsSync(dependsFlowFilename) || !fs.statSync(dependsFlowFilename).isFile()) {
+			throw new Error(`Dependency flow[${flow}@${story}] not found.`);
+		}
+		const dependsFlow = jsonfile.readFileSync(dependsFlowFilename);
+		const { dataDepends = [] } = dependsFlow.settings || {};
+
+		const myself = { children: [], parent: node, story, flow };
+		node.children.push(myself);
+
+		return dataLoopCheck(dataDepends, myself, env);
+	});
 };
 
 const replayNextStep = (
@@ -172,7 +218,7 @@ const handleReplayStepEnd = (
 				(async () => {
 					console.error(
 						(`Process[${processId}] Replay flow ${key} failed on step ${index + 1}.`
-							.bold as any).red,
+							.bold as any).red.bold,
 						error
 					);
 					emitter.once(`replay-browser-abolish-${key}`, () => resolve());
@@ -226,7 +272,7 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 	flow.name = flowName;
 
 	if (flow.steps == null || flow.steps.length === 0) {
-		console.info((`Process[${processId}] Flow ${flowKey} has no steps, ignored.` as any).red);
+		console.info((`Process[${processId}] Flow ${flowKey} has no steps, ignored.` as any).red.bold);
 		return Promise.reject();
 	}
 
@@ -234,12 +280,12 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 		// has force dependency
 		const { story: dependsStoryName, flow: dependsFlowName } = flow.settings.forceDepends;
 		try {
-			loopCheck(dependsStoryName, dependsFlowName, storyName, flowName, env);
+			forceLoopCheck(dependsStoryName, dependsFlowName, storyName, flowName, env);
 		} catch (e) {
 			logger.error(e);
 			console.info(
 				(`Process[${processId}] Flow ${flowKey} failed on force dependency loop check, ignored.` as any)
-					.red
+					.red.bold
 			);
 			return Promise.reject();
 		}
@@ -262,16 +308,114 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 		flow = forceDependsFlow;
 	}
 
+	if (flow.settings && flow.settings.dataDepends) {
+		// has data dependency
+		const depends = flow.settings.dataDepends;
+		const root: DataLoopCheckNode = {
+			children: [],
+			parent: null,
+			story: storyName,
+			flow: flowName
+		};
+		try {
+			dataLoopCheck(depends, root, env);
+		} catch (e) {
+			logger.error(e);
+			console.info(
+				(`Process[${processId}] Flow ${flowKey} failed on force dependency loop check, ignored.` as any)
+					.red.bold
+			);
+			return Promise.reject();
+		}
+		// to check all data dependencies are finished
+		const score = root.children.reduce((score: number, depend: DataLoopCheckNode) => {
+			switch (score) {
+				case 1:
+					// dependency not finished yet
+					return 1;
+				case 2:
+					// dependency failure
+					return 2;
+				default:
+					// check dependency
+					const { story: storyName, flow: flowName } = depend;
+					const resultFile = path.join(
+						env.getWorkspace(),
+						'.result-params-temp',
+						storyName,
+						flowName,
+						'params.json'
+					);
+					if (fs.existsSync(resultFile) && fs.statSync(resultFile).isFile()) {
+						const result = jsonfile.readFileSync(resultFile);
+						const { success, params = [] } = result || { success: false };
+						if (!success) {
+							// dependency failed
+							return 2;
+						} else {
+							params
+								.filter((param: FlowParameter) => {
+									return ['out', 'both'].includes(param.type);
+								})
+								.forEach((param: FlowParameter) => {
+									flow.params = flow.params || [];
+									const defined = flow.params.find(
+										defined =>
+											['in', 'both'].includes(defined.type) &&
+											defined.name === param.name
+									);
+									if (defined) {
+										// pass value
+										defined.value = param.value;
+									} else {
+										// create an input parameter
+										flow.params.push({
+											type: 'in',
+											name: param.name,
+											value: param.value
+										});
+									}
+								});
+							return 0;
+						}
+					} else {
+						return 1;
+					}
+			}
+		}, 0);
+		switch (score) {
+			case 1:
+				console.info(
+					(`Process[${processId}] Flow ${flowKey} pending on data dependency flow not ready.` as any)
+						.yellow.underline
+				);
+				// dependency not finished yet
+				return Promise.resolve({
+					code: 'pending'
+				} as FlowResult);
+			case 2:
+				// dependency failure
+				console.info(
+					(`Process[${processId}] Flow ${flowKey} failed on data dependency flow failure, ignored.` as any)
+						.red.bold
+				);
+				return Promise.reject();
+			default:
+				// every is ready, let's go
+				break;
+		}
+	}
+
 	const startStep = flow.steps![0] as StartStep;
 	if (startStep.type !== 'start') {
 		console.info(
-			(`Process[${processId}] Flow ${flowKey} has no start step, ignored.` as any).red
+			(`Process[${processId}] Flow ${flowKey} has no start step, ignored.` as any).red.bold
 		);
 		return Promise.reject();
 	}
 	if (!startStep.url) {
 		console.info(
-			(`Process[${processId}] Flow ${flowKey} has no start url, ignored.` as any).red
+			(`Process[${processId}] Flow ${flowKey} has no start url, ignored.` as any).red.bold
 		);
 		return Promise.reject();
 	}
@@ -287,11 +431,26 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 
 	const promise = new Promise<FlowResult>(resolve => {
 		handleReplayStepEnd(emitter, { name: storyName } as Story, flow, () => {
-			const summary = replayer.current.getSummaryData();
+			const summary: Summary = replayer.current.getSummaryData();
+			// write out parameters only
+			const resultFolder = path.join(
+				env.getWorkspace(),
+				'.result-params-temp',
+				storyName,
+				flowName
+			);
+			fs.mkdirSync(resultFolder, { recursive: true });
+			const result = {
+				success: summary.numberOfStep === summary.numberOfSuccess,
+				params: summary.flowParams
+			};
+			const resultFile = path.join(resultFolder, 'params.json');
+			jsonfile.writeFileSync(resultFile, result, { encoding: 'UTF-8', spaces: '\t' });
 			timeLogger.timeEnd(flowKey);
 			resolve({
 				report: { ...summary, spent: timeSpent },
-				coverages: replayer.current.getCoverageData()
+				coverages: replayer.current.getCoverageData(),
+				code: 'success'
 			});
 		});
 	});

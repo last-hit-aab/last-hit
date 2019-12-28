@@ -121,7 +121,7 @@ var findAndMergeForceDependencyFlows = function (flow, env) {
 var findInDependencyChain = function (story, flow, dependsChain) {
     return dependsChain.some(function (node) { return node.story === story && node.flow === flow; });
 };
-var doLoopCheck = function (dependsStoryName, dependsFlowName, dependsChain, env) {
+var doForceLoopCheck = function (dependsStoryName, dependsFlowName, dependsChain, env) {
     if (findInDependencyChain(dependsStoryName, dependsFlowName, dependsChain)) {
         dependsChain.push({ story: dependsStoryName, flow: dependsFlowName });
         var chain = dependsChain.map(function (_a) {
@@ -152,7 +152,7 @@ var doLoopCheck = function (dependsStoryName, dependsFlowName, dependsChain, env
         else {
             // push dependency to chain
             dependsChain.push({ story: dependsStoryName, flow: dependsFlowName });
-            return doLoopCheck(forceDepends.story, forceDepends.flow, dependsChain, env);
+            return doForceLoopCheck(forceDepends.story, forceDepends.flow, dependsChain, env);
         }
     }
     return true;
@@ -160,8 +160,42 @@ var doLoopCheck = function (dependsStoryName, dependsFlowName, dependsChain, env
 /**
  * only check loop. return true even dependency flow not found.
  */
-var loopCheck = function (dependsStoryName, dependsFlowName, myStoryName, myFlowName, env) {
-    return doLoopCheck(dependsStoryName, dependsFlowName, [{ story: myStoryName, flow: myFlowName }], env);
+var forceLoopCheck = function (dependsStoryName, dependsFlowName, myStoryName, myFlowName, env) {
+    return doForceLoopCheck(dependsStoryName, dependsFlowName, [{ story: myStoryName, flow: myFlowName }], env);
+};
+var dataLoopCheck = function (depends, node, env) {
+    return depends.every(function (depend) {
+        var story = depend.story, flow = depend.flow;
+        if (story === node.story && flow === node.flow) {
+            throw new Error("Loop dependency[" + flow + "@" + story + " -> " + flow + "@" + story + "] found.");
+        }
+        var chain = [node];
+        var parent = node.parent;
+        while (parent != null) {
+            chain.push(parent);
+            if (story === parent.story && flow === parent.flow) {
+                var chained = chain.map(function (_a) {
+                    var story = _a.story, flow = _a.flow;
+                    return flow + "@" + story;
+                }).join(' -> ');
+                throw new Error("Loop dependency[" + flow + "@" + story + " -> " + chained + "] found.");
+            }
+            parent = parent.parent;
+        }
+        var dependsStoryFolder = path_1.default.join(env.getWorkspace(), story);
+        if (!fs_1.default.existsSync(dependsStoryFolder) || !fs_1.default.statSync(dependsStoryFolder).isDirectory()) {
+            throw new Error("Dependency story[" + story + "] not found.");
+        }
+        var dependsFlowFilename = path_1.default.join(dependsStoryFolder, flow + ".flow.json");
+        if (!fs_1.default.existsSync(dependsFlowFilename) || !fs_1.default.statSync(dependsFlowFilename).isFile()) {
+            throw new Error("Dependency flow[" + flow + "@" + story + "] not found.");
+        }
+        var dependsFlow = jsonfile_1.default.readFileSync(dependsFlowFilename);
+        var _a = (dependsFlow.settings || {}).dataDepends, dataDepends = _a === void 0 ? [] : _a;
+        var myself = { children: [], parent: node, story: story, flow: flow };
+        node.children.push(myself);
+        return dataLoopCheck(dataDepends, myself, env);
+    });
 };
 var replayNextStep = function (emitter, story, flow, index, resolve) {
     handleReplayStepEnd(emitter, story, flow, resolve);
@@ -180,7 +214,7 @@ var handleReplayStepEnd = function (emitter, story, flow, resolve) {
             (function () { return __awaiter(void 0, void 0, void 0, function () {
                 return __generator(this, function (_a) {
                     console.error(("Process[" + processId + "] Replay flow " + key + " failed on step " + (index + 1) + ".")
-                        .bold.red, error);
+                        .bold.red.bold, error);
                     emitter.once("replay-browser-abolish-" + key, function () { return resolve(); });
                     // abolish anyway
                     emitter.send("continue-replay-step-" + key, { command: 'abolish' });
@@ -231,19 +265,19 @@ exports.handleFlow = function (flowFile, env) {
     }
     flow.name = flowName;
     if (flow.steps == null || flow.steps.length === 0) {
-        console.info(("Process[" + processId + "] Flow " + flowKey + " has no steps, ignored.").red);
+        console.info(("Process[" + processId + "] Flow " + flowKey + " has no steps, ignored.").red.bold);
         return Promise.reject();
     }
     if (flow.settings && flow.settings.forceDepends) {
         // has force dependency
         var _a = flow.settings.forceDepends, dependsStoryName = _a.story, dependsFlowName = _a.flow;
         try {
-            loopCheck(dependsStoryName, dependsFlowName, storyName, flowName, env);
+            forceLoopCheck(dependsStoryName, dependsFlowName, storyName, flowName, env);
         }
         catch (e) {
             logger.error(e);
             console.info(("Process[" + processId + "] Flow " + flowKey + " failed on force dependency loop check, ignored.")
-                .red);
+                .red.bold);
             return Promise.reject();
         }
         var forceDependsFlow_1 = findAndMergeForceDependencyFlows(flow, env);
@@ -261,13 +295,101 @@ exports.handleFlow = function (flowFile, env) {
         exports.mergeFlowInput(flow, forceDependsFlow_1);
         flow = forceDependsFlow_1;
     }
+    if (flow.settings && flow.settings.dataDepends) {
+        // has data dependency
+        var depends = flow.settings.dataDepends;
+        var root = {
+            children: [],
+            parent: null,
+            story: storyName,
+            flow: flowName
+        };
+        try {
+            dataLoopCheck(depends, root, env);
+        }
+        catch (e) {
+            logger.error(e);
+            console.info(("Process[" + processId + "] Flow " + flowKey + " failed on force dependency loop check, ignored.")
+                .red.bold);
+            return Promise.reject();
+        }
+        // to check all data dependencies are finished
+        var score = root.children.reduce(function (score, depend) {
+            switch (score) {
+                case 1:
+                    // dependency not finished yet
+                    return 1;
+                case 2:
+                    // dependency failure
+                    return 2;
+                default:
+                    // check dependency
+                    var storyName_1 = depend.story, flowName_1 = depend.flow;
+                    var resultFile = path_1.default.join(env.getWorkspace(), '.result-params-temp', storyName_1, flowName_1, 'params.json');
+                    if (fs_1.default.existsSync(resultFile) && fs_1.default.statSync(resultFile).isFile()) {
+                        var result = jsonfile_1.default.readFileSync(resultFile);
+                        var _a = result || { success: false }, success = _a.success, _b = _a.params, params = _b === void 0 ? [] : _b;
+                        if (!success) {
+                            // dependency failed
+                            return 2;
+                        }
+                        else {
+                            params
+                                .filter(function (param) {
+                                return ['out', 'both'].includes(param.type);
+                            })
+                                .forEach(function (param) {
+                                flow.params = flow.params || [];
+                                var defined = flow.params.find(function (defined) {
+                                    return ['in', 'both'].includes(defined.type) &&
+                                        defined.name === param.name;
+                                });
+                                if (defined) {
+                                    // pass value
+                                    defined.value = param.value;
+                                }
+                                else {
+                                    // create an input parameter
+                                    flow.params.push({
+                                        type: 'in',
+                                        name: param.name,
+                                        value: param.value
+                                    });
+                                }
+                            });
+                            return 0;
+                        }
+                    }
+                    else {
+                        return 1;
+                    }
+            }
+        }, 0);
+        switch (score) {
+            case 1:
+                console.info(("Process[" + processId + "] Flow " + flowKey + " pending on data dependency flow not ready.")
+                    .yellow.underline);
+                // dependency not finished yet
+                return Promise.resolve({
+                    code: 'pending'
+                });
+            case 2:
+                // dependency failure
+                console.info(("Process[" + processId + "] Flow " + flowKey + " failed on data dependency flow failure, ignored.")
+                    .red.bold);
+                return Promise.reject();
+            default:
+                // every is ready, let's go
+                break;
+        }
+    }
     var startStep = flow.steps[0];
     if (startStep.type !== 'start') {
-        console.info(("Process[" + processId + "] Flow " + flowKey + " has no start step, ignored.").red);
+        console.info(("Process[" + processId + "] Flow " + flowKey + " has no start step, ignored.").red.bold);
         return Promise.reject();
     }
     if (!startStep.url) {
-        console.info(("Process[" + processId + "] Flow " + flowKey + " has no start url, ignored.").red);
+        console.info(("Process[" + processId + "] Flow " + flowKey + " has no start url, ignored.").red.bold);
         return Promise.reject();
     }
     var emitter = new replayer_1.ReplayEmitter();
@@ -282,10 +404,20 @@ exports.handleFlow = function (flowFile, env) {
     var promise = new Promise(function (resolve) {
         handleReplayStepEnd(emitter, { name: storyName }, flow, function () {
             var summary = replayer.current.getSummaryData();
+            // write out parameters only
+            var resultFolder = path_1.default.join(env.getWorkspace(), '.result-params-temp', storyName, flowName);
+            fs_1.default.mkdirSync(resultFolder, { recursive: true });
+            var result = {
+                success: summary.numberOfStep === summary.numberOfSuccess,
+                params: summary.flowParams
+            };
+            var resultFile = path_1.default.join(resultFolder, 'params.json');
+            jsonfile_1.default.writeFileSync(resultFile, result, { encoding: 'UTF-8', spaces: '\t' });
             timeLogger.timeEnd(flowKey);
             resolve({
                 report: __assign(__assign({}, summary), { spent: timeSpent }),
-                coverages: replayer.current.getCoverageData()
+                coverages: replayer.current.getCoverageData(),
+                code: 'success'
             });
         });
     });

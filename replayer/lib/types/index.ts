@@ -64,4 +64,8 @@ export type Report = Summary & {
 };
 export type CoverageEntryRange = { start: number; end: number };
 export type Coverages = CoverageEntry[];
-export type FlowResult = { report: Report; coverages: Coverages };
+export type FlowResult = {
+	report: Report;
+	coverages: Coverages;
+	code: 'success' | 'pending';
+};

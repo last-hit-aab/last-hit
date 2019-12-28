@@ -74,13 +74,25 @@ var run = function () {
                 case 6:
                     e_1 = _a.sent();
                     console_1.default.error(e_1);
-                    return [2 /*return*/, Promise.reject()];
+                    return [2 /*return*/, Promise.reject(e_1)];
                 case 7: return [2 /*return*/];
             }
         });
     }); })()
-        .then(function () { return process.exit(0); })
-        .catch(function () { return process.exit(1); });
+        .then(function () {
+        // console.log(`process[${processId}] exit on 0.`);
+        process.exit(0);
+    })
+        .catch(function (reason) {
+        if (reason === 'jammed') {
+            // console.log(`process[${processId}] exit on 1024.`);
+            process.exit(2);
+        }
+        else {
+            // console.log(`process[${processId}] exit on 1.`);
+            process.exit(1);
+        }
+    });
 };
 exports.default = run;
 

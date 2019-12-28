@@ -105,7 +105,6 @@ export const loadConfig = async (): Promise<Environment> => {
 		const workspaceConfig = await readWorkspaceFile(workspace);
 		return buildEnvironment(config, workspaceConfig);
 	} catch (e) {
-		console.log(e);
-		return Promise.reject();
+		return Promise.reject(e);
 	}
 };

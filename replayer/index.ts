@@ -21,11 +21,22 @@ const run = () => {
 			}
 		} catch (e) {
 			console.error(e);
-			return Promise.reject();
+			return Promise.reject(e);
 		}
 	})()
-		.then(() => process.exit(0))
-		.catch(() => process.exit(1));
+		.then(() => {
+			// console.log(`process[${processId}] exit on 0.`);
+			process.exit(0);
+		})
+		.catch((reason: string) => {
+			if (reason === 'jammed') {
+				// console.log(`process[${processId}] exit on 1024.`);
+				process.exit(2);
+			} else {
+				// console.log(`process[${processId}] exit on 1.`);
+				process.exit(1);
+			}
+		});
 };
 
 export default run;

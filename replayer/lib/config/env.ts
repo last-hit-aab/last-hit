@@ -154,7 +154,7 @@ class Environment {
 	}
 	static exposeNoop(): EnvironmentOptions {
 		return {
-			name: 'NO-ENVIRONMENT'
+			// name: 'NO-ENVIRONMENT'
 		} as EnvironmentOptions;
 	}
 }

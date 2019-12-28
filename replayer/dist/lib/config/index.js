@@ -142,8 +142,7 @@ exports.loadConfig = function () { return __awaiter(void 0, void 0, void 0, func
                 return [2 /*return*/, buildEnvironment(config, workspaceConfig)];
             case 3:
                 e_1 = _a.sent();
-                console.log(e_1);
-                return [2 /*return*/, Promise.reject()];
+                return [2 /*return*/, Promise.reject(e_1)];
             case 4: return [2 /*return*/];
         }
     });

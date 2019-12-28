@@ -45,7 +45,7 @@ exports.print = function (env) {
     var coverageMap = {};
     var allCoverageData = [];
     var workspace = env.getWorkspace();
-    var resultTempFolder = path_1.default.join(workspace, 'result-temp');
+    var resultTempFolder = path_1.default.join(workspace, '.result-temp');
     (fs_1.default.readdirSync(resultTempFolder) || []).forEach(function (threadFolder) {
         var summaryFilename = path_1.default.join(path_1.default.join(resultTempFolder, threadFolder, 'summary.json'));
         var report = jsonfile_1.default.readFileSync(summaryFilename);

@@ -132,7 +132,7 @@ var Environment = /** @class */ (function () {
     };
     Environment.exposeNoop = function () {
         return {
-            name: 'NO-ENVIRONMENT'
+        // name: 'NO-ENVIRONMENT'
         };
     };
     return Environment;

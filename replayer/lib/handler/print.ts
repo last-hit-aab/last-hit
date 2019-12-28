@@ -36,7 +36,7 @@ export const print = (env: Environment): void => {
 	const allCoverageData: Coverages = [];
 	const workspace = env.getWorkspace();
 
-	const resultTempFolder = path.join(workspace, 'result-temp');
+	const resultTempFolder = path.join(workspace, '.result-temp');
 
 	(fs.readdirSync(resultTempFolder) || []).forEach(threadFolder => {
 		const summaryFilename = path.join(
