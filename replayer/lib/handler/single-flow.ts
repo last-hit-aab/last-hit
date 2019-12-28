@@ -155,7 +155,9 @@ const dataLoopCheck = (
 	return depends.every(depend => {
 		const { story, flow } = depend;
 		if (story === node.story && flow === node.flow) {
-			throw new Error(`Loop dependency[${flow}@${story} -> ${flow}@${story}] found.`);
+			throw new Error(
+				`Loop dependency[${node.flow}@${node.story} -> ${flow}@${story}] found.`
+			);
 		}
 
 		const chain: Array<DataLoopCheckNode> = [node];
@@ -164,7 +166,7 @@ const dataLoopCheck = (
 			chain.push(parent);
 			if (story === parent.story && flow === parent.flow) {
 				const chained = chain.map(({ story, flow }) => `${flow}@${story}`).join(' -> ');
-				throw new Error(`Loop dependency[${flow}@${story} -> ${chained}] found.`);
+				throw new Error(`Loop dependency[${chained}] found.`);
 			}
 			parent = parent.parent;
 		}
@@ -272,7 +274,9 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 	flow.name = flowName;
 
 	if (flow.steps == null || flow.steps.length === 0) {
-		console.info((`Process[${processId}] Flow ${flowKey} has no steps, ignored.` as any).red.bold);
+		console.info(
+			(`Process[${processId}] Flow ${flowKey} has no steps, ignored.` as any).red.bold
+		);
 		return Promise.reject();
 	}
 

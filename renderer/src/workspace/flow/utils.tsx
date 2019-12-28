@@ -84,7 +84,7 @@ const findInDependencyChain = (
 	return dependsChain.some(node => node.story === story && node.flow === flow);
 };
 
-const doLoopCheck = (
+const doLoopCheckForceDependency = (
 	workspace: WorkspaceStructure,
 	dependsStoryName: string,
 	dependsFlowName: string,
@@ -110,7 +110,12 @@ const doLoopCheck = (
 		} else {
 			// push dependency to chain
 			dependsChain.push({ story: dependsStoryName, flow: dependsFlowName });
-			return doLoopCheck(workspace, forceDepends.story, forceDepends.flow, dependsChain);
+			return doLoopCheckForceDependency(
+				workspace,
+				forceDepends.story,
+				forceDepends.flow,
+				dependsChain
+			);
 		}
 	}
 	return true;
@@ -120,14 +125,84 @@ const doLoopCheck = (
  * only check loop. return true even dependency flow not found.
  * @returns {boolean} return true when pass the loop check
  */
-export const loopCheck = (
+export const loopCheckForceDependency = (
 	workspace: WorkspaceStructure,
 	dependsStoryName: string,
 	dependsFlowName: string,
 	myStoryName: string,
 	myFlowName: string
 ): boolean => {
-	return doLoopCheck(workspace, dependsStoryName, dependsFlowName, [
+	return doLoopCheckForceDependency(workspace, dependsStoryName, dependsFlowName, [
 		{ story: myStoryName, flow: myFlowName }
 	]);
+};
+
+type DataLoopCheckNode = {
+	children: Array<DataLoopCheckNode>;
+	parent: null | DataLoopCheckNode;
+	story: string;
+	flow: string;
+};
+
+const doLoopCheckDataDependency = (
+	depends: Array<{ story: string; flow: string }>,
+	node: DataLoopCheckNode,
+	workspace: WorkspaceStructure
+): boolean => {
+	return depends.every(depend => {
+		const { story: dependsStoryName, flow: dependsFlowName } = depend;
+		// find story
+		const dependsStory: Story | undefined = workspace.stories.find(
+			story => story.name === dependsStoryName
+		);
+		if (!dependsStory) {
+			return true;
+		}
+		// find flow
+		const dependsFlow: Flow | undefined = (dependsStory.flows || []).find(
+			flow => flow.name === dependsFlowName
+		);
+		if (!dependsFlow) {
+			return true;
+		}
+
+		let parent: DataLoopCheckNode | null = node;
+		while (parent != null) {
+			if (dependsStoryName === parent.story && dependsStoryName === parent.flow) {
+				return false;
+			}
+			parent = parent.parent;
+		}
+
+		const { dataDepends = [] } = dependsFlow.settings || {};
+
+		const myself = {
+			children: [] as Array<{ story: string; flow: string }>,
+			parent: node,
+			story: dependsStoryName,
+			flow: dependsFlowName
+		} as DataLoopCheckNode;
+		node.children.push(myself);
+
+		return doLoopCheckDataDependency(dataDepends, myself, workspace);
+	});
+};
+
+export const loopCheckDataDependency = (
+	workspace: WorkspaceStructure,
+	dependsStoryName: string,
+	dependsFlowName: string,
+	myStoryName: string,
+	myFlowName: string
+): boolean => {
+	return doLoopCheckDataDependency(
+		[{ story: dependsStoryName, flow: dependsFlowName }],
+		{
+			story: myStoryName,
+			flow: myFlowName,
+			children: [] as Array<DataLoopCheckNode>,
+			parent: null
+		} as DataLoopCheckNode,
+		workspace
+	);
 };

@@ -9,7 +9,7 @@ import { EventTypes } from '../../events';
 import { asFlowKey, findAndMergeForceDependencyFlows, mergeFlowInput } from '../../files';
 import { getStepTypeText } from '../step/utils';
 import ParamsDialog from './replay-params-dialog';
-import { loopCheck } from './utils';
+import { loopCheckForceDependency } from './utils';
 
 const Placeholder = styled.div`
 	flex-grow: 1;
@@ -26,7 +26,7 @@ const buildReplayFlow = async (
 	if (forRecordForceDependency || forceDepends) {
 		// force dependency exists, run replay first
 		if (
-			!loopCheck(
+			!loopCheckForceDependency(
 				workspaceStructure,
 				forceDepends!.story,
 				forceDepends!.flow,

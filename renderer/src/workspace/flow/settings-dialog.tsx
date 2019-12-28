@@ -5,7 +5,7 @@ import React from 'react';
 import { getActiveWorkspace } from '../../active';
 import UIContext from '../../common/context';
 import { EventTypes } from '../../events';
-import { loopCheck } from './utils';
+import { loopCheckDataDependency, loopCheckForceDependency } from './utils';
 
 const TheDialog = (props: { story: Story; flow: Flow }): JSX.Element => {
 	const { story, flow } = props;
@@ -22,11 +22,18 @@ const TheDialog = (props: { story: Story; flow: Flow }): JSX.Element => {
 			return `${flow}@${story}`;
 		}
 	};
-	const forceDepends = asDependsString((flow.settings || {}).forceDepends);
+	const forceDepends: string = asDependsString((flow.settings || {}).forceDepends);
+	const dataDepends: string = (
+		(flow.settings || {}).dataDepends || ([] as Array<{ story: string; flow: string }>)
+	)
+		.map((depend: { story: string; flow: string }) => {
+			return asDependsString(depend);
+		})
+		.join(',');
 
 	const checkDependency = (
 		value: string,
-		type: string,
+		type: 'force' | 'data',
 		ref: HTMLInputElement
 	): { storyName?: string; flowName?: string; passed: boolean } => {
 		if (value.trim().length === 0) {
@@ -58,7 +65,18 @@ const TheDialog = (props: { story: Story; flow: Flow }): JSX.Element => {
 		);
 		if (found) {
 			// loop check
-			if (!loopCheck(workspace, storyName, flowName, story.name, flow.name)) {
+			if (
+				(type === 'force' &&
+					!loopCheckForceDependency(
+						workspace,
+						storyName,
+						flowName,
+						story.name,
+						flow.name
+					)) ||
+				(type === 'data' &&
+					!loopCheckDataDependency(workspace, storyName, flowName, story.name, flow.name))
+			) {
 				remote.dialog.showMessageBox(remote.getCurrentWindow(), {
 					type: 'error',
 					title: 'Invalid Input',
@@ -73,7 +91,7 @@ const TheDialog = (props: { story: Story; flow: Flow }): JSX.Element => {
 			remote.dialog.showMessageBox(remote.getCurrentWindow(), {
 				type: 'error',
 				title: 'Invalid Input',
-				message: `Given flow@story not found.`
+				message: `Given ${flowName}@${storyName} not found.`
 			});
 			ref.focus();
 			return { passed: false };
@@ -81,9 +99,16 @@ const TheDialog = (props: { story: Story; flow: Flow }): JSX.Element => {
 	};
 
 	let forceDependencyRef: HTMLInputElement | null;
+	let dataDependencyRef: HTMLInputElement | null;
 	const onConfirmClicked = () => {
 		const force = checkDependency(forceDependencyRef!.value, 'force', forceDependencyRef!);
 		if (!force.passed) {
+			return;
+		}
+		const data = dataDependencyRef!.value
+			.split(',')
+			.map(data => checkDependency(data, 'data', dataDependencyRef!));
+		if (data.some(item => !item.passed)) {
 			return;
 		}
 
@@ -92,7 +117,11 @@ const TheDialog = (props: { story: Story; flow: Flow }): JSX.Element => {
 				if (force.storyName) {
 					return { story: force.storyName, flow: force.flowName! };
 				}
-			})()
+			})(),
+			dataDepends: data.map(({ storyName: story, flowName: flow }) => ({
+				story,
+				flow
+			})) as any
 		};
 
 		emitter.emit(EventTypes.ASK_SAVE_FLOW, story, flow);
@@ -118,6 +147,14 @@ const TheDialog = (props: { story: Story; flow: Flow }): JSX.Element => {
 						onKeyPress={handleKeyPress}
 						inputRef={ref => (forceDependencyRef = ref)}
 						defaultValue={forceDepends}
+					/>
+				</FormGroup>
+				<FormGroup label="Data Dependency (fill with flow@story, split by comma)">
+					<InputGroup
+						fill={true}
+						onKeyPress={handleKeyPress}
+						inputRef={ref => (dataDependencyRef = ref)}
+						defaultValue={dataDepends}
 					/>
 				</FormGroup>
 				<div className="overlay-placeholder" />

@@ -167,7 +167,7 @@ var dataLoopCheck = function (depends, node, env) {
     return depends.every(function (depend) {
         var story = depend.story, flow = depend.flow;
         if (story === node.story && flow === node.flow) {
-            throw new Error("Loop dependency[" + flow + "@" + story + " -> " + flow + "@" + story + "] found.");
+            throw new Error("Loop dependency[" + node.flow + "@" + node.story + " -> " + flow + "@" + story + "] found.");
         }
         var chain = [node];
         var parent = node.parent;
@@ -178,7 +178,7 @@ var dataLoopCheck = function (depends, node, env) {
                     var story = _a.story, flow = _a.flow;
                     return flow + "@" + story;
                 }).join(' -> ');
-                throw new Error("Loop dependency[" + flow + "@" + story + " -> " + chained + "] found.");
+                throw new Error("Loop dependency[" + chained + "] found.");
             }
             parent = parent.parent;
         }

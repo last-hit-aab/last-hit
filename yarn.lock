@@ -2585,10 +2585,10 @@ last-hit-extensions@^0.8.5-dev.6:
     last-hit-types "^0.8.5-dev.5"
     typescript "^3.7.2"
 
-last-hit-replayer@^0.8.5-dev.3:
-  version "0.8.5-dev.3"
-  resolved "https://registry.npmjs.org/last-hit-replayer/-/last-hit-replayer-0.8.5-dev.3.tgz#9332f4a267188cf89c64eda724987b42f1652896"
-  integrity sha512-zu3jVdbqIU5TR5oKnA9YF8nLxNW4Bbn7y8CFUA2u/zVqWVBsa6CYl0dmjNoT8e+9YY4ny18KotgPJAqjqRwrXw==
+last-hit-replayer@^0.8.5-dev.4:
+  version "0.8.5-dev.4"
+  resolved "https://registry.npmjs.org/last-hit-replayer/-/last-hit-replayer-0.8.5-dev.4.tgz#0e6fd4ace4ed0e3412c3c4e93ccbd2c98374e85f"
+  integrity sha512-R9Bst9Dc7D90MrgDso57c19Vwpn3LKuDSxqiRoDwp6PPjvFMvGilE4VRZmwOwm70WXwoq21XAcE0TTQ8jq7/3g==
   dependencies:
     "@types/atob" "^2.1.2"
     "@types/clone" "^0.1.30"
