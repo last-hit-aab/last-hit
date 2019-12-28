@@ -2,12 +2,12 @@ import { Drawer } from '@blueprintjs/core';
 import React from 'react';
 import styled from 'styled-components';
 import UIContext from '../../common/context';
-import IDESettings from '../../common/ide-settings';
+// import IDESettings from '../../common/ide-settings';
 import { EventTypes } from '../../events';
 
-const {
-	padding: { body }
-} = IDESettings.getStyles();
+// const {
+// 	padding: { body }
+// } = IDESettings.getStyles();
 const drawerHeaderHeight = 40;
 
 const Container = styled.div`
