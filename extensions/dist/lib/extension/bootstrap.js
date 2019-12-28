@@ -13,7 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  *--------------------------------------------------------------------------------------------*/
 var bootstrap = __importStar(require("./bootstrap-utils"));
 var Consts = __importStar(require("./consts"));
-console.log("child process pid[" + process.pid + "]");
+// console.log(`child process pid[${process.pid}]`);
 if (process.env[Consts.ARG_INJECT_NODE_MODULE_LOOKUP_PATH]) {
     bootstrap.injectNodeModuleLookupPath(process.env[Consts.ARG_INJECT_NODE_MODULE_LOOKUP_PATH]);
 }
