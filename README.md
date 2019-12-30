@@ -93,4 +93,4 @@ npm run start
 
 # License
 
-React is [MIT licensed](./LICENSE).
+Last-Hit is [MIT licensed](./LICENSE).

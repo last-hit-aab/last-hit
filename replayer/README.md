@@ -93,3 +93,7 @@ yarn start -- --workspace=directory/to/your/workspace --story=your-story-name --
 ### CI report 
 
 - CI will generate a report.html in current folder 
+
+# License
+
+Last-Hit replayer is [MIT licensed](./LICENSE).
