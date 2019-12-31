@@ -20,6 +20,7 @@ import StoryRenameDialog from '../story/rename-dialog';
 import BottomBar from './bottom-bar';
 import EnvDialog from './env-dialog';
 import MainContent from './main-content';
+import FlowReloadDialog from '../flow/reload-dialog';
 
 const onBeforeUnload = (evt: BeforeUnloadEvent) => {
 	remote.dialog
@@ -70,6 +71,7 @@ export default (): JSX.Element => {
 			<FlowRenameDialog />
 			<FlowDelete />
 			<FlowSettingsDialog />
+			<FlowReloadDialog />
 			<FlowParamsDialog />
 			<FlowReplayDialog />
 			<FlowRecordDialog />

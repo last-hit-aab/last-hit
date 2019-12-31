@@ -52,13 +52,20 @@ export default (props: { story: Story; flow: Flow }): JSX.Element => {
 		const onStepSelected = (story: Story, flow: Flow, step: Step): void =>
 			setEditStep({ step });
 
+		const onFlowReloadDialogClose = (theStory: Story, theFlow: Flow): void => {
+			if (theStory === story && theFlow === flow) {
+				setEditStep({ step: flow.steps![0] });
+			}
+		};
+
 		emitter
 			.on(EventTypes.FLOW_STATUS_CHECK, onFlowStatusCheck)
 			.on(EventTypes.ASK_FLOW_REPLAY, onAskFlowReplay)
 			.on(EventTypes.CLOSE_FLOW_REPLAY_DIALOG, onFlowReplayDialogClose)
 			.on(EventTypes.ASK_FLOW_RECORD, onAskFlowRecord)
 			.on(EventTypes.CLOSE_FLOW_RECORD_DIALOG, onFlowRecordDialogClose)
-			.on(EventTypes.STEP_SELECTED, onStepSelected);
+			.on(EventTypes.STEP_SELECTED, onStepSelected)
+			.on(EventTypes.CLOSE_FLOW_RELOAD_DIALOG, onFlowReloadDialogClose);
 		return () => {
 			emitter
 				.off(EventTypes.FLOW_STATUS_CHECK, onFlowStatusCheck)
@@ -66,7 +73,8 @@ export default (props: { story: Story; flow: Flow }): JSX.Element => {
 				.off(EventTypes.CLOSE_FLOW_REPLAY_DIALOG, onFlowReplayDialogClose)
 				.off(EventTypes.ASK_FLOW_RECORD, onAskFlowRecord)
 				.off(EventTypes.CLOSE_FLOW_RECORD_DIALOG, onFlowRecordDialogClose)
-				.off(EventTypes.STEP_SELECTED, onStepSelected);
+				.off(EventTypes.STEP_SELECTED, onStepSelected)
+				.off(EventTypes.CLOSE_FLOW_RELOAD_DIALOG, onFlowReloadDialogClose);
 		};
 	});
 

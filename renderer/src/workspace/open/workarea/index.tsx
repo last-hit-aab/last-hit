@@ -122,7 +122,7 @@ export default () => {
 			.on(EventTypes.ASK_SAVE_FLOW, onSaveFlowAsked)
 			.on(EventTypes.NAVIGATOR_TOGGLED, onNavigatorToggled)
 			.on(EventTypes.CLOSE_FLOW_SETTINGS_DIALOG, onFlowSettingsDialogClosed)
-			.on(EventTypes.ASK_FLOW_RELOAD, onFlowReloadAsked);
+			.on(EventTypes.CLOSE_FLOW_RELOAD_DIALOG, onFlowReloadDialogClosed);
 
 		return () => {
 			emitter
@@ -136,7 +136,7 @@ export default () => {
 				.off(EventTypes.ASK_SAVE_FLOW, onSaveFlowAsked)
 				.off(EventTypes.NAVIGATOR_TOGGLED, onNavigatorToggled)
 				.off(EventTypes.CLOSE_FLOW_SETTINGS_DIALOG, onFlowSettingsDialogClosed)
-				.off(EventTypes.ASK_FLOW_RELOAD, onFlowReloadAsked);
+				.off(EventTypes.CLOSE_FLOW_RELOAD_DIALOG, onFlowReloadDialogClosed);
 		};
 	});
 
@@ -160,12 +160,8 @@ export default () => {
 		}
 		flowSaver[flowKey] = setTimeout(() => saveFlow(story, flow), 500);
 	};
-	const onFlowReloadAsked = (story: Story, flow: Flow): void => {
-		remote.dialog.showMessageBox(remote.getCurrentWindow(), {
-			type: 'info',
-			title: 'Coming soon',
-			message: `Coming soon.`
-		});
+	const onFlowReloadDialogClosed = (story: Story, flow: Flow): void => {
+		forceUpdate(ignored);
 	};
 	const closeFlows = (closeFlows: Array<{ story: Story; flow: Flow }>): void => {
 		const flows = closeFlows.map(({ flow }) => flow);

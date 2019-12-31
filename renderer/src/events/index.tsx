@@ -10,6 +10,7 @@ export enum EventTypes {
 	CLOSE_FLOW_CREATE_DIALOG = 'close-flow-create-dialog',
 	CLOSE_FLOW_RENAME_DIALOG = 'close-flow-rename-dialog',
 	CLOSE_FLOW_SETTINGS_DIALOG = 'close-flow-settings-dialog',
+	CLOSE_FLOW_RELOAD_DIALOG = 'close-flow-reload-dialog',
 	CLOSE_FLOW_PARAMS_DIALOG = 'close-flow-params-dialog',
 	CLOSE_FLOW_REPLAY_DIALOG = 'close-flow-replay-dialog',
 	CLOSE_FLOW_RECORD_DIALOG = 'close-flow-record-dialog',

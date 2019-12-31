@@ -106,6 +106,39 @@ export const deleteFlow = (story: Story, flow: Flow): void => {
 	}
 };
 
+export const reloadFlow = (story: Story, flow: Flow): Promise<Flow> => {
+	const settings = getActiveWorkspace()!.getSettings();
+
+	const flowFile = getFlowFilePath(settings, story, flow);
+	if (!fs.existsSync(flowFile)) {
+		// flow file must exists
+		return Promise.reject(
+			new Error(`Failed to reload flow file[${flowFile}] because it is not exists.`)
+		);
+	}
+	if (fs.statSync(flowFile).isDirectory()) {
+		// flow file must  is file
+		return Promise.reject(
+			new Error(`Failed to reload flow file[${flowFile}] because it is not a file.`)
+		);
+	}
+	// properties name and state are no need to persist
+	try {
+		// const { name } = flow;
+		const flowFileData = jsonfile.readFileSync(flowFile);
+		Object.keys(flow)
+			.filter(key => key !== 'name')
+			.forEach(key => delete (flow as any)[key]);
+		Object.keys(flowFileData).forEach(key => ((flow as any)[key] = flowFileData[key]));
+		return Promise.resolve(flow);
+	} catch (e) {
+		console.error(e);
+		return Promise.reject(
+			new Error(`Failed to reload flow file[${flowFile}] because ${e.message}.`)
+		);
+	}
+};
+
 /**
  * always on active workspace
  */

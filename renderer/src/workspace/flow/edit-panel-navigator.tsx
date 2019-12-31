@@ -284,6 +284,11 @@ export default (props: { story: Story; flow: Flow }): JSX.Element => {
 			emitter.emit(EventTypes.STEP_SELECTED, story, flow, flow.steps![0]);
 		}
 	};
+	const onFlowReloadDialogClose = (theStory: Story, theFlow: Flow): void => {
+		if (theStory === story && theFlow === flow) {
+			setContents(buildContents(flow, onMoveUpClicked, onMoveDownClicked));
+		}
+	};
 
 	// force render
 	const [ignored, forceUpdate] = React.useReducer(x => x + 1, 0);
@@ -294,12 +299,14 @@ export default (props: { story: Story; flow: Flow }): JSX.Element => {
 		emitter
 			.on(EventTypes.STEP_BREAKPOINT_CHANGED, onStepBreakpointChanged)
 			.on(EventTypes.STEP_DELETED, onStepDeleted)
-			.on(EventTypes.CLOSE_FLOW_RECORD_DIALOG, onFlowRecordDialogClose);
+			.on(EventTypes.CLOSE_FLOW_RECORD_DIALOG, onFlowRecordDialogClose)
+			.on(EventTypes.CLOSE_FLOW_RELOAD_DIALOG, onFlowReloadDialogClose);
 		return () => {
 			emitter
 				.off(EventTypes.STEP_BREAKPOINT_CHANGED, onStepBreakpointChanged)
 				.off(EventTypes.STEP_DELETED, onStepDeleted)
-				.off(EventTypes.CLOSE_FLOW_RECORD_DIALOG, onFlowRecordDialogClose);
+				.off(EventTypes.CLOSE_FLOW_RECORD_DIALOG, onFlowRecordDialogClose)
+				.off(EventTypes.CLOSE_FLOW_RELOAD_DIALOG, onFlowReloadDialogClose);
 		};
 	});
 

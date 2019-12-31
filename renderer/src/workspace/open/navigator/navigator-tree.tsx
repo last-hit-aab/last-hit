@@ -57,7 +57,8 @@ export default () => {
 			.on(EventTypes.FLOW_CREATED, onFlowCreated)
 			.on(EventTypes.FLOW_RENAMED, onFlowRenamed)
 			.on(EventTypes.FLOW_DELETED, onFlowDeleted)
-			.on(EventTypes.CLOSE_FLOW_SETTINGS_DIALOG, onFlowSettingsDialogClosed);
+			.on(EventTypes.CLOSE_FLOW_SETTINGS_DIALOG, onFlowSettingsDialogClosed)
+			.on(EventTypes.CLOSE_FLOW_RELOAD_DIALOG, onFlowReloadDialogClosed);
 
 		return () => {
 			emitter
@@ -67,7 +68,8 @@ export default () => {
 				.off(EventTypes.FLOW_CREATED, onFlowCreated)
 				.off(EventTypes.FLOW_RENAMED, onFlowRenamed)
 				.off(EventTypes.FLOW_DELETED, onFlowDeleted)
-				.off(EventTypes.CLOSE_FLOW_SETTINGS_DIALOG, onFlowSettingsDialogClosed);
+				.off(EventTypes.CLOSE_FLOW_SETTINGS_DIALOG, onFlowSettingsDialogClosed)
+				.off(EventTypes.CLOSE_FLOW_RELOAD_DIALOG, onFlowReloadDialogClosed);
 		};
 	});
 
@@ -135,6 +137,23 @@ export default () => {
 		}
 	};
 	const onFlowSettingsDialogClosed = (story: Story, flow: Flow): void => {
+		contents.some(storyNode => {
+			if (storyNode.nodeData === story) {
+				return (storyNode.childNodes || []).some(flowNode => {
+					if ((flowNode.nodeData! as { story: Story; flow: Flow }).flow === flow) {
+						flowNode.icon = getFlowIcon(flow);
+						return true;
+					} else {
+						return false;
+					}
+				});
+			} else {
+				return false;
+			}
+		});
+		setContents([...contents]);
+	};
+	const onFlowReloadDialogClosed = (story: Story, flow: Flow): void => {
 		contents.some(storyNode => {
 			if (storyNode.nodeData === story) {
 				return (storyNode.childNodes || []).some(flowNode => {

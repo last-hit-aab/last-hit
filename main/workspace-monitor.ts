@@ -115,7 +115,7 @@ export const initialize = (): void => {
 		});
 		replayer.swtichEnv(env);
 
-		state.stalker = startFileSystemWatch(workspaceFile);
+		// state.stalker = startFileSystemWatch(workspaceFile);
 		console.log(`Workspace[${workspaceFile}] opened.`);
 	});
 };
