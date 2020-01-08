@@ -15,7 +15,8 @@ const TheDialog = (props: {
 
 	React.useEffect(() => {
 		setTimeout(reload, 3000);
-	}, [flow]);
+		// eslint-disable-next-line
+	}, [0]);
 
 	const reload = async () => {
 		try {

@@ -75,6 +75,7 @@ var page_controller_1 = require("./page-controller");
 var replay_summary_1 = __importDefault(require("./replay-summary"));
 var request_counter_1 = __importDefault(require("./request-counter"));
 var ssim_1 = __importDefault(require("./ssim"));
+var atob_1 = __importDefault(require("atob"));
 var getChromiumExecPath = function () {
     return puppeteer_1.default.executablePath().replace('app.asar', 'app.asar.unpacked');
 };
@@ -922,15 +923,15 @@ var Replayer = /** @class */ (function () {
     };
     Replayer.prototype.handleStepError = function (step, e) {
         return __awaiter(this, void 0, void 0, function () {
-            var page, file_path;
+            var page, errorFile;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         page = this.getPage(step.uuid);
                         this.getSummary().handleError(step, e);
-                        file_path = utils_1.getTempFolder(process.cwd()) + "/error-" + step.uuid + "-" + this.getSteps().indexOf(step) + ".png";
+                        errorFile = utils_1.getTempFolder(process.cwd()) + "/error-" + step.stepUuid + ".png";
                         if (!page) return [3 /*break*/, 2];
-                        return [4 /*yield*/, page.screenshot({ path: file_path, type: 'png' })];
+                        return [4 /*yield*/, page.screenshot({ path: errorFile, type: 'png' })];
                     case 1:
                         _a.sent();
                         return [3 /*break*/, 3];
@@ -974,7 +975,7 @@ var Replayer = /** @class */ (function () {
                         filename = segments[segments.length - 1];
                         dir = path_1.default.join(utils_1.getTempFolder(process.cwd()), 'upload-temp', v4_1.default());
                         filepath = path_1.default.join(dir, filename);
-                        byteString = atob(step.file.split(',')[1]);
+                        byteString = atob_1.default(step.file.split(',')[1]);
                         ab = new ArrayBuffer(byteString.length);
                         ia = new Uint8Array(ab);
                         // set the bytes of the buffer to the correct values

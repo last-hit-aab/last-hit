@@ -281,6 +281,7 @@ export default (props: { story: Story; flow: Flow; step: Step }): JSX.Element =>
 		}
 		emitter.emit(EventTypes.ASK_SAVE_FLOW, story, flow);
 		// forceUpdate(ignored);
+		emitter.emit(EventTypes.STEP_CONTENT_CHANGED, story, flow, step);
 	};
 	const handleDeviceChange = (device: Device): void => {
 		setValueToStep(step, 'device', device.name);

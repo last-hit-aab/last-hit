@@ -52,6 +52,7 @@ import { WorkspaceExtensionRegistry } from './replayer-extension-registry';
 import { ReplayerCache } from './replayers-cache';
 import RequestCounter from './request-counter';
 import ssim from './ssim';
+import atob from 'atob';
 
 export type ReplayerOptions = {
 	storyName: string;
@@ -752,11 +753,9 @@ class Replayer {
 	private async handleStepError(step: Step, e: any) {
 		const page = this.getPage(step.uuid);
 		this.getSummary().handleError(step, e);
-		const file_path = `${getTempFolder(process.cwd())}/error-${
-			step.uuid
-		}-${this.getSteps().indexOf(step)}.png`;
+		const errorFile = `${getTempFolder(process.cwd())}/error-${step.stepUuid}.png`;
 		if (page) {
-			await page.screenshot({ path: file_path, type: 'png' });
+			await page.screenshot({ path: errorFile, type: 'png' });
 		} else {
 			this.getLogger().log("page don't exsit ");
 		}

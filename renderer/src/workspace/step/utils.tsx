@@ -113,7 +113,11 @@ export const getStepIcon = (step: Step) => {
 };
 
 const StepTypeTransformer = /-|_/g;
-export const getStepTypeText = (step: Step): string => step.type.replace(StepTypeTransformer, ' ');
+export const getStepTypeText = (step: Step): string => {
+	const type = step.type.replace(StepTypeTransformer, ' ');
+	const human = step.human;
+	return [type, human].filter(text => text).join(' ');
+};
 export const getStepText = (step: Step, flow: Flow): JSX.Element => {
 	const func = StepTexts[step.type];
 	const tooltip = func ? func(step as any, flow) : 'Alien found!';

@@ -89,6 +89,7 @@ export interface IUIEventEmitter {
 
 	emit(event: EventTypes.STEP_SELECTED, story: Story, flow: Flow, step: Step): boolean;
 	emit(event: EventTypes.STEP_BREAKPOINT_CHANGED, story: Story, flow: Flow, step: Step): boolean;
+	emit(event: EventTypes.STEP_CONTENT_CHANGED, story: Story, flow: Flow, step: Step): boolean;
 	emit(event: EventTypes.STEP_DELETED, story: Story, flow: Flow, step: Step): boolean;
 	emit(event: EventTypes.ASK_SHOW_THUMBNAIL, story: Story, flow: Flow, step: Step): boolean;
 	emit(event: EventTypes.ASK_STEP_SEARCH): boolean;
@@ -155,6 +156,7 @@ export interface IUIEventEmitter {
 
 	on(event: EventTypes.STEP_SELECTED, listener: StepListener): this;
 	on(event: EventTypes.STEP_BREAKPOINT_CHANGED, listener: StepListener): this;
+	on(event: EventTypes.STEP_CONTENT_CHANGED, listener: StepListener): this;
 	on(event: EventTypes.STEP_DELETED, listener: StepListener): this;
 	on(event: EventTypes.ASK_SHOW_THUMBNAIL, listener: StepListener): this;
 	on(event: EventTypes.ASK_STEP_SEARCH, listener: NoArgListener): this;
@@ -209,6 +211,7 @@ export interface IUIEventEmitter {
 
 	off(event: EventTypes.STEP_SELECTED, listener: StepListener): this;
 	off(event: EventTypes.STEP_BREAKPOINT_CHANGED, listener: StepListener): this;
+	off(event: EventTypes.STEP_CONTENT_CHANGED, listener: StepListener): this;
 	off(event: EventTypes.STEP_DELETED, listener: StepListener): this;
 	off(event: EventTypes.ASK_SHOW_THUMBNAIL, listener: StepListener): this;
 	off(event: EventTypes.ASK_STEP_SEARCH, listener: NoArgListener): this;

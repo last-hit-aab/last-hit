@@ -1,6 +1,6 @@
 {
 	"name": "last-hit-appearance",
-	"version": "0.9.0",
+	"version": "0.9.1",
 	"homepage": "./",
 	"dependencies": {
 		"@blueprintjs/core": "^3.17.2",
@@ -21,7 +21,7 @@
 		"@types/uuid": "^3.4.5",
 		"fs-extra": "^8.1.0",
 		"jsonfile": "^5.0.0",
-		"last-hit-types": "0.9.0",
+		"last-hit-types": "0.9.1",
 		"react": "^16.12.0",
 		"react-dom": "^16.12.0",
 		"react-router-dom": "^5.1.2",

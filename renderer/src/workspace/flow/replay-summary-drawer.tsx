@@ -245,11 +245,13 @@ const ErrorPanel = (props: {
 	}
 
 	let errorThumbnail = error
-		? `${remote.app.getPath('logs')}/error-${errorStep!.uuid}-${stepIndex}.png`
+		? `${remote.app.getPath('logs')}/error-${errorStep!.stepUuid}.png`
 		: null;
+	console.log(errorThumbnail);
 	if (errorThumbnail && !fs.existsSync(errorThumbnail)) {
 		errorThumbnail = null;
 	}
+	console.log(errorThumbnail);
 
 	const text = errorStack ? errorStack : 'Everything is OK.';
 	const onThumbnailClicked = (): void => {

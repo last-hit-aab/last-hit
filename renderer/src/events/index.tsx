@@ -50,6 +50,7 @@ export enum EventTypes {
 	STEP_SELECTED = 'step-selected',
 	STEP_BREAKPOINT_CHANGED = 'step-breakpoint-changed',
 	STEP_DELETED = 'step-deleted',
+	STEP_CONTENT_CHANGED = 'step-content-changed',
 	ASK_SHOW_THUMBNAIL = 'ask-show-thumbnail',
 	ASK_STEP_SEARCH = 'ask-step-search',
 	ASK_REMOVE_STEP_SEARCH_ITEM = 'ask-remove-step-search-item',

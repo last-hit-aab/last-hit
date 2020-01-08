@@ -219,6 +219,15 @@ const rebuildNodeClassName = (node: TreeNode, step: Step): boolean => {
 	}
 };
 
+const rebuildNode = (node: TreeNode, flow: Flow, step: Step): boolean => {
+	if (node.nodeData === step) {
+		node.label = getStepText(step, flow);
+		return true;
+	} else {
+		return false;
+	}
+};
+
 const rebuildSteps = (contents: Array<TreeNode>): Array<Step> => {
 	const steps: Array<Step> = [];
 	contents.forEach(node => {
@@ -298,12 +307,14 @@ export default (props: { story: Story; flow: Flow }): JSX.Element => {
 	React.useEffect(() => {
 		emitter
 			.on(EventTypes.STEP_BREAKPOINT_CHANGED, onStepBreakpointChanged)
+			.on(EventTypes.STEP_CONTENT_CHANGED, onStepContentChanged)
 			.on(EventTypes.STEP_DELETED, onStepDeleted)
 			.on(EventTypes.CLOSE_FLOW_RECORD_DIALOG, onFlowRecordDialogClose)
 			.on(EventTypes.CLOSE_FLOW_RELOAD_DIALOG, onFlowReloadDialogClose);
 		return () => {
 			emitter
 				.off(EventTypes.STEP_BREAKPOINT_CHANGED, onStepBreakpointChanged)
+				.off(EventTypes.STEP_CONTENT_CHANGED, onStepContentChanged)
 				.off(EventTypes.STEP_DELETED, onStepDeleted)
 				.off(EventTypes.CLOSE_FLOW_RECORD_DIALOG, onFlowRecordDialogClose)
 				.off(EventTypes.CLOSE_FLOW_RELOAD_DIALOG, onFlowReloadDialogClose);
@@ -346,6 +357,17 @@ export default (props: { story: Story; flow: Flow }): JSX.Element => {
 		);
 		forceUpdate(ignored);
 		emitter.emit(EventTypes.ASK_SAVE_FLOW, story, flow);
+	};
+	const onStepContentChanged = (theStory: Story, theFlow: Flow, theStep: Step): void => {
+		if (flow !== theFlow) {
+			return;
+		}
+		contents.some(
+			node =>
+				rebuildNode(node, theFlow, theStep) ||
+				(node.childNodes || []).some(node => rebuildNode(node, theFlow, theStep))
+		);
+		forceUpdate(ignored);
 	};
 	const onStepDeleted = (theStory: Story, theFlow: Flow, theStep: Step): void => {
 		if (flow !== theFlow) {
