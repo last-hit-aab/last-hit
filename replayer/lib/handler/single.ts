@@ -19,7 +19,9 @@ const createTemporaryFolders = async (
 	const resultTempFolder = path.join(workspace, '.result-temp');
 	if (!env.isOnChildProcess()) {
 		// not in child process, delete the result temp folder
-		fs.rmdirSync(resultTempFolder, { recursive: true });
+		if (fs.existsSync(resultTempFolder)) {
+			fs.rmdirSync(resultTempFolder, { recursive: true });
+		}
 	}
 	if (!fs.existsSync(resultTempFolder)) {
 		fs.mkdirSync(resultTempFolder);
@@ -32,7 +34,9 @@ const createTemporaryFolders = async (
 	const resultParamsTempFolder = path.join(workspace, '.result-params-temp');
 	if (!env.isOnChildProcess()) {
 		// not in child process, delete the result temp folder
-		fs.rmdirSync(resultParamsTempFolder, { recursive: true });
+		if (fs.existsSync(resultParamsTempFolder)) {
+			fs.rmdirSync(resultParamsTempFolder, { recursive: true });
+		}
 	}
 	if (!fs.existsSync(resultParamsTempFolder)) {
 		fs.mkdirSync(resultParamsTempFolder);
