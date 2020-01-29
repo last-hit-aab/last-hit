@@ -1,6 +1,6 @@
 {
 	"name": "last-hit",
-	"version": "0.9.2",
+	"version": "0.9.3",
 	"description": "last hit on enterprise web",
 	"main": "runtime/main/index.js",
 	"scripts": {
@@ -52,7 +52,7 @@
 		"@types/puppeteer": "^1.20.2",
 		"@types/uuid": "^3.4.6",
 		"cssesc": "^3.0.0",
-		"last-hit-replayer": "0.9.2",
+		"last-hit-replayer": "0.9.3",
 		"pino": "^5.13.4",
 		"pino-pretty": "^3.2.1",
 		"puppeteer": "^2.0.0",
