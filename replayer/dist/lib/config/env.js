@@ -13,8 +13,6 @@ var Environment = /** @class */ (function () {
         this.name = 'NO-ENVIRONMENT';
         this.urlReplaceRegexps = [];
         this.urlReplaceTos = [];
-        this.constructed = false;
-        this.constructed = true;
         this.originalOptions = options;
         this.workspace = options.workspace;
         this.mergeFrom(options);
@@ -23,6 +21,9 @@ var Environment = /** @class */ (function () {
         this.child = options.child || false;
         this.wrappers = [this.wrapUrl];
     }
+    Environment.prototype.getOriginalOptions = function () {
+        return this.originalOptions;
+    };
     Environment.prototype.mergeFrom = function (options) {
         var _this = this;
         this.name = options.name || this.name;
@@ -45,9 +46,6 @@ var Environment = /** @class */ (function () {
     };
     Environment.prototype.wrap = function (step) {
         var _this = this;
-        if (!this.isConstructed()) {
-            return step;
-        }
         return this.getWrappers().reduce(function (step, wrapper) { return wrapper.call(_this, step); }, step);
     };
     Environment.prototype.wrapUrl = function (step) {
@@ -62,9 +60,6 @@ var Environment = /** @class */ (function () {
     };
     Environment.prototype.getWrappers = function () {
         return this.wrappers;
-    };
-    Environment.prototype.isConstructed = function () {
-        return this.constructed;
     };
     Environment.prototype.getName = function () {
         return this.name;

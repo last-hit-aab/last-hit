@@ -12,7 +12,6 @@ type SimpleEnvironmentOptions = Omit<
 >;
 
 class Environment {
-	private constructed: boolean;
 	/** environment name */
 	private name: string = 'NO-ENVIRONMENT';
 	/** workspace folder */
@@ -30,9 +29,6 @@ class Environment {
 	private originalOptions: EnvironmentOptions;
 
 	constructor(options: EnvironmentOptions) {
-		this.constructed = false;
-
-		this.constructed = true;
 		this.originalOptions = options;
 
 		this.workspace = options.workspace;
@@ -44,6 +40,9 @@ class Environment {
 		this.child = options.child || false;
 
 		this.wrappers = [this.wrapUrl];
+	}
+	getOriginalOptions(): EnvironmentOptions {
+		return this.originalOptions;
 	}
 	mergeFrom(options: SimpleEnvironmentOptions) {
 		this.name = options.name || this.name;
@@ -67,9 +66,6 @@ class Environment {
 		);
 	}
 	wrap(step: Step): Step {
-		if (!this.isConstructed()) {
-			return step;
-		}
 		return this.getWrappers().reduce((step, wrapper) => wrapper.call(this, step), step);
 	}
 	private wrapUrl(step: Step): Step {
@@ -83,9 +79,6 @@ class Environment {
 	}
 	private getWrappers(): Wrapper[] {
 		return this.wrappers;
-	}
-	isConstructed(): boolean {
-		return this.constructed;
 	}
 	getName(): string {
 		return this.name;
