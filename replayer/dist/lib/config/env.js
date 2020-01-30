@@ -3,7 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var fs_1 = __importDefault(require("fs"));
+var jsonfile_1 = __importDefault(require("jsonfile"));
 var os_1 = __importDefault(require("os"));
+var path_1 = __importDefault(require("path"));
 var Environment = /** @class */ (function () {
     function Environment(options) {
         /** environment name */
@@ -134,6 +137,23 @@ var Environment = /** @class */ (function () {
         return {
         // name: 'NO-ENVIRONMENT'
         };
+    };
+    Environment.prototype.isStoryExists = function (storyName) {
+        var dependsStoryFolder = path_1.default.join(this.getWorkspace(), storyName);
+        return fs_1.default.existsSync(dependsStoryFolder) && fs_1.default.statSync(dependsStoryFolder).isDirectory();
+    };
+    Environment.prototype.isFlowExists = function (storyName, flowName) {
+        var dependsStoryFolder = path_1.default.join(this.getWorkspace(), storyName);
+        if (!this.isStoryExists(storyName)) {
+            return false;
+        }
+        var dependsFlowFilename = path_1.default.join(dependsStoryFolder, flowName + ".flow.json");
+        return fs_1.default.existsSync(dependsFlowFilename) && fs_1.default.statSync(dependsFlowFilename).isFile();
+    };
+    Environment.prototype.readFlowFile = function (storyName, flowName) {
+        var dependsStoryFolder = path_1.default.join(this.getWorkspace(), storyName);
+        var filename = path_1.default.join(dependsStoryFolder, flowName + ".flow.json");
+        return jsonfile_1.default.readFileSync(filename);
     };
     return Environment;
 }());

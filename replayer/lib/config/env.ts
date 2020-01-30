@@ -1,5 +1,8 @@
-import { Step } from 'last-hit-types';
+import fs from 'fs';
+import jsonfile from 'jsonfile';
+import { Flow, Step } from 'last-hit-types';
 import os from 'os';
+import path from 'path';
 import { EnvironmentOptions, IncludingFilter, IncludingFilters } from '../types';
 
 type Wrapper = (step: Step) => Step;
@@ -156,6 +159,23 @@ class Environment {
 		return {
 			// name: 'NO-ENVIRONMENT'
 		} as EnvironmentOptions;
+	}
+	isStoryExists(storyName: string): boolean {
+		const dependsStoryFolder = path.join(this.getWorkspace(), storyName);
+		return fs.existsSync(dependsStoryFolder) && fs.statSync(dependsStoryFolder).isDirectory();
+	}
+	isFlowExists(storyName: string, flowName: string): boolean {
+		const dependsStoryFolder = path.join(this.getWorkspace(), storyName);
+		if (!this.isStoryExists(storyName)) {
+			return false;
+		}
+		const dependsFlowFilename = path.join(dependsStoryFolder, `${flowName}.flow.json`);
+		return fs.existsSync(dependsFlowFilename) && fs.statSync(dependsFlowFilename).isFile();
+	}
+	readFlowFile(storyName: string, flowName: string): Flow {
+		const dependsStoryFolder = path.join(this.getWorkspace(), storyName);
+		const filename = path.join(dependsStoryFolder, `${flowName}.flow.json`);
+		return jsonfile.readFileSync(filename);
 	}
 }
 

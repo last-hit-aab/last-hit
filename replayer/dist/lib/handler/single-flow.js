@@ -91,11 +91,10 @@ var findAndMergeForceDependencyFlows = function (flow, env) {
     var _loop_1 = function () {
         var _a;
         var _b = currentFlow.settings.forceDepends, storyName = _b.story, flowName = _b.flow;
-        var dependsFlowFilename = path_1.default.join(env.getWorkspace(), storyName, flowName + ".flow.json");
-        if (!fs_1.default.existsSync(dependsFlowFilename) || !fs_1.default.statSync(dependsFlowFilename).isFile()) {
+        if (!env.isFlowExists(storyName, flowName)) {
             throw new Error("Dependency flow[" + flowName + "@" + storyName + "] not found.");
         }
-        var dependsFlow = jsonfile_1.default.readFileSync(dependsFlowFilename);
+        var dependsFlow = env.readFlowFile(storyName, flowName);
         var steps = dependsFlow.steps || [];
         (_a = forceDependencyFlow.steps).splice.apply(_a, __spreadArrays([0,
             0], steps.map(function (step) {
@@ -121,7 +120,8 @@ var findAndMergeForceDependencyFlows = function (flow, env) {
 var findInDependencyChain = function (story, flow, dependsChain) {
     return dependsChain.some(function (node) { return node.story === story && node.flow === flow; });
 };
-var doForceLoopCheck = function (dependsStoryName, dependsFlowName, dependsChain, env) {
+var doForceLoopCheck = function (depends, dependsChain, env) {
+    var dependsStoryName = depends.story, dependsFlowName = depends.flow;
     if (findInDependencyChain(dependsStoryName, dependsFlowName, dependsChain)) {
         dependsChain.push({ story: dependsStoryName, flow: dependsFlowName });
         var chain = dependsChain.map(function (_a) {
@@ -130,15 +130,13 @@ var doForceLoopCheck = function (dependsStoryName, dependsFlowName, dependsChain
         }).join(' -> ');
         throw new Error("Loop dependency[" + chain + "] found.");
     }
-    var dependsStoryFolder = path_1.default.join(env.getWorkspace(), dependsStoryName);
-    if (!fs_1.default.existsSync(dependsStoryFolder) || !fs_1.default.statSync(dependsStoryFolder).isDirectory()) {
+    if (!env.isStoryExists(dependsStoryName)) {
         throw new Error("Dependency story[" + dependsStoryName + "] not found.");
     }
-    var dependsFlowFilename = path_1.default.join(dependsStoryFolder, dependsFlowName + ".flow.json");
-    if (!fs_1.default.existsSync(dependsFlowFilename) || !fs_1.default.statSync(dependsFlowFilename).isFile()) {
+    if (!env.isFlowExists(dependsStoryName, dependsFlowName)) {
         throw new Error("Dependency flow[" + dependsFlowName + "@" + dependsStoryName + "] not found.");
     }
-    var dependsFlow = jsonfile_1.default.readFileSync(dependsFlowFilename);
+    var dependsFlow = env.readFlowFile(dependsStoryName, dependsFlowName);
     var _a = (dependsFlow.settings || {}).forceDepends, forceDepends = _a === void 0 ? null : _a;
     if (forceDepends) {
         if (findInDependencyChain(forceDepends.story, forceDepends.flow, dependsChain)) {
@@ -152,7 +150,7 @@ var doForceLoopCheck = function (dependsStoryName, dependsFlowName, dependsChain
         else {
             // push dependency to chain
             dependsChain.push({ story: dependsStoryName, flow: dependsFlowName });
-            return doForceLoopCheck(forceDepends.story, forceDepends.flow, dependsChain, env);
+            return doForceLoopCheck(forceDepends, dependsChain, env);
         }
     }
     return true;
@@ -160,8 +158,8 @@ var doForceLoopCheck = function (dependsStoryName, dependsFlowName, dependsChain
 /**
  * only check loop. return true even dependency flow not found.
  */
-var forceLoopCheck = function (dependsStoryName, dependsFlowName, myStoryName, myFlowName, env) {
-    return doForceLoopCheck(dependsStoryName, dependsFlowName, [{ story: myStoryName, flow: myFlowName }], env);
+var forceLoopCheck = function (dependency, myself, env) {
+    return doForceLoopCheck(dependency, [myself], env);
 };
 var dataLoopCheck = function (depends, node, env) {
     return depends.every(function (depend) {
@@ -182,15 +180,13 @@ var dataLoopCheck = function (depends, node, env) {
             }
             parent = parent.parent;
         }
-        var dependsStoryFolder = path_1.default.join(env.getWorkspace(), story);
-        if (!fs_1.default.existsSync(dependsStoryFolder) || !fs_1.default.statSync(dependsStoryFolder).isDirectory()) {
+        if (!env.isStoryExists(story)) {
             throw new Error("Dependency story[" + story + "] not found.");
         }
-        var dependsFlowFilename = path_1.default.join(dependsStoryFolder, flow + ".flow.json");
-        if (!fs_1.default.existsSync(dependsFlowFilename) || !fs_1.default.statSync(dependsFlowFilename).isFile()) {
+        if (!env.isFlowExists(story, flow)) {
             throw new Error("Dependency flow[" + flow + "@" + story + "] not found.");
         }
-        var dependsFlow = jsonfile_1.default.readFileSync(dependsFlowFilename);
+        var dependsFlow = env.readFlowFile(story, flow);
         var _a = (dependsFlow.settings || {}).dataDepends, dataDepends = _a === void 0 ? [] : _a;
         var myself = { children: [], parent: node, story: story, flow: flow };
         node.children.push(myself);
@@ -254,10 +250,9 @@ exports.handleFlow = function (flowFile, env) {
     var timeLogger = new console.Console({ stdout: timeLoggerStream });
     timeLogger.time(flowKey);
     console.info(("Process[" + processId + "] Start to replay [" + flowKey + "].").italic.blue.underline);
-    var file = path_1.default.join(workspace, storyName, flowName + ".flow.json");
     var flow;
     try {
-        flow = jsonfile_1.default.readFileSync(file);
+        flow = env.readFlowFile(storyName, flowName);
     }
     catch (e) {
         logger.error(e);
@@ -272,7 +267,7 @@ exports.handleFlow = function (flowFile, env) {
         // has force dependency
         var _a = flow.settings.forceDepends, dependsStoryName = _a.story, dependsFlowName = _a.flow;
         try {
-            forceLoopCheck(dependsStoryName, dependsFlowName, storyName, flowName, env);
+            forceLoopCheck({ story: dependsStoryName, flow: dependsFlowName }, { story: storyName, flow: flowName }, env);
         }
         catch (e) {
             logger.error(e);

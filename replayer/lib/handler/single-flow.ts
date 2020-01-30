@@ -1,6 +1,6 @@
 import fs from 'fs';
 import jsonfile from 'jsonfile';
-import { Flow, Step, Story, StartStep, FlowParameters, FlowParameter } from 'last-hit-types';
+import { Flow, FlowParameter, FlowParameters, StartStep, Step, Story } from 'last-hit-types';
 import path from 'path';
 import stream from 'stream';
 import Environment from '../config/env';
@@ -38,15 +38,10 @@ const findAndMergeForceDependencyFlows = (flow: Flow, env: Environment): Flow =>
 	let currentFlow = flow;
 	while (currentFlow.settings && currentFlow.settings.forceDepends) {
 		const { story: storyName, flow: flowName } = currentFlow.settings.forceDepends;
-		const dependsFlowFilename = path.join(
-			env.getWorkspace(),
-			storyName,
-			`${flowName}.flow.json`
-		);
-		if (!fs.existsSync(dependsFlowFilename) || !fs.statSync(dependsFlowFilename).isFile()) {
+		if (!env.isFlowExists(storyName, flowName)) {
 			throw new Error(`Dependency flow[${flowName}@${storyName}] not found.`);
 		}
-		const dependsFlow: Flow = jsonfile.readFileSync(dependsFlowFilename);
+		const dependsFlow: Flow = env.readFlowFile(storyName, flowName);
 
 		const steps = dependsFlow.steps || [];
 
@@ -87,27 +82,25 @@ const findInDependencyChain = (
 };
 
 const doForceLoopCheck = (
-	dependsStoryName: string,
-	dependsFlowName: string,
-	dependsChain: { story: string; flow: string }[],
+	depends: FlowFile,
+	dependsChain: Array<FlowFile>,
 	env: Environment
 ): boolean => {
+	const { story: dependsStoryName, flow: dependsFlowName } = depends;
 	if (findInDependencyChain(dependsStoryName, dependsFlowName, dependsChain)) {
 		dependsChain.push({ story: dependsStoryName, flow: dependsFlowName });
 		const chain = dependsChain.map(({ story, flow }) => `${flow}@${story}`).join(' -> ');
 		throw new Error(`Loop dependency[${chain}] found.`);
 	}
 
-	const dependsStoryFolder = path.join(env.getWorkspace(), dependsStoryName);
-	if (!fs.existsSync(dependsStoryFolder) || !fs.statSync(dependsStoryFolder).isDirectory()) {
+	if (!env.isStoryExists(dependsStoryName)) {
 		throw new Error(`Dependency story[${dependsStoryName}] not found.`);
 	}
-	const dependsFlowFilename = path.join(dependsStoryFolder, `${dependsFlowName}.flow.json`);
-	if (!fs.existsSync(dependsFlowFilename) || !fs.statSync(dependsFlowFilename).isFile()) {
+	if (!env.isFlowExists(dependsStoryName, dependsFlowName)) {
 		throw new Error(`Dependency flow[${dependsFlowName}@${dependsStoryName}] not found.`);
 	}
 
-	const dependsFlow = jsonfile.readFileSync(dependsFlowFilename);
+	const dependsFlow = env.readFlowFile(dependsStoryName, dependsFlowName);
 	const { forceDepends = null } = dependsFlow.settings || {};
 	if (forceDepends) {
 		if (findInDependencyChain(forceDepends.story, forceDepends.flow, dependsChain)) {
@@ -117,7 +110,7 @@ const doForceLoopCheck = (
 		} else {
 			// push dependency to chain
 			dependsChain.push({ story: dependsStoryName, flow: dependsFlowName });
-			return doForceLoopCheck(forceDepends.story, forceDepends.flow, dependsChain, env);
+			return doForceLoopCheck(forceDepends, dependsChain, env);
 		}
 	}
 	return true;
@@ -126,19 +119,8 @@ const doForceLoopCheck = (
 /**
  * only check loop. return true even dependency flow not found.
  */
-const forceLoopCheck = (
-	dependsStoryName: string,
-	dependsFlowName: string,
-	myStoryName: string,
-	myFlowName: string,
-	env: Environment
-): boolean => {
-	return doForceLoopCheck(
-		dependsStoryName,
-		dependsFlowName,
-		[{ story: myStoryName, flow: myFlowName }],
-		env
-	);
+const forceLoopCheck = (dependency: FlowFile, myself: FlowFile, env: Environment): boolean => {
+	return doForceLoopCheck(dependency, [myself], env);
 };
 
 type DataLoopCheckNode = {
@@ -171,15 +153,13 @@ const dataLoopCheck = (
 			parent = parent.parent;
 		}
 
-		const dependsStoryFolder = path.join(env.getWorkspace(), story);
-		if (!fs.existsSync(dependsStoryFolder) || !fs.statSync(dependsStoryFolder).isDirectory()) {
+		if (!env.isStoryExists(story)) {
 			throw new Error(`Dependency story[${story}] not found.`);
 		}
-		const dependsFlowFilename = path.join(dependsStoryFolder, `${flow}.flow.json`);
-		if (!fs.existsSync(dependsFlowFilename) || !fs.statSync(dependsFlowFilename).isFile()) {
+		if (!env.isFlowExists(story, flow)) {
 			throw new Error(`Dependency flow[${flow}@${story}] not found.`);
 		}
-		const dependsFlow = jsonfile.readFileSync(dependsFlowFilename);
+		const dependsFlow = env.readFlowFile(story, flow);
 		const { dataDepends = [] } = dependsFlow.settings || {};
 
 		const myself = { children: [], parent: node, story, flow };
@@ -263,10 +243,9 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 	console.info(
 		(`Process[${processId}] Start to replay [${flowKey}].` as any).italic.blue.underline
 	);
-	const file = path.join(workspace, storyName, `${flowName}.flow.json`);
 	let flow: Flow;
 	try {
-		flow = jsonfile.readFileSync(file);
+		flow = env.readFlowFile(storyName, flowName);
 	} catch (e) {
 		logger.error(e);
 		return Promise.reject();
@@ -284,7 +263,11 @@ export const handleFlow = (flowFile: FlowFile, env: Environment): Promise<FlowRe
 		// has force dependency
 		const { story: dependsStoryName, flow: dependsFlowName } = flow.settings.forceDepends;
 		try {
-			forceLoopCheck(dependsStoryName, dependsFlowName, storyName, flowName, env);
+			forceLoopCheck(
+				{ story: dependsStoryName, flow: dependsFlowName },
+				{ story: storyName, flow: flowName },
+				env
+			);
 		} catch (e) {
 			logger.error(e);
 			console.info(
