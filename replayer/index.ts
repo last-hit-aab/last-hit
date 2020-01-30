@@ -1,10 +1,11 @@
 import 'colors';
 import console from 'console';
 import { loadConfig } from './lib/config';
-import { doOnMultipleProcesses, doOnSingleProcess } from './lib/handler';
-import { findFlows, getProcessId } from './lib/utils';
-import { createReplayer } from './lib/replayer';
 import Environment from './lib/config/env';
+import { doOnMultipleProcesses, doOnSingleProcess } from './lib/handler';
+import { createReplayer } from './lib/replayer';
+import { FlowFile } from './lib/types';
+import { findFlows, getProcessId } from './lib/utils';
 
 const run = () => {
 	const processId = getProcessId();
@@ -40,4 +41,5 @@ const run = () => {
 };
 
 export default run;
-export { createReplayer, Environment };
+export { FlowFile };
+export { createReplayer, Environment, loadConfig, doOnMultipleProcesses, doOnSingleProcess };
