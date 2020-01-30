@@ -60,7 +60,9 @@ var createTemporaryFolders = function (env) { return __awaiter(void 0, void 0, v
         resultTempFolder = path_1.default.join(workspace, '.result-temp');
         if (!env.isOnChildProcess()) {
             // not in child process, delete the result temp folder
-            fs_1.default.rmdirSync(resultTempFolder, { recursive: true });
+            if (fs_1.default.existsSync(resultTempFolder)) {
+                fs_1.default.rmdirSync(resultTempFolder, { recursive: true });
+            }
         }
         if (!fs_1.default.existsSync(resultTempFolder)) {
             fs_1.default.mkdirSync(resultTempFolder);
@@ -72,7 +74,9 @@ var createTemporaryFolders = function (env) { return __awaiter(void 0, void 0, v
         resultParamsTempFolder = path_1.default.join(workspace, '.result-params-temp');
         if (!env.isOnChildProcess()) {
             // not in child process, delete the result temp folder
-            fs_1.default.rmdirSync(resultParamsTempFolder, { recursive: true });
+            if (fs_1.default.existsSync(resultParamsTempFolder)) {
+                fs_1.default.rmdirSync(resultParamsTempFolder, { recursive: true });
+            }
         }
         if (!fs_1.default.existsSync(resultParamsTempFolder)) {
             fs_1.default.mkdirSync(resultParamsTempFolder);
