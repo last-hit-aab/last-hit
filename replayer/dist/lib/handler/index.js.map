@@ -1,1 +1,0 @@
-{"version":3,"sources":["../lib/handler/index.ts"],"names":[],"mappings":";;AAAA,mCAA6C;AAGpC,4BAHA,0BAAiB,CAGA;AAF1B,uCAAmD;AAEvB,gCAFnB,gCAAqB,CAEmB","file":"index.js","sourcesContent":["import { doOnSingleProcess } from './single';\nimport { doOnMultipleProcesses } from './multiple';\n\nexport { doOnSingleProcess, doOnMultipleProcesses };\n"]}
