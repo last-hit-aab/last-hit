@@ -5,6 +5,9 @@ export enum EventTypes {
 	ASK_OPEN_ENV = 'ask-open-env',
 	CLOSE_ENV_DIALOG = 'close-env-dialog',
 
+	ASK_OPEN_UPDATE = 'ask-open-update',
+	CLOSE_UPDATE_DIALOG = 'close-update-dialog',
+
 	CLOSE_STORY_CREATE_DIALOG = 'close-story-create-dialog',
 	CLOSE_STORY_RENAME_DIALOG = 'close-story-rename-dialog',
 	CLOSE_FLOW_CREATE_DIALOG = 'close-flow-create-dialog',

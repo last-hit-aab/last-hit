@@ -26,8 +26,12 @@ export type StepSearchItemListener = (story: any, flow: any, step: any, match: a
 export interface IUIEventEmitter {
 	emit(event: EventTypes.ASK_TOGGLE_NAVIGATOR): boolean;
 	emit(event: EventTypes.NAVIGATOR_TOGGLED, opened: boolean): boolean;
+
 	emit(event: EventTypes.ASK_OPEN_ENV): boolean;
 	emit(event: EventTypes.CLOSE_ENV_DIALOG): boolean;
+
+	emit(event: EventTypes.ASK_OPEN_UPDATE, current: string, latest: string): boolean;
+	emit(event: EventTypes.CLOSE_UPDATE_DIALOG): boolean;
 
 	emit(event: EventTypes.ASK_CREATE_STORY): boolean;
 	emit(event: EventTypes.ASK_RENAME_STORY, story: Story): boolean;
@@ -114,8 +118,15 @@ export interface IUIEventEmitter {
 
 	on(event: EventTypes.ASK_TOGGLE_NAVIGATOR, listener: NoArgListener): this;
 	on(event: EventTypes.NAVIGATOR_TOGGLED, listener: BooleanListener): this;
+
 	on(event: EventTypes.ASK_OPEN_ENV, listener: NoArgListener): this;
 	on(event: EventTypes.CLOSE_ENV_DIALOG, listener: NoArgListener): this;
+
+	on(
+		event: EventTypes.ASK_OPEN_UPDATE,
+		listener: (current: string, latest: string) => void
+	): this;
+	on(event: EventTypes.CLOSE_UPDATE_DIALOG, listener: NoArgListener): this;
 
 	on(event: EventTypes.ASK_CREATE_STORY, listener: NoArgListener): this;
 	on(event: EventTypes.ASK_RENAME_STORY, listener: StoryListener): this;
@@ -169,8 +180,15 @@ export interface IUIEventEmitter {
 
 	off(event: EventTypes.ASK_TOGGLE_NAVIGATOR, listener: NoArgListener): this;
 	off(event: EventTypes.NAVIGATOR_TOGGLED, listener: BooleanListener): this;
+
 	off(event: EventTypes.ASK_OPEN_ENV, listener: NoArgListener): this;
 	off(event: EventTypes.CLOSE_ENV_DIALOG, listener: NoArgListener): this;
+
+	off(
+		event: EventTypes.ASK_OPEN_UPDATE,
+		listener: (current: string, latest: string) => void
+	): this;
+	off(event: EventTypes.CLOSE_UPDATE_DIALOG, listener: NoArgListener): this;
 
 	off(event: EventTypes.ASK_CREATE_STORY, listener: NoArgListener): this;
 	off(event: EventTypes.ASK_RENAME_STORY, listener: StoryListener): this;

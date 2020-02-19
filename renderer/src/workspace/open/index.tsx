@@ -7,6 +7,7 @@ import FlowCreateDialog from '../flow/create-dialog';
 import FlowDelete from '../flow/delete';
 import FlowParamsDialog from '../flow/params-dialog';
 import FlowRecordDialog from '../flow/record-dialog';
+import FlowReloadDialog from '../flow/reload-dialog';
 import FlowRenameDialog from '../flow/rename-dialog';
 import FlowReplayDialog from '../flow/replay-dialog';
 import ReplaySummaryDrawer from '../flow/replay-summary-drawer';
@@ -20,7 +21,7 @@ import StoryRenameDialog from '../story/rename-dialog';
 import BottomBar from './bottom-bar';
 import EnvDialog from './env-dialog';
 import MainContent from './main-content';
-import FlowReloadDialog from '../flow/reload-dialog';
+import UpdateDialog from './update-dialog';
 
 const onBeforeUnload = (evt: BeforeUnloadEvent) => {
 	remote.dialog
@@ -80,6 +81,7 @@ export default (): JSX.Element => {
 			<ScriptsHelperDrawer />
 			<StepSearchDrawer />
 			<EnvDialog />
+			<UpdateDialog />
 		</Container>
 	);
 };
