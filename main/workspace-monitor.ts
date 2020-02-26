@@ -4,6 +4,7 @@ import fsWathcer, { WatchrChangeEventListener, WatchrStalker, WatchrStartCallbac
 import recorder from './recorder';
 import replayer from './replayer';
 import { Environment } from 'last-hit-replayer';
+import { Environment as EnvironmentOptions } from 'last-hit-types';
 
 // IMPORTANT: following enumerations are declared in global.d.ts
 // IMPORTANT: typescript compiler treats them as from the original module, which they are not
@@ -35,7 +36,7 @@ const generateKeyByString = (storyName: string, flowName: string): string => {
 const getWorkspaceRootFolder = (workspaceFile: string): string => {
 	const parsedPath = path.parse(workspaceFile);
 	const rootFolder = path.resolve(parsedPath.root, parsedPath.dir);
-	console.log(rootFolder);
+	console.log(`workspace root folder is ${rootFolder}`);
 	return rootFolder;
 };
 
@@ -118,4 +119,34 @@ export const initialize = (): void => {
 		// state.stalker = startFileSystemWatch(workspaceFile);
 		console.log(`Workspace[${workspaceFile}] opened.`);
 	});
+	ipcMain.on(
+		'switch-replayer-env',
+		(
+			event: IpcMainEvent,
+			arg: { env: EnvironmentOptions | null; workspaceFile: string }
+		): void => {
+			const { env, workspaceFile } = arg;
+			if (env != null) {
+				const newEnv = new Environment({
+					...env,
+					name: env.name || 'IDE',
+					urlReplaceRegexp: Array.isArray(env.urlReplaceRegexp)
+						? env.urlReplaceRegexp.join('&&')
+						: env.urlReplaceRegexp,
+					urlReplaceTo: Array.isArray(env.urlReplaceTo)
+						? env.urlReplaceTo.join('&&')
+						: env.urlReplaceTo,
+					workspace: getWorkspaceRootFolder(workspaceFile)
+				});
+				replayer.swtichEnv(newEnv);
+			} else {
+				const env = new Environment({
+					name: 'IDE',
+					workspace: getWorkspaceRootFolder(workspaceFile)
+				});
+				replayer.swtichEnv(env);
+			}
+			event.reply('replayer-env-switched');
+		}
+	);
 };

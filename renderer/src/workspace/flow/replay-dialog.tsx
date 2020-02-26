@@ -1,6 +1,6 @@
 import { Button, Classes, Overlay } from '@blueprintjs/core';
 import { ipcRenderer, remote } from 'electron';
-import { Flow, FlowParameters, Story } from 'last-hit-types';
+import { Flow, FlowParameters, Story, Environment } from 'last-hit-types';
 import React from 'react';
 import styled from 'styled-components';
 import { getActiveWorkspace } from '../../active';
@@ -75,7 +75,7 @@ const ReplayDialog = (props: {
 	const close = () => {
 		emitter.emit(EventTypes.CLOSE_FLOW_REPLAY_DIALOG, story, flow);
 	};
-	const [paramsFlow, setParamsFlow] = React.useState(null as null | Flow);
+	const [prepareFlow, setPrepareFlow] = React.useState(null as null | Flow);
 	const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
 	const [paused, setPaused] = React.useState(false);
 	const [replayFlow, setReplayFlow] = React.useState(null as null | Flow);
@@ -246,23 +246,32 @@ const ReplayDialog = (props: {
 			}
 		});
 	};
-	const doStartReplay = (replayFlow: Flow): void => {
-		setReplayFlow(replayFlow);
-		handleReplayStepEnd(story, replayFlow);
-		ipcRenderer.send('launch-replay', {
-			flow: replayFlow,
-			index: currentStepIndex,
-			storyName: story.name
+	const doStartReplay = (replayFlow: Flow, env: Environment | null): void => {
+		ipcRenderer.once('replayer-env-switched', () => {
+			setReplayFlow(replayFlow);
+			handleReplayStepEnd(story, replayFlow);
+			ipcRenderer.send('launch-replay', {
+				flow: replayFlow,
+				index: currentStepIndex,
+				storyName: story.name
+			});
 		});
+		const { workspaceFile } = getActiveWorkspace()!.getSettings();
+		ipcRenderer.send('switch-replayer-env', { env, workspaceFile });
 	};
 	const startReplay = async () => {
 		try {
 			const replayFlow: Flow = await buildReplayFlow(story, flow, forRecordForceDependency);
-			if (replayFlow.params && replayFlow.params.length !== 0) {
-				// has inputs
-				setParamsFlow(replayFlow);
+			const { envs } = getActiveWorkspace()!.getSettings();
+
+			if (
+				(replayFlow.params && replayFlow.params.length !== 0) ||
+				(envs != null && envs.length !== 0)
+			) {
+				// there are flow parameters or environments
+				setPrepareFlow(replayFlow);
 			} else {
-				doStartReplay(replayFlow);
+				doStartReplay(replayFlow, null);
 			}
 		} catch {
 			await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
@@ -347,15 +356,15 @@ const ReplayDialog = (props: {
 		})();
 	};
 
-	const onParamsDialogConfirmed = (params: FlowParameters): void => {
-		const flow = paramsFlow!;
+	const onParamsDialogConfirmed = (params: FlowParameters, env: Environment | null): void => {
+		const flow = prepareFlow!;
 		flow.params = params;
-		setParamsFlow(null);
-		doStartReplay(flow);
+		setPrepareFlow(null);
+		doStartReplay(flow, env);
 	};
-	if (paramsFlow != null) {
+	if (prepareFlow != null) {
 		return (
-			<ParamsDialog flow={paramsFlow} onConfirm={onParamsDialogConfirmed} onCancel={close} />
+			<ParamsDialog flow={prepareFlow} onConfirm={onParamsDialogConfirmed} onCancel={close} />
 		);
 	}
 
