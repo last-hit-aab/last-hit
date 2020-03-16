@@ -9,6 +9,7 @@ interface Window {
 	$lhGod?: boolean;
 	$lhUuid: string;
 	$lhRecordEvent: (event: string) => void;
+	$lhDataAttrName?: string;
 	WeixinJSBridge: {
 		invoke: (
 			event:

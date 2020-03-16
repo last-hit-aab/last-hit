@@ -58,8 +58,74 @@ const FieldPanel = styled.div`
 	}
 `;
 
-const buildStepFieldDefinitions = (flow: Flow, step: Step): Array<FieldDefinition> => {
+const buildChangeStepDefinitions = (flow: Flow, step: Step, properties: Array<FieldDefinition>): void => {
+	if (step.type !== 'change') {
+		return;
+	}
+	properties.push({ label: 'Value', propName: 'value', writeable: true });
+	properties.push({
+		label: 'Checked', propName: 'checked', writeable: true, helpText: 'Only on checkbox and radio button.'
+	});
+	properties.push({
+		label: 'Force Blur', propName: 'forceBlur', writeable: true, helpText: 'Force trigger blur after change done.'
+	});
+};
+const buildPathRelatedStepDefinitions = (flow: Flow, step: Step, properties: Array<FieldDefinition>): void => {
+	if (![ 'change', 'click', 'mousedown', 'keydown', 'focus', 'scroll' ].includes(step.type)) {
+		return;
+	}
+
+	properties.push({ label: 'XPath', propName: 'path', writeable: true });
+	properties.push({ label: 'CSS Path', propName: 'csspath', writeable: true });
+	properties.push({
+		label: 'Custom Path', propName: 'custompath', writeable: true, helpText: 'Custom path of element.'
+	});
+	properties.push({
+		label: 'Unique Data Path',
+		propName: 'datapath',
+		writeable: true,
+		helpText: 'Unique data-* attribute path of element.'
+	});
+	properties.push({ label: 'Target', propName: 'target', writeable: true });
+};
+const buildStartStepDefinitions = (flow: Flow, step: Step, properties: Array<FieldDefinition>): void => {
+	if (step.type !== 'start') {
+		return;
+	}
+
 	const forceDependency = !!(flow.settings && flow.settings.forceDepends);
+	if (!forceDependency) {
+		properties.push({ label: 'URL', propName: 'url', writeable: true });
+		properties.push({ label: 'Device', propName: 'device', writeable: true });
+		properties.push({ label: 'Wechat', propName: 'wechat', writeable: true });
+	}
+};
+const buildPageCreatedStepDefinitions = (flow: Flow, step: Step, properties: Array<FieldDefinition>): void => {
+	if (step.type !== 'page-created') {
+		return;
+	}
+	properties.push({
+		label: 'Triggered By',
+		propName: 'forStepUuid',
+		writeable: true,
+		helpText: 'Provide page uuid matching in replayer.'
+	});
+};
+const buildUrlRelatedStepDefinitions = (flow: Flow, step: Step, properties: Array<FieldDefinition>): void => {
+	if (![ 'page-created', 'page-switched', 'page-closed', 'ajax' ].includes(step.type)) {
+		return;
+	}
+	properties.push({ label: 'URL', propName: 'url', writeable: ![ 'page-closed', 'ajax' ].includes(step.type) });
+};
+
+const buildUrlMatchStepDefinitions = (flow: Flow, step: Step, properties: Array<FieldDefinition>): void => {
+	if (![ 'page-created', 'page-switched' ].includes(step.type)) {
+		return;
+	}
+	properties.push({ label: 'Match Regexp', propName: 'matcher', writeable: true });
+};
+
+const buildStepFieldDefinitions = (flow: Flow, step: Step): Array<FieldDefinition> => {
 	const properties: Array<FieldDefinition> = [
 		{
 			label: 'Human Reading',
@@ -68,102 +134,15 @@ const buildStepFieldDefinitions = (flow: Flow, step: Step): Array<FieldDefinitio
 			helpText: 'Human reading text, make step more understandable.'
 		}
 	];
+	[
+		buildChangeStepDefinitions,
+		buildPageCreatedStepDefinitions,
+		buildPathRelatedStepDefinitions,
+		buildStartStepDefinitions,
+		buildUrlRelatedStepDefinitions,
+		buildUrlMatchStepDefinitions
+	].forEach(x => x(flow, step, properties));
 
-	switch (step.type) {
-		case 'change':
-			properties.push({
-				label: 'Value',
-				propName: 'value',
-				writeable: true
-			});
-			properties.push({
-				label: 'Checked',
-				propName: 'checked',
-				writeable: true,
-				helpText: 'Only on checkbox and radio button.'
-			});
-			properties.push({
-				label: 'Force Blur',
-				propName: 'forceBlur',
-				writeable: true,
-				helpText: 'Force trigger blur after change done.'
-			});
-		// eslint-disable-next-line
-		case 'click':
-		case 'mousedown':
-		case 'keydown':
-		case 'focus':
-		case 'scroll':
-			properties.push({
-				label: 'XPath',
-				propName: 'path',
-				writeable: true
-			});
-			properties.push({
-				label: 'CSS Path',
-				propName: 'csspath',
-				writeable: true
-			});
-			properties.push({
-				label: 'Custom Path',
-				propName: 'custompath',
-				writeable: true,
-				helpText: 'Custom path of element.'
-			});
-			properties.push({
-				label: 'Target',
-				propName: 'target',
-				writeable: true
-			});
-			break;
-		case 'start':
-			if (!forceDependency) {
-				properties.push({
-					label: 'URL',
-					propName: 'url',
-					writeable: true
-				});
-				properties.push({
-					label: 'Device',
-					propName: 'device',
-					writeable: true
-				});
-				properties.push({
-					label: 'Wechat',
-					propName: 'wechat',
-					writeable: true
-				});
-			}
-			break;
-		case 'page-created':
-			properties.push({
-				label: 'For',
-				propName: 'forStepUuid',
-				writeable: true,
-				helpText: 'Provide page uuid matching in replayer.'
-			});
-		// eslint-disable-next-line
-		case 'end':
-		case 'page-closed':
-		case 'page-error':
-		case 'page-switched':
-		case 'dialog-open':
-		case 'dialog-close':
-			break;
-		case 'ajax':
-			properties.push({
-				label: 'URL',
-				propName: 'url',
-				writeable: false
-			});
-			break;
-		case 'dom-change':
-		case 'resource-load':
-		case 'load':
-		case 'unload':
-		case 'animation':
-			break;
-	}
 	properties.push({
 		label: 'Sleep After',
 		propName: 'sleep',
@@ -172,23 +151,9 @@ const buildStepFieldDefinitions = (flow: Flow, step: Step): Array<FieldDefinitio
 	});
 	properties.push(
 		...[
-			{
-				label: 'Step UUID',
-				propName: 'stepUuid',
-				writeable: false,
-				helpText: 'Identity of step.'
-			},
-			{
-				label: 'Page UUID',
-				propName: 'uuid',
-				writeable: false,
-				helpText: 'Identity of page.'
-			},
-			{
-				label: 'Step Index',
-				propName: 'stepIndex',
-				writeable: false
-			}
+			{ label: 'Step UUID', propName: 'stepUuid', writeable: false, helpText: 'Identity of step.' },
+			{ label: 'Page UUID', propName: 'uuid', writeable: false, helpText: 'Identity of page.' },
+			{ label: 'Step Index', propName: 'stepIndex', writeable: false }
 		]
 	);
 	return properties;
@@ -219,18 +184,16 @@ const setValueToStep = (step: Step, propName: string, value: string | boolean): 
 				request.url = value as string;
 			}
 			break;
-		case step.type === 'start' && propName === 'wechat':
-			{
-				const { device = {} } = step as StartStep;
-				(step as StartStep).device = { ...device, wechat: value as boolean } as Device;
-			}
+		case step.type === 'start' && propName === 'wechat': {
+			const { device = {} } = step as StartStep;
+			(step as StartStep).device = { ...device, wechat: value as boolean } as Device;
+		}
 			break;
-		case step.type === 'start' && propName === 'device':
-			{
-				const { device: { wechat = false } = {} } = step as StartStep;
-				const device = Devices.find(device => device.name === value);
-				(step as StartStep).device = { ...device, wechat } as Device;
-			}
+		case step.type === 'start' && propName === 'device': {
+			const { device: { wechat = false } = {} } = step as StartStep;
+			const device = Devices.find(device => device.name === value);
+			(step as StartStep).device = { ...device, wechat } as Device;
+		}
 			break;
 		default:
 			(step as any)[propName] = value;
@@ -239,16 +202,16 @@ const setValueToStep = (step: Step, propName: string, value: string | boolean): 
 };
 
 const isBooleanProperty = (propName: string): boolean =>
-	['wechat', 'forceBlur', 'checked'].includes(propName);
+	[ 'wechat', 'forceBlur', 'checked' ].includes(propName);
 const DeviceSelect = Select.ofType<Device>();
 const DeviceSelectRenderer = (item: Device, props: any): JSX.Element | null => {
 	const { handleClick, modifiers } = props;
 	if (!modifiers.matchesPredicate) {
 		return null;
 	}
-	return <MenuItem text={item.name} key={item.name} onClick={handleClick} />;
+	return <MenuItem text={item.name} key={item.name} onClick={handleClick}/>;
 };
-const DeviceSelectPredicator = (
+const DeviceSelectPredictor = (
 	query: string,
 	device: Device,
 	index?: number,
@@ -269,7 +232,7 @@ export default (props: { story: Story; flow: Flow; step: Step }): JSX.Element =>
 	const { emitter } = React.useContext(UIContext);
 
 	// force render
-	const [ignored, forceUpdate] = React.useReducer(x => x + 1, 0);
+	const [ ignored, forceUpdate ] = React.useReducer(x => x + 1, 0);
 
 	const handleValueChange = (propName: string) => (
 		event: React.ChangeEvent<HTMLInputElement>
@@ -294,7 +257,7 @@ export default (props: { story: Story; flow: Flow; step: Step }): JSX.Element =>
 	const getPropEditor = (step: Step, field: FieldDefinition): JSX.Element => {
 		switch (true) {
 			case (step.type === 'start' && field.propName === 'wechat') ||
-				(step.type === 'change' && ['forceBlur', 'checked'].includes(field.propName)):
+			(step.type === 'change' && [ 'forceBlur', 'checked' ].includes(field.propName)):
 				return (
 					<Switch
 						defaultChecked={getValueFromStep(step, field.propName) as boolean}
@@ -305,11 +268,11 @@ export default (props: { story: Story; flow: Flow; step: Step }): JSX.Element =>
 				return (
 					<DeviceSelect
 						items={Devices}
-						itemPredicate={DeviceSelectPredicator}
+						itemPredicate={DeviceSelectPredictor}
 						itemRenderer={DeviceSelectRenderer}
 						onItemSelect={handleDeviceChange}
 						popoverProps={{ minimal: true }}>
-						<Button rightIcon="caret-down" text={getValueFromStep(step, 'device')} />
+						<Button rightIcon="caret-down" text={getValueFromStep(step, 'device')}/>
 					</DeviceSelect>
 				);
 			default:
@@ -344,7 +307,7 @@ export default (props: { story: Story; flow: Flow; step: Step }): JSX.Element =>
 					})}
 				</FieldPanel>
 			</Panel>
-			<EditPanelBottomBar story={story} flow={flow} step={step} />
+			<EditPanelBottomBar story={story} flow={flow} step={step}/>
 		</Container>
 	);
 };

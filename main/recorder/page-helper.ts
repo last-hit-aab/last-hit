@@ -15,7 +15,7 @@ const staticResourceTypes: ResourceType[] = [
 	'manifest',
 	'other'
 ];
-const dynamicResourceTypes: ResourceType[] = ['xhr', 'fetch', 'websocket'];
+const dynamicResourceTypes: ResourceType[] = [ 'xhr', 'fetch', 'websocket' ];
 const ignoredIdRegexps = [
 	/^md-.+-.{6,16}$/,
 	/^select2-.+$/,
@@ -32,16 +32,20 @@ export default class PageHelper {
 	private static async createCDPClient(page: Page): Promise<CDPSession> {
 		return await page.target().createCDPSession();
 	}
+
 	static async captureScreenshot(page: Page): Promise<string> {
 		return await page.screenshot({ encoding: 'base64' });
 	}
+
 	static async isAllRelatedPagesClosed(page: Page): Promise<boolean> {
 		const pages = await page.browser().pages();
 		return pages.filter(p => page !== p).length === 0;
 	}
+
 	static shouldIgnore(id: string): boolean {
 		return idShouldIgnore(id);
 	}
+
 	private static async emulate(page: Page, device: Device, client: CDPSession): Promise<void> {
 		await page.emulate(device);
 		await page.emulateMedia('screen');
@@ -59,6 +63,7 @@ export default class PageHelper {
 			// await client.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
 		}
 	}
+
 	private static async exposeFunctionToPage(
 		browserHelper: BrowserHelper,
 		page: Page
@@ -75,6 +80,7 @@ export default class PageHelper {
 		await page.exposeFunction('$lhGetFlowKey', () => flowKey);
 		await page.exposeFunction('$lhRecordEvent', eventRecorder.record);
 	}
+
 	private static async installListenersOnPage(
 		browserHelper: BrowserHelper,
 		page: Page
@@ -374,15 +380,27 @@ export default class PageHelper {
 				steps.reverse();
 				return steps.join(' > ');
 			};
+			const createDataPathFromElement = (elm: Element): string | null => {
+				// detect data attribute name
+				const attrName = `data-${window.$lhDataAttrName || 'lh-key'}`;
+				const value = elm.getAttribute(attrName);
+				if (value) {
+					return `${attrName}=${value}`;
+				} else {
+					return null;
+				}
+			};
 
 			// css path createor copy from chrome dev-tools, and make some changes
 			class StepPath {
 				private value: string;
 				optimized: boolean;
+
 				constructor(value: string, optimized: boolean = false) {
 					this.value = value;
 					this.optimized = optimized;
 				}
+
 				toString() {
 					return this.value;
 				}
@@ -391,6 +409,7 @@ export default class PageHelper {
 			const transformEvent = (e: any, element: any): { [key in string]: any } => {
 				let xpath = createXPathFromElement(element, true);
 				let csspath = createCssPathFromElement(element, true);
+				let datapath = createDataPathFromElement(element);
 				if (
 					(e.type === 'click' || e.type === 'mousedown') &&
 					xpath.indexOf('/svg') !== -1
@@ -444,13 +463,14 @@ export default class PageHelper {
 					// computed
 					path: xpath,
 					csspath: csspath,
+					datapath: datapath,
 					target:
 						element === document
 							? 'document'
 							: `<${element.tagName.toLowerCase()} ${element
-									.getAttributeNames()
-									.map(name => `${name}="${element.getAttribute(name)}"`)
-									.join(' ')}>`
+								.getAttributeNames()
+								.map(name => `${name}="${element.getAttribute(name)}"`)
+								.join(' ')}>`
 					// bubbles: e.bubbles,
 					// cancelBubble: e.cancelBubble,
 					// cancelable: e.cancelable,
@@ -481,7 +501,7 @@ export default class PageHelper {
 				if (!e) {
 					return;
 				}
-				if (['STYLE'].includes(e.target && e.target.tagName)) {
+				if ([ 'STYLE' ].includes(e.target && e.target.tagName)) {
 					// inline style tag, ignored
 					return;
 				}
@@ -518,7 +538,7 @@ export default class PageHelper {
 					}
 				} else if (
 					element.tagName === 'INPUT' &&
-					['checkbox', 'radio'].indexOf(
+					[ 'checkbox', 'radio' ].indexOf(
 						(element.getAttribute('type') || '').toLowerCase()
 					) != -1
 				) {
@@ -620,7 +640,7 @@ export default class PageHelper {
 
 						const image = new Image();
 						image.crossOrigin = 'anonymous';
-						image.onload = function() {
+						image.onload = function () {
 							const { width, height } = image;
 							canvas.width = width;
 							canvas.height = height;
@@ -661,11 +681,11 @@ export default class PageHelper {
 											// 是PNG, 转成JPEG
 											transformPNG2JPEG(base64Image).then(base64Image => {
 												imageData = base64Image;
-												func({ localIds: [0], errMsg: 'chooseImage:ok' });
+												func({ localIds: [ 0 ], errMsg: 'chooseImage:ok' });
 											});
 										} else {
 											imageData = base64Image;
-											func({ localIds: [0], errMsg: 'chooseImage:ok' });
+											func({ localIds: [ 0 ], errMsg: 'chooseImage:ok' });
 										}
 									};
 									reader.readAsDataURL(file);
@@ -753,6 +773,7 @@ export default class PageHelper {
 		await page.evaluateOnNewDocument(god);
 		await page.evaluate(god);
 	}
+
 	static async control(browserHelper: BrowserHelper, page: Page) {
 		await PageHelper.exposeFunctionToPage(browserHelper, page);
 		await PageHelper.installListenersOnPage(browserHelper, page);
@@ -766,6 +787,7 @@ export default class PageHelper {
 		PageHelper.monitorPageErrorOccurred(page, browserHelper);
 		PageHelper.monitorDialogOpened(page, browserHelper);
 	}
+
 	private static monitorDialogOpened(page: Page, browserHelper: BrowserHelper): void {
 		page.on('dialog', async dialog => {
 			console.log(`page event dialog caught`);
@@ -782,6 +804,7 @@ export default class PageHelper {
 			}
 		});
 	}
+
 	private static monitorPageErrorOccurred(page: Page, browserHelper: BrowserHelper): void {
 		page.on('pageerror', async () => {
 			console.log(`page event pageerror caught`);
@@ -795,6 +818,7 @@ export default class PageHelper {
 			});
 		});
 	}
+
 	/**
 	 * page created by window.open or anchor
 	 */
@@ -817,6 +841,7 @@ export default class PageHelper {
 			}
 		});
 	}
+
 	private static monitorPageClosed(
 		page: Page,
 		browserHelper: BrowserHelper,
@@ -837,9 +862,11 @@ export default class PageHelper {
 			}
 			try {
 				client.detach();
-			} catch {}
+			} catch {
+			}
 		});
 	}
+
 	private static async monitorAnimation(
 		client: CDPSession,
 		browserHelper: BrowserHelper,
@@ -854,13 +881,16 @@ export default class PageHelper {
 		// 	});
 		// });
 	}
+
 	private static isDynamicResource(resourceType: ResourceType) {
 		return dynamicResourceTypes.includes(resourceType);
 	}
+
 	static async monitorRequests(page: Page, browserHelper: BrowserHelper): Promise<void> {
 		PageHelper.monitorRequestFinished(page, browserHelper);
 		PageHelper.monitorRequestFailed(page, browserHelper);
 	}
+
 	private static monitorRequestFailed(page: Page, browserHelper: BrowserHelper) {
 		page.on('requestfailed', async request => {
 			const url = request.url();
@@ -888,6 +918,7 @@ export default class PageHelper {
 			}
 		});
 	}
+
 	private static monitorRequestFinished(page: Page, browserHelper: BrowserHelper) {
 		page.on('requestfinished', async request => {
 			const url = request.url();

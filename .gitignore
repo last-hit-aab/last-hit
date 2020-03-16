@@ -12,3 +12,5 @@ log/**
 package-lock.json
 .vscode/settings.json
 yarn-error.log
+
+.idea
