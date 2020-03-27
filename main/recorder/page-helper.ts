@@ -47,6 +47,9 @@ export default class PageHelper {
 	}
 
 	private static async emulate(page: Page, device: Device, client: CDPSession): Promise<void> {
+		if (device.wechat) {
+			device.userAgent = `${device.userAgent} MicroMessenger/6.5.7`;
+		}
 		await page.emulate(device);
 		await page.emulateMedia('screen');
 		const setBackground = () =>
