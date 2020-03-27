@@ -2606,10 +2606,10 @@ last-hit-extensions@^0.9.9:
     last-hit-types "^0.9.9"
     typescript "^3.7.2"
 
-last-hit-replayer@^0.10.3:
-  version "0.10.3"
-  resolved "https://registry.npmjs.org/last-hit-replayer/-/last-hit-replayer-0.10.3.tgz#11361b2324a03a194eeddf887da438a8e2a060bc"
-  integrity sha512-Xdj+MBjBBirE3FQ3rhuItGcJFy2ichuH6qS0iTRz2HuIskKpqtPwOfYbMjkRe7UIuIt2Cx6uWY/aw7RhZQfisQ==
+last-hit-replayer@^0.10.4:
+  version "0.10.4"
+  resolved "https://registry.npmjs.org/last-hit-replayer/-/last-hit-replayer-0.10.4.tgz#3ce6177f0b393c73e000cc543bf5bf42591cc041"
+  integrity sha512-bftKPJCA33XUxI0yVqxAQa6/F3LGAHObww8I6+I7poYu5sXCyungF5f3hgAIdQdIca/Wl7janLsxW8OnLkvfvA==
   dependencies:
     "@types/atob" "^2.1.2"
     "@types/clone" "^0.1.30"
