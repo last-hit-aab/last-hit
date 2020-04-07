@@ -386,15 +386,32 @@ export default class PageHelper {
 			const createDataPathFromElement = (elm: Element): string | null => {
 				// detect data attribute name
 				const attrName = `data-${window.$lhDataAttrName || 'lh-key'}`;
-				const value = elm.getAttribute(attrName);
-				if (value) {
-					return `${attrName}=${value}`;
-				} else {
-					return null;
+				const paths = [];
+				while (true) {
+					const value = elm.getAttribute(attrName);
+					if (value) {
+						paths.push(`[${attrName}=${value}]`);
+						return paths.reverse().join(' > ');
+					} else {
+						const parent = elm.parentElement;
+						if (!parent || parent == document.body) {
+							return null;
+						} else {
+							const children = parent.children;
+							for (let index = 0, count = children.length; index < count; index++) {
+								const child = children.item(index);
+								if (child == elm) {
+									paths.push(`${elm.tagName}:nth-child(${index + 1})`);
+									elm = parent;
+									break;
+								}
+							}
+						}
+					}
 				}
 			};
 
-			// css path createor copy from chrome dev-tools, and make some changes
+			// css path creator copy from chrome dev-tools, and make some changes
 			class StepPath {
 				private value: string;
 				optimized: boolean;
