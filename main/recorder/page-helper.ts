@@ -384,6 +384,10 @@ export default class PageHelper {
 				return steps.join(' > ');
 			};
 			const createDataPathFromElement = (elm: Element): string | null => {
+				if (elm.nodeType === Node.DOCUMENT_NODE) {
+					return '';
+				}
+
 				// detect data attribute name
 				const attrName = `data-${window.$lhDataAttrName || 'lh-key'}`;
 				const paths = [];
