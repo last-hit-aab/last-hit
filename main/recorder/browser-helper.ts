@@ -37,7 +37,7 @@ export default class BrowserHelper {
 					// not found in pages
 					const uuid = uuidv4();
 					allPages.add(uuid, newPage);
-					await PageHelper.control(this, newPage);
+					await PageHelper.control(this, newPage, false);
 					const base64 = await PageHelper.captureScreenshot(newPage);
 					this.recordPageWindowEvent({
 						type: 'page-created',

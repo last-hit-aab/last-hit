@@ -86,7 +86,8 @@ export default class PageHelper {
 
 	private static async installListenersOnPage(
 		browserHelper: BrowserHelper,
-		page: Page
+		page: Page,
+		onSwitchFromReplayToRecord: boolean = false
 	): Promise<void> {
 		console.log('install listener on page');
 		const god = () => {
@@ -536,6 +537,7 @@ export default class PageHelper {
 
 				let element = e.target;
 				const data = transformEvent(e, element);
+				// console.log(data);
 				data.uuid = window.$lhUuid;
 				if (e.type === 'scroll') {
 					if (scrollTimeoutHandle) {
@@ -592,9 +594,14 @@ export default class PageHelper {
 				// LOAD: 'load',
 				// UNLOAD: 'unload',
 				// VALUE_CHANGE: 'valuechange'
-			}).forEach(eventType =>
-				document.addEventListener(eventType, eventHandler, { capture: true })
-			);
+			}).forEach(eventType => {
+				document.addEventListener(eventType, eventHandler, { capture: true });
+				if (window.$lhOnSwitchFromReplayToRecord) {
+					document.querySelectorAll('iframe').forEach(frame => {
+						frame.contentDocument!.addEventListener(eventType, eventHandler, { capture: true });
+					});
+				}
+			});
 
 			const recordDialogEvent = options => {
 				const { message, defaultMessage, returnValue, eventType, dialogType } = options;
@@ -794,13 +801,16 @@ export default class PageHelper {
 		// some pages postpones the page created or popup event. so evaluateOnNewDocument doesn't work.
 		// in this case, run evaluate for ensuring the god logic should be install into page
 		// anyway, monitors cannot be installed twice, so add varaiable $lhGod on window to prevent
+		if (onSwitchFromReplayToRecord) {
+			await page.evaluate(() => window.$lhOnSwitchFromReplayToRecord = true);
+		}
 		await page.evaluateOnNewDocument(god);
 		await page.evaluate(god);
 	}
 
-	static async control(browserHelper: BrowserHelper, page: Page) {
+	static async control(browserHelper: BrowserHelper, page: Page, onSwitchFromReplayToRecord: boolean = false) {
 		await PageHelper.exposeFunctionToPage(browserHelper, page);
-		await PageHelper.installListenersOnPage(browserHelper, page);
+		await PageHelper.installListenersOnPage(browserHelper, page, onSwitchFromReplayToRecord);
 
 		const client = await PageHelper.createCDPClient(page);
 		PageHelper.emulate(page, browserHelper.getDevice(), client);
@@ -854,7 +864,7 @@ export default class PageHelper {
 				// not found in pages
 				const uuid = uuidv4();
 				allPages.add(uuid, newPage);
-				await PageHelper.control(browserHelper, newPage);
+				await PageHelper.control(browserHelper, newPage, false);
 				// const base64 = await PageHelper.captureScreenshot(newPage);
 				browserHelper.recordPageWindowEvent({
 					type: 'page-created',

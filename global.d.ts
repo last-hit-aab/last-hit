@@ -7,6 +7,7 @@ declare module NodeJS {
 interface Window {
 	$lhGetUuid: () => Promise<string>;
 	$lhGod?: boolean;
+	$lhOnSwitchFromReplayToRecord?: boolean;
 	$lhUuid: string;
 	$lhRecordEvent: (event: string) => void;
 	$lhDataAttrName?: string;

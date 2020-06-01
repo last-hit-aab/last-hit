@@ -57,19 +57,24 @@ class MyNode {
 		});
 		nodesMap.put(this);
 	}
+
 	hasAttribute(name: string): boolean {
 		return typeof this.attributes[name] !== 'undefined';
 	}
+
 	getAttribute(name: string): string {
 		return this.attributes[name] || '';
 	}
 }
+
 class NodesMap {
 	private attrIdMap = new Map<string, Array<MyNode>>();
 	private nodeIdMap = new Map<number, MyNode>();
+
 	shouldIgnore(id: string): boolean {
 		return PageHelper.shouldIgnore(id);
 	}
+
 	put(node: MyNode): void {
 		const attrIdValue = node.getAttribute('id');
 		if (attrIdValue) {
@@ -82,9 +87,11 @@ class NodesMap {
 		}
 		this.nodeIdMap.set(node.nodeId, node);
 	}
+
 	get(nodeId: number): MyNode {
 		return this.nodeIdMap.get(nodeId);
 	}
+
 	isIdAttrUnique(attrIdValue: string): boolean {
 		const data = this.attrIdMap.get(attrIdValue);
 		return data && data.length === 1;
@@ -104,10 +111,12 @@ const Node = {
 class StepPath {
 	private value: string;
 	optimized: boolean;
+
 	constructor(value: string, optimized: boolean = false) {
 		this.value = value;
 		this.optimized = optimized;
 	}
+
 	toString() {
 		return this.value;
 	}
@@ -116,31 +125,40 @@ class StepPath {
 class Recorder {
 	private replayer: ReplayerHelper;
 	private browsers: BrowsersCache = {};
+
 	initialize(replayer: ReplayerHelper) {
 		this.replayer = replayer;
 		this.launch();
 	}
+
 	private getChromiumExecPath(): string {
 		return puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked');
 	}
+
 	private generateKeyByString(storyName: string, flowName: string) {
 		return `[${flowName}@${storyName}]`;
 	}
+
 	private getReplayer(): ReplayerHelper {
 		return this.replayer;
 	}
+
 	private getBrowsers(): BrowsersCache {
 		return this.browsers;
 	}
+
 	private addBrowser(browser: Browser, flowKey: string): void {
 		this.getBrowsers()[flowKey] = browser;
 	}
+
 	private getBrowser(flowKey: string): Browser | undefined {
 		return this.getBrowsers()[flowKey];
 	}
+
 	private releaseBrowser(flowKey: string): void {
 		delete this.browsers[flowKey];
 	}
+
 	private async disconnectPuppeteer(flowKey: string, close: boolean = false): Promise<void> {
 		const browser = this.getBrowser(flowKey);
 		try {
@@ -159,6 +177,7 @@ class Recorder {
 			}
 		}
 	}
+
 	private areNodesSimilar(left: MyNode, right: MyNode): boolean {
 		if (left === right) {
 			return true;
@@ -178,6 +197,7 @@ class Recorder {
 			right.nodeType === Node.CDATA_SECTION_NODE ? Node.TEXT_NODE : right.nodeType;
 		return leftType === rightType;
 	}
+
 	private getNodeIndexForXPath(element: MyNode): number {
 		const siblings = element.parentNode ? element.parentNode.children : null;
 		if (!siblings) {
@@ -204,6 +224,7 @@ class Recorder {
 		}
 		return -1; // An error occurred: |node| not found in parent's children.
 	}
+
 	private createXPathStep(element: MyNode, nodesMap: NodesMap, optimized: boolean): StepPath {
 		let ownValue: string;
 		const ownIndex = this.getNodeIndexForXPath(element);
@@ -246,6 +267,7 @@ class Recorder {
 
 		return new StepPath(ownValue, element.nodeType === Node.DOCUMENT_NODE);
 	}
+
 	private createXPathFromNode(node: MyNode, nodesMap: NodesMap): string | null {
 		if (node.nodeType === Node.DOCUMENT_NODE) {
 			return '/';
@@ -268,9 +290,11 @@ class Recorder {
 		steps.reverse();
 		return (steps.length && steps[0].optimized ? '' : '/') + steps.join('/');
 	}
+
 	private idSelector(id: string) {
 		return `#${cssesc(id)}`;
 	}
+
 	private nodeNameInCorrectCase(elm: MyNode): string {
 		// IMPORTANT shadow root is not concerned now, by last-hit-b 2019/10/24.
 		// const shadowRootType = this.shadowRootType();
@@ -291,6 +315,7 @@ class Recorder {
 		// Return the localname, which will be case insensitive if its an html node
 		return elm.localName;
 	}
+
 	private prefixedElementClassNames(elm: MyNode): string[] {
 		const classNames = elm.getAttribute('class');
 		if (!classNames) {
@@ -305,6 +330,7 @@ class Recorder {
 				return '$' + name;
 			});
 	}
+
 	private createCssPathStep(
 		elm: MyNode,
 		nodesMap: NodesMap,
@@ -398,6 +424,7 @@ class Recorder {
 
 		return new StepPath(result, false);
 	}
+
 	private createCssPathFromNode(node: MyNode, nodesMap: NodesMap): string {
 		if (node.nodeType !== Node.ELEMENT_NODE) {
 			return '';
@@ -421,6 +448,7 @@ class Recorder {
 		steps.reverse();
 		return steps.join(' > ');
 	}
+
 	private handleLaunch(): void {
 		ipcMain.on(
 			'launch-puppeteer',
@@ -462,7 +490,7 @@ class Recorder {
 
 				await PageHelper.monitorRequests(page, browserHelper);
 				await page.goto(url, { waitUntil: 'domcontentloaded' });
-				await PageHelper.control(browserHelper, page);
+				await PageHelper.control(browserHelper, page, false);
 				try {
 					await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
 				} catch (e) {
@@ -472,6 +500,7 @@ class Recorder {
 			}
 		);
 	}
+
 	private handleDisconnect(): void {
 		ipcMain.on(
 			'disconnect-puppeteer',
@@ -481,12 +510,14 @@ class Recorder {
 			}
 		);
 	}
+
 	private handleAbolish(): void {
 		ipcMain.on('abolish-puppeteer', async (event: IpcMainEvent, arg: { flowKey: string }) => {
 			const { flowKey } = arg;
 			await this.disconnectPuppeteer(flowKey, true);
 		});
 	}
+
 	private handleSwitchToRecord(): void {
 		ipcMain.on(
 			'switch-puppeteer',
@@ -508,12 +539,13 @@ class Recorder {
 					const uuid = await page.evaluate(() => window.$lhGetUuid());
 					allPages.add(uuid, page);
 					await PageHelper.monitorRequests(page, browserHelper);
-					await PageHelper.control(browserHelper, page);
+					await PageHelper.control(browserHelper, page, true);
 				}
 				event.reply(`puppeteer-switched-${flowKey}`);
 			}
 		);
 	}
+
 	private handleCaptureScreen(): void {
 		ipcMain.on(
 			'capture-screen',
@@ -542,6 +574,7 @@ class Recorder {
 			}
 		);
 	}
+
 	private handleStartPickDOM(): void {
 		ipcMain.on(
 			'start-pick-dom',
@@ -571,9 +604,9 @@ class Recorder {
 							const nodesMap = new NodesMap();
 							new MyNode(root, nodesMap);
 							const {
-								nodeIds: [nodeId]
+								nodeIds: [ nodeId ]
 							} = (await client.send('DOM.pushNodesByBackendIdsToFrontend', {
-								backendNodeIds: [backendNodeId]
+								backendNodeIds: [ backendNodeId ]
 							})) as { nodeIds: number[] };
 							let node = nodesMap.get(nodeId);
 							if (node.pseudoType) {
@@ -607,6 +640,7 @@ class Recorder {
 			}
 		);
 	}
+
 	private launch(): void {
 		this.handleLaunch();
 		this.handleDisconnect();
@@ -615,6 +649,7 @@ class Recorder {
 		this.handleCaptureScreen();
 		this.handleStartPickDOM();
 	}
+
 	destory(): void {
 		console.info('destory all puppeteer browsers.');
 		Object.keys(this.browsers).forEach(async (key: string) => {
