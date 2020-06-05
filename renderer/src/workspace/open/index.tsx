@@ -20,6 +20,7 @@ import StoryDelete from '../story/delete';
 import StoryRenameDialog from '../story/rename-dialog';
 import BottomBar from './bottom-bar';
 import EnvDialog from './env-dialog';
+import WorkspaceSettingsDialog from './workspace-settings-dialog'
 import MainContent from './main-content';
 import UpdateDialog from './update-dialog';
 
@@ -81,6 +82,7 @@ export default (): JSX.Element => {
 			<ScriptsHelperDrawer />
 			<StepSearchDrawer />
 			<EnvDialog />
+			<WorkspaceSettingsDialog />
 			<UpdateDialog />
 		</Container>
 	);

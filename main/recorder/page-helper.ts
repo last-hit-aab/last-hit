@@ -27,8 +27,13 @@ const ignoredIdRegexps = [
 	/^react-select.+-.+$/
 ];
 const idShouldIgnore = (id: string): boolean => ignoredIdRegexps.some(regexp => regexp.test(id));
-
 export default class PageHelper {
+	private static dataAttrName: string | null | undefined = null;
+
+	public static setDataAttrName(dataAttrName?: string): void {
+		PageHelper.dataAttrName = dataAttrName;
+	}
+
 	private static async createCDPClient(page: Page): Promise<CDPSession> {
 		return await page.target().createCDPSession();
 	}
@@ -441,7 +446,7 @@ export default class PageHelper {
 				) {
 					console.log('xpath contains svg dom node.');
 					const newXpath = xpath.replace(/^(.*button.*)\/svg.*$/, '$1');
-					const newCssPaath = csspath.replace(/^(.*button.*)\s>\ssvg.*$/, '$1');
+					const newCssPath = csspath.replace(/^(.*button.*)\s>\ssvg.*$/, '$1');
 					console.log(`new xpath after svg cut-off is ${newXpath}.`);
 					if (newXpath !== xpath) {
 						// replaced
@@ -451,7 +456,7 @@ export default class PageHelper {
 						}
 						element = parent;
 						xpath = newXpath;
-						csspath = newCssPaath;
+						csspath = newCssPath;
 					}
 				}
 
@@ -803,6 +808,12 @@ export default class PageHelper {
 		// anyway, monitors cannot be installed twice, so add varaiable $lhGod on window to prevent
 		if (onSwitchFromReplayToRecord) {
 			await page.evaluate(() => window.$lhOnSwitchFromReplayToRecord = true);
+		}
+		if (PageHelper.dataAttrName) {
+			await page.evaluate((dataAttrName: string) => window.$lhDataAttrName = dataAttrName, PageHelper.dataAttrName);
+		} else {
+			// clear when not given
+			await page.evaluate(() => window.$lhDataAttrName = null);
 		}
 		await page.evaluateOnNewDocument(god);
 		await page.evaluate(god);

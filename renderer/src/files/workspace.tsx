@@ -3,7 +3,7 @@ import fs from 'fs';
 import jsonfile from 'jsonfile';
 import { Flow, Story } from 'last-hit-types';
 import path from 'path';
-import { activeWorkspace, deactiveWorkspace, getActiveWorkspace } from '../active';
+import { activeWorkspace, deactivateWorkspace, getActiveWorkspace } from '../active';
 import history from '../common/history';
 import IDESettings, { WorkspaceFileExt } from '../common/ide-settings';
 import paths from '../common/paths';
@@ -133,7 +133,7 @@ const loadWorkspaceStructure = (settings: WorkspaceSettings): WorkspaceStructure
 };
 
 export const closeCurrentWorkspace = (): void => {
-	deactiveWorkspace();
+	deactivateWorkspace();
 
 	history.replace(paths.ROOT);
 

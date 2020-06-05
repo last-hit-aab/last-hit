@@ -5,6 +5,9 @@ export enum EventTypes {
 	ASK_OPEN_ENV = 'ask-open-env',
 	CLOSE_ENV_DIALOG = 'close-env-dialog',
 
+	ASK_OPEN_WORKSPACE_SETTINGS = 'ask-open-workspace-settings',
+	CLOSE_WORKSPACE_SETTINGS_DIALOG = 'close-workspace-settings-dialog',
+
 	ASK_OPEN_UPDATE = 'ask-open-update',
 	CLOSE_UPDATE_DIALOG = 'close-update-dialog',
 

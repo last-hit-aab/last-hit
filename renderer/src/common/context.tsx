@@ -30,6 +30,9 @@ export interface IUIEventEmitter {
 	emit(event: EventTypes.ASK_OPEN_ENV): boolean;
 	emit(event: EventTypes.CLOSE_ENV_DIALOG): boolean;
 
+	emit(event: EventTypes.ASK_OPEN_WORKSPACE_SETTINGS): boolean;
+	emit(event: EventTypes.CLOSE_WORKSPACE_SETTINGS_DIALOG): boolean;
+
 	emit(event: EventTypes.ASK_OPEN_UPDATE, current: string, latest: string): boolean;
 	emit(event: EventTypes.CLOSE_UPDATE_DIALOG): boolean;
 
@@ -122,6 +125,9 @@ export interface IUIEventEmitter {
 	on(event: EventTypes.ASK_OPEN_ENV, listener: NoArgListener): this;
 	on(event: EventTypes.CLOSE_ENV_DIALOG, listener: NoArgListener): this;
 
+	on(event: EventTypes.ASK_OPEN_WORKSPACE_SETTINGS, listener: NoArgListener): this;
+	on(event: EventTypes.CLOSE_WORKSPACE_SETTINGS_DIALOG, listener: NoArgListener): this;
+
 	on(
 		event: EventTypes.ASK_OPEN_UPDATE,
 		listener: (current: string, latest: string) => void
@@ -183,6 +189,9 @@ export interface IUIEventEmitter {
 
 	off(event: EventTypes.ASK_OPEN_ENV, listener: NoArgListener): this;
 	off(event: EventTypes.CLOSE_ENV_DIALOG, listener: NoArgListener): this;
+
+	off(event: EventTypes.ASK_OPEN_WORKSPACE_SETTINGS, listener: NoArgListener): this;
+	off(event: EventTypes.CLOSE_WORKSPACE_SETTINGS_DIALOG, listener: NoArgListener): this;
 
 	off(
 		event: EventTypes.ASK_OPEN_UPDATE,

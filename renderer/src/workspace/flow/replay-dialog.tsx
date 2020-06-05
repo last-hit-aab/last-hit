@@ -120,7 +120,11 @@ const ReplayDialog = (props: {
 				emitter.emit(EventTypes.ASK_FLOW_RECORD, story, flow, true);
 				close();
 			});
-			ipcRenderer.send('switch-puppeteer', { storyName: story.name, flowName: flow.name });
+			ipcRenderer.send('switch-puppeteer', {
+				storyName: story.name,
+				flowName: flow.name,
+				dataAttrName: getActiveWorkspace()!.getSettings().dataAttrName
+			});
 		});
 		ipcRenderer.send(`continue-replay-step-${flowKey}`, {
 			command: 'switch-to-record'

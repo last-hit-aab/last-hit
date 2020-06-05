@@ -21,26 +21,26 @@ export class ActiveWorkspace {
 	}
 }
 
-let actived: ActiveWorkspace | null = null;
+let active: ActiveWorkspace | null = null;
 
 export const activeWorkspace = (
 	workspace: Workspace,
 	settings: WorkspaceSettings,
 	structure: WorkspaceStructure
 ): void => {
-	actived = new ActiveWorkspace(workspace, settings, structure);
+	active = new ActiveWorkspace(workspace, settings, structure);
 };
 
 export const getActiveWorkspace = (): ActiveWorkspace | null => {
-	return actived;
+	return active;
 };
 
 export const hasActiveWorkspace = (): boolean => {
-	return actived != null;
+	return active != null;
 };
 
-export const deactiveWorkspace = (): ActiveWorkspace | null => {
-	const previousActived = actived;
-	actived = null;
-	return previousActived;
+export const deactivateWorkspace = (): ActiveWorkspace | null => {
+	const previousActive = active;
+	active = null;
+	return previousActive;
 };

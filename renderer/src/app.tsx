@@ -3,7 +3,7 @@ import { FocusStyleManager } from '@blueprintjs/core';
 import React from 'react';
 import { Redirect, Route, Router, Switch } from 'react-router-dom';
 import styled from 'styled-components';
-import { deactiveWorkspace, hasActiveWorkspace } from './active';
+import { deactivateWorkspace, hasActiveWorkspace } from './active';
 import UIContext, { context } from './common/context';
 import history from './common/history';
 import paths from './common/paths';
@@ -12,7 +12,7 @@ import { GlobalStyles } from './common/styles';
 FocusStyleManager.onlyShowFocusOnTabs();
 
 const Splash = React.lazy(() => import(/* webpackChunkName: "splash" */ './splash'));
-const CreateWorspace = React.lazy(() =>
+const CreateWorkspace = React.lazy(() =>
 	import(/* webpackChunkName: "create-workspace" */ './workspace/create')
 );
 const OpenedWorkspace = React.lazy(() =>
@@ -38,15 +38,15 @@ const App = () => {
 									if (hasActiveWorkspace()) {
 										return <OpenedWorkspace />;
 									} else {
-										// for ensure deactive
-										deactiveWorkspace();
+										// for ensure deactivate
+										deactivateWorkspace();
 										return <Redirect to={paths.SPLASH} />;
 									}
 								}}
 							/>
 							<Route
 								path={paths.CREATE_WORKSPACE}
-								render={() => <CreateWorspace />}
+								render={() => <CreateWorkspace />}
 							/>
 							<Route path={paths.SPLASH} render={() => <Splash />} />
 							<Route

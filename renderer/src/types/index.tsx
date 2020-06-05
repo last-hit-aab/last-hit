@@ -10,6 +10,7 @@ export type ExecuteEnv = Environment;
 export type WorkspaceSettings = {
 	name: string;
 	workspaceFile: string;
+	dataAttrName?: string;
 	envs?: ExecuteEnv[];
 };
 

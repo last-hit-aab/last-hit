@@ -4,6 +4,7 @@ import { Flow, StartStep, StepType, Story } from 'last-hit-types';
 import React from 'react';
 import styled from 'styled-components';
 import uuidv4 from 'uuid/v4';
+import { getActiveWorkspace } from '../../active';
 import UIContext from '../../common/context';
 import Devices from '../../common/device-descriptors';
 import { EventTypes } from '../../events';
@@ -26,7 +27,7 @@ const TheDialog = (props: {
 	};
 
 	// force render
-	const [ignored, forceUpdate] = React.useReducer(x => x + 1, 0);
+	const [ ignored, forceUpdate ] = React.useReducer(x => x + 1, 0);
 
 	const handleRecording = (): void => {
 		const flowKey = asFlowKey(flow, story);
@@ -110,9 +111,10 @@ const TheDialog = (props: {
 			const options = {
 				url: step.url,
 				device: step.device || Devices[0],
-				uuid: uuidv4()
+				uuid: uuidv4(),
+				dataAttrName: getActiveWorkspace()!.getSettings().dataAttrName
 			};
-			flow.steps = [{ type: 'start', stepIndex: 0, stepUuid: uuidv4(), ...options }];
+			flow.steps = [ { type: 'start', stepIndex: 0, stepUuid: uuidv4(), ...options } ];
 			emitter.emit(EventTypes.ASK_SAVE_FLOW, story, flow);
 			forceUpdate(ignored);
 			ipcRenderer.send('launch-puppeteer', {
@@ -121,7 +123,7 @@ const TheDialog = (props: {
 			});
 		}
 		// eslint-disable-next-line
-	}, [0]);
+	}, [ 0 ]);
 
 	const onCaptureScreenshotClicked = (): void => {
 		const flowKey = asFlowKey(flow, story);
@@ -191,12 +193,12 @@ const TheDialog = (props: {
 						#{flow.steps!.length} {getStepTypeText(flow.steps![flow.steps!.length - 1])}
 					</h4>
 				</div>
-				<div className="overlay-placeholder" />
+				<div className="overlay-placeholder"/>
 				<div className={Classes.DIALOG_FOOTER_ACTIONS}>
 					<Button onClick={onStopClicked} intent="danger">
 						Stop
 					</Button>
-					<Placeholder />
+					<Placeholder/>
 					<Button onClick={onCaptureScreenshotClicked} intent="primary">
 						Capture Screenshot
 					</Button>
@@ -212,7 +214,7 @@ const TheDialog = (props: {
 export default (): JSX.Element => {
 	const { emitter } = React.useContext(UIContext);
 
-	const [data, setData] = React.useState(
+	const [ data, setData ] = React.useState(
 		null as { story: Story; flow: Flow; isSwitchedFromReplay: boolean } | null
 	);
 	React.useEffect(() => {
@@ -233,6 +235,6 @@ export default (): JSX.Element => {
 	if (data != null) {
 		return <TheDialog {...data} />;
 	} else {
-		return <React.Fragment />;
+		return <React.Fragment/>;
 	}
 };

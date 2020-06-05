@@ -65,7 +65,7 @@ export default () => {
 				.replace('v', '')
 				.split('.')
 				.map((x: string) => (x ? (x as any) * 1 : 0));
-			// console.log('latest veresion', major, minor, patch);
+			// console.log('latest version', major, minor, patch);
 			if (
 				myMajor < major ||
 				(myMajor === major && myMinor < minor) ||
@@ -83,7 +83,7 @@ export default () => {
 		checkUpdate();
 		// eslint-disable-next-line
 	}, [0]);
-	const onToggleNagivatorClicked = (): void => {
+	const onToggleNavigatorClicked = (): void => {
 		emitter.emit(EventTypes.ASK_TOGGLE_NAVIGATOR);
 	};
 	const onStepSearchClicked = (): void => {
@@ -92,6 +92,9 @@ export default () => {
 	const onEnvClicked = (): void => {
 		emitter.emit(EventTypes.ASK_OPEN_ENV);
 	};
+	const onWorkspaceSettingsClicked = () : void => {
+		emitter.emit(EventTypes.ASK_OPEN_WORKSPACE_SETTINGS);
+	}
 	const onUpdateClicked = (): void => {
 		if (update.has) {
 			setUpdate({ has: false, current: update.current, latest: update.latest });
@@ -107,7 +110,7 @@ export default () => {
 					minimal={true}
 					icon="inbox"
 					large={true}
-					onClick={onToggleNagivatorClicked}
+					onClick={onToggleNavigatorClicked}
 				/>
 			</Segment>
 			<Segment title="Step Search">
@@ -115,6 +118,9 @@ export default () => {
 			</Segment>
 			<Segment title="Environments">
 				<Button minimal={true} icon="heat-grid" large={true} onClick={onEnvClicked} />
+			</Segment>
+			<Segment title="Workspace Settings">
+				<Button minimal={true} icon="settings" large={true} onClick={onWorkspaceSettingsClicked} />
 			</Segment>
 			<Segment title="Update">
 				<UpdateButton

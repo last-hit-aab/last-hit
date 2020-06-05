@@ -454,9 +454,10 @@ class Recorder {
 			'launch-puppeteer',
 			async (
 				event: IpcMainEvent,
-				arg: { url: string; device: Device; flowKey: string; uuid: string }
+				arg: { url: string; device: Device; flowKey: string; uuid: string, dataAttrName?: string }
 			) => {
-				const { url, device, flowKey, uuid } = arg;
+				const { url, device, flowKey, uuid, dataAttrName } = arg;
+				PageHelper.setDataAttrName(dataAttrName);
 				const {
 					viewport: { width, height }
 				} = device;
@@ -521,8 +522,9 @@ class Recorder {
 	private handleSwitchToRecord(): void {
 		ipcMain.on(
 			'switch-puppeteer',
-			async (event: IpcMainEvent, arg: { storyName: string; flowName: string }) => {
-				const { storyName, flowName } = arg;
+			async (event: IpcMainEvent, arg: { storyName: string; flowName: string, dataAttrName?: string }) => {
+				const { storyName, flowName, dataAttrName } = arg;
+				PageHelper.setDataAttrName(dataAttrName);
 				const flowKey = this.generateKeyByString(storyName, flowName);
 				const replayer = this.getReplayer().abandon(storyName, flowName);
 				const browser = replayer.getBrowser();
