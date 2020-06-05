@@ -1,26 +1,10 @@
-import {
-	Button,
-	Classes,
-	Colors,
-	FormGroup,
-	InputGroup,
-	Overlay,
-	Tab,
-	Tabs
-} from '@blueprintjs/core';
+import { Button, Classes, FormGroup, InputGroup, Overlay } from '@blueprintjs/core';
 import React from 'react';
-import styled from 'styled-components';
-import uuidv4 from 'uuid/v4';
 import { getActiveWorkspace } from '../../active';
 import UIContext from '../../common/context';
-import IDESettings from '../../common/ide-settings';
 import { EventTypes } from '../../events';
 import { saveWorkspace } from '../../files';
 
-const {
-	gap,
-	padding: { body }
-} = IDESettings.getStyles();
 
 const TheDialog = (): JSX.Element => {
 	const { emitter } = React.useContext(UIContext);
