@@ -400,7 +400,7 @@ export default class PageHelper {
 				while (true) {
 					const value = elm.getAttribute(attrName);
 					if (value) {
-						paths.push(`[${attrName}=${value}]`);
+						paths.push(`[${attrName}="${value}"]`);
 						return paths.reverse().join(' > ');
 					} else {
 						const parent = elm.parentElement;
