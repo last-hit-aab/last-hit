@@ -1,13 +1,13 @@
-import { Button, Label } from '@blueprintjs/core';
-import React from 'react';
-import styled from 'styled-components';
-import uuidv4 from 'uuid/v4';
-import IDESettings from '../common/ide-settings';
-import { openWorkspaceByFolder } from '../files';
-import { Workspace } from '../types';
+import { Button, Label } from "@blueprintjs/core";
+import React from "react";
+import styled from "styled-components";
+import uuidv4 from "uuid/v4";
+import IDESettings from "../common/ide-settings";
+import { openWorkspaceByFolder } from "../files";
+import { Workspace } from "../types";
 
 const {
-	padding: { vertical, horizontal }
+	padding: { vertical, horizontal },
 } = IDESettings.getStyles();
 
 const List = styled.div`
@@ -48,7 +48,7 @@ const RemoveButton = styled(Button)`
 `;
 
 export default (): JSX.Element => {
-	const [ignored, forceUpdate] = React.useReducer(x => x + 1, 0);
+	const [ignored, forceUpdate] = React.useReducer((x) => x + 1, 0);
 	const onWorkspaceOpenClicked = (workspace: Workspace): void => {
 		openWorkspaceByFolder(workspace.path);
 	};
@@ -62,15 +62,14 @@ export default (): JSX.Element => {
 	} else {
 		return (
 			<List>
-				{IDESettings.getWorkspaces().map(workspace => {
+				{IDESettings.getWorkspaces().map((workspace) => {
 					return (
 						<ListItem
 							key={uuidv4()}
 							onClick={() => onWorkspaceOpenClicked(workspace)}
-							title={workspace.path}>
-							<Label className="bp3-text-large margin-bottom-0">
-								{workspace.name}
-							</Label>
+							title={workspace.path}
+						>
+							<Label className="bp3-text-large margin-bottom-0">{workspace.name}</Label>
 							<Label className="bp3-text-small bp3-text-muted bp3-text-overflow-ellipsis margin-bottom-0">
 								{workspace.path}
 							</Label>

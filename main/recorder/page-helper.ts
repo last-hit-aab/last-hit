@@ -1,21 +1,21 @@
-import { Device } from 'last-hit-types';
-import { CDPSession, Page, ResourceType } from 'puppeteer';
-import uuidv4 from 'uuid/v4';
-import BrowserHelper from './browser-helper';
+import { Device } from "last-hit-types";
+import { CDPSession, Page, ResourceType } from "puppeteer";
+import uuidv4 from "uuid/v4";
+import BrowserHelper from "./browser-helper";
 
 const staticResourceTypes: ResourceType[] = [
-	'document',
-	'stylesheet',
-	'image',
-	'media',
-	'font',
-	'script',
-	'texttrack',
-	'eventsource',
-	'manifest',
-	'other'
+	"document",
+	"stylesheet",
+	"image",
+	"media",
+	"font",
+	"script",
+	"texttrack",
+	"eventsource",
+	"manifest",
+	"other",
 ];
-const dynamicResourceTypes: ResourceType[] = [ 'xhr', 'fetch', 'websocket' ];
+const dynamicResourceTypes: ResourceType[] = ["xhr", "fetch", "websocket"];
 const ignoredIdRegexps = [
 	/^md-.+-.{6,16}$/,
 	/^select2-.+$/,
@@ -24,9 +24,9 @@ const ignoredIdRegexps = [
 	/^.+-\d{2,10}--value$/,
 	/^.+-\d{1,}$/,
 	/^.+_\d{1,}$/,
-	/^react-select.+-.+$/
+	/^react-select.+-.+$/,
 ];
-const idShouldIgnore = (id: string): boolean => ignoredIdRegexps.some(regexp => regexp.test(id));
+const idShouldIgnore = (id: string): boolean => ignoredIdRegexps.some((regexp) => regexp.test(id));
 export default class PageHelper {
 	private static dataAttrName: string | null | undefined = null;
 
@@ -39,12 +39,12 @@ export default class PageHelper {
 	}
 
 	static async captureScreenshot(page: Page): Promise<string> {
-		return await page.screenshot({ encoding: 'base64' });
+		return await page.screenshot({ encoding: "base64" });
 	}
 
 	static async isAllRelatedPagesClosed(page: Page): Promise<boolean> {
 		const pages = await page.browser().pages();
-		return pages.filter(p => page !== p).length === 0;
+		return pages.filter((p) => page !== p).length === 0;
 	}
 
 	static shouldIgnore(id: string): boolean {
@@ -52,18 +52,17 @@ export default class PageHelper {
 	}
 
 	private static async emulate(page: Page, device: Device, client: CDPSession): Promise<void> {
-		if (device.wechat && (device.userAgent || '').indexOf('MicroMessenger') === -1) {
+		if (device.wechat && (device.userAgent || "").indexOf("MicroMessenger") === -1) {
 			device.userAgent = `${device.userAgent} MicroMessenger/6.5.7`;
 		}
 		await page.emulate(device);
-		await page.emulateMedia('screen');
-		const setBackground = () =>
-			(document.documentElement.style.backgroundColor = 'rgba(25,25,25,0.8)');
+		await page.emulateMedia("screen");
+		const setBackground = () => (document.documentElement.style.backgroundColor = "rgba(25,25,25,0.8)");
 		await page.evaluate(setBackground);
-		page.on('load', async () => await page.evaluate(setBackground));
+		page.on("load", async () => await page.evaluate(setBackground));
 
 		if (device.viewport.isMobile) {
-			await client.send('Emulation.setFocusEmulationEnabled', { enabled: true });
+			await client.send("Emulation.setFocusEmulationEnabled", { enabled: true });
 			// IMPORTANT emit as touch events will introduce many problems
 			// such as touch on a button and scroll
 			// replayer cannot know it is a click/tap or a scroll when touch end
@@ -72,10 +71,7 @@ export default class PageHelper {
 		}
 	}
 
-	private static async exposeFunctionToPage(
-		browserHelper: BrowserHelper,
-		page: Page
-	): Promise<void> {
+	private static async exposeFunctionToPage(browserHelper: BrowserHelper, page: Page): Promise<void> {
 		const uuid = browserHelper.getAllPages().findUuidByPage(page);
 		const flowKey = browserHelper.getFlowKey();
 		const eventRecorder = browserHelper.getEventRecorder();
@@ -83,10 +79,10 @@ export default class PageHelper {
 		// may already installed by replayer
 		let exists = await page.evaluate(() => window.$lhGetUuid != null);
 		if (!exists) {
-			await page.exposeFunction('$lhGetUuid', () => uuid);
+			await page.exposeFunction("$lhGetUuid", () => uuid);
 		}
-		await page.exposeFunction('$lhGetFlowKey', () => flowKey);
-		await page.exposeFunction('$lhRecordEvent', eventRecorder.record);
+		await page.exposeFunction("$lhGetFlowKey", () => flowKey);
+		await page.exposeFunction("$lhRecordEvent", eventRecorder.record);
 	}
 
 	private static async installListenersOnPage(
@@ -94,18 +90,14 @@ export default class PageHelper {
 		page: Page,
 		onSwitchFromReplayToRecord: boolean = false
 	): Promise<void> {
-		console.log('install listener on page');
+		console.log("install listener on page");
 		const god = () => {
 			if (window.$lhGod) {
 				return;
 			}
 
 			window.$lhGod = true;
-			console.log(
-				'%c last-hit: %c evaluate on new document start...',
-				'color:red',
-				'color:brown'
-			);
+			console.log("%c last-hit: %c evaluate on new document start...", "color:red", "color:brown");
 
 			// here we are in the browser context
 			const ignoredIdRegexps = [
@@ -116,11 +108,10 @@ export default class PageHelper {
 				/^.+-\d{2,10}--value$/,
 				/^.+-\d{1,}$/,
 				/^.+_\d{1,}$/,
-				/^react-select.+-.+$/
+				/^react-select.+-.+$/,
 			];
-			const idShouldIgnore = (id: string): boolean =>
-				ignoredIdRegexps.some(regexp => regexp.test(id));
-			const idSelector = id => `#${CSS.escape(id)}`;
+			const idShouldIgnore = (id: string): boolean => ignoredIdRegexps.some((regexp) => regexp.test(id));
+			const idSelector = (id) => `#${CSS.escape(id)}`;
 			const nodeNameInCorrectCase = (elm: Node & Element): string => {
 				// IMPORTANT shadow root is not concerned now, by last-hit-b 2019/10/24.
 				// const shadowRootType = this.shadowRootType();
@@ -155,10 +146,8 @@ export default class PageHelper {
 				}
 
 				// XPath treats CDATA as text nodes.
-				const leftType =
-					left.nodeType === Node.CDATA_SECTION_NODE ? Node.TEXT_NODE : left.nodeType;
-				const rightType =
-					right.nodeType === Node.CDATA_SECTION_NODE ? Node.TEXT_NODE : right.nodeType;
+				const leftType = left.nodeType === Node.CDATA_SECTION_NODE ? Node.TEXT_NODE : left.nodeType;
+				const rightType = right.nodeType === Node.CDATA_SECTION_NODE ? Node.TEXT_NODE : right.nodeType;
 				return leftType === rightType;
 			};
 			/**
@@ -201,42 +190,42 @@ export default class PageHelper {
 
 				switch (elm.nodeType) {
 					case Node.ELEMENT_NODE:
-						const id = elm.getAttribute('id');
+						const id = elm.getAttribute("id");
 						if (optimized && id && !idShouldIgnore(id)) {
 							return new StepPath('//*[@id="' + id + '"]', true);
 						}
 						ownValue = elm.localName;
 						break;
 					case Node.ATTRIBUTE_NODE:
-						ownValue = '@' + elm.nodeName;
+						ownValue = "@" + elm.nodeName;
 						break;
 					case Node.TEXT_NODE:
 					case Node.CDATA_SECTION_NODE:
-						ownValue = 'text()';
+						ownValue = "text()";
 						break;
 					case Node.PROCESSING_INSTRUCTION_NODE:
-						ownValue = 'processing-instruction()';
+						ownValue = "processing-instruction()";
 						break;
 					case Node.COMMENT_NODE:
-						ownValue = 'comment()';
+						ownValue = "comment()";
 						break;
 					case Node.DOCUMENT_NODE:
-						ownValue = '';
+						ownValue = "";
 						break;
 					default:
-						ownValue = '';
+						ownValue = "";
 						break;
 				}
 
 				if (ownIndex > 0) {
-					ownValue += '[' + ownIndex + ']';
+					ownValue += "[" + ownIndex + "]";
 				}
 
 				return new StepPath(ownValue, elm.nodeType === Node.DOCUMENT_NODE);
 			};
 			const createXPathFromElement = (elm: Element, optimized: boolean): string => {
 				if (elm.nodeType === Node.DOCUMENT_NODE) {
-					return '/';
+					return "/";
 				}
 
 				const steps = [];
@@ -254,10 +243,10 @@ export default class PageHelper {
 				}
 
 				steps.reverse();
-				return (steps.length && steps[0].optimized ? '' : '/') + steps.join('/');
+				return (steps.length && steps[0].optimized ? "" : "/") + steps.join("/");
 			};
 			const prefixedElementClassNames = (elm: Element): string[] => {
-				const classNames = elm.getAttribute('class');
+				const classNames = elm.getAttribute("class");
 				if (!classNames) {
 					return [];
 				}
@@ -265,31 +254,23 @@ export default class PageHelper {
 				return classNames
 					.split(/\s+/g)
 					.filter(Boolean)
-					.map(name => {
+					.map((name) => {
 						// The prefix is required to store "__proto__" in a object-based map.
-						return '$' + name;
+						return "$" + name;
 					});
 			};
-			const createCssPathStep = (
-				elm: Element,
-				optimized: boolean,
-				isTargetNode: boolean
-			): StepPath => {
+			const createCssPathStep = (elm: Element, optimized: boolean, isTargetNode: boolean): StepPath => {
 				if (elm.nodeType !== Node.ELEMENT_NODE) {
 					return null;
 				}
 
-				const id = elm.getAttribute('id');
+				const id = elm.getAttribute("id");
 				if (optimized) {
 					if (id && !idShouldIgnore(id)) {
 						return new StepPath(idSelector(id), true);
 					}
 					const nodeNameLower = elm.nodeName.toLowerCase();
-					if (
-						nodeNameLower === 'body' ||
-						nodeNameLower === 'head' ||
-						nodeNameLower === 'html'
-					) {
+					if (nodeNameLower === "body" || nodeNameLower === "head" || nodeNameLower === "html") {
 						return new StepPath(nodeNameInCorrectCase(elm), true);
 					}
 				}
@@ -349,18 +330,18 @@ export default class PageHelper {
 				let result = nodeName;
 				if (
 					isTargetNode &&
-					nodeName.toLowerCase() === 'input' &&
-					elm.getAttribute('type') &&
+					nodeName.toLowerCase() === "input" &&
+					elm.getAttribute("type") &&
 					(!id || idShouldIgnore(id)) &&
-					!elm.getAttribute('class')
+					!elm.getAttribute("class")
 				) {
-					result += '[type=' + CSS.escape(elm.getAttribute('type')) + ']';
+					result += "[type=" + CSS.escape(elm.getAttribute("type")) + "]";
 				}
 				if (needsNthChild) {
-					result += ':nth-child(' + (ownIndex + 1) + ')';
+					result += ":nth-child(" + (ownIndex + 1) + ")";
 				} else if (needsClassNames) {
 					for (const prefixedName of prefixedOwnClassNamesArray) {
-						result += '.' + CSS.escape(prefixedName.slice(1));
+						result += "." + CSS.escape(prefixedName.slice(1));
 					}
 				}
 
@@ -368,7 +349,7 @@ export default class PageHelper {
 			};
 			const createCssPathFromElement = (elm: Element, optimized: boolean): string => {
 				if (elm.nodeType !== Node.ELEMENT_NODE) {
-					return '';
+					return "";
 				}
 
 				const steps = [];
@@ -387,21 +368,21 @@ export default class PageHelper {
 				}
 
 				steps.reverse();
-				return steps.join(' > ');
+				return steps.join(" > ");
 			};
 			const createDataPathFromElement = (elm: Element): string | null => {
 				if (elm.nodeType === Node.DOCUMENT_NODE) {
-					return '';
+					return "";
 				}
 
 				// detect data attribute name
-				const attrName = `data-${window.$lhDataAttrName || 'lh-key'}`;
+				const attrName = `data-${window.$lhDataAttrName || "lh-key"}`;
 				const paths = [];
 				while (true) {
 					const value = elm.getAttribute(attrName);
 					if (value) {
 						paths.push(`[${attrName}="${value}"]`);
-						return paths.reverse().join(' > ');
+						return paths.reverse().join(" > ");
 					} else {
 						const parent = elm.parentElement;
 						if (!parent || parent == document.body) {
@@ -440,18 +421,15 @@ export default class PageHelper {
 				let xpath = createXPathFromElement(element, true);
 				let csspath = createCssPathFromElement(element, true);
 				let datapath = createDataPathFromElement(element);
-				if (
-					(e.type === 'click' || e.type === 'mousedown') &&
-					xpath.indexOf('/svg') !== -1
-				) {
-					console.log('xpath contains svg dom node.');
-					const newXpath = xpath.replace(/^(.*button.*)\/svg.*$/, '$1');
-					const newCssPath = csspath.replace(/^(.*button.*)\s>\ssvg.*$/, '$1');
+				if ((e.type === "click" || e.type === "mousedown") && xpath.indexOf("/svg") !== -1) {
+					console.log("xpath contains svg dom node.");
+					const newXpath = xpath.replace(/^(.*button.*)\/svg.*$/, "$1");
+					const newCssPath = csspath.replace(/^(.*button.*)\s>\ssvg.*$/, "$1");
 					console.log(`new xpath after svg cut-off is ${newXpath}.`);
 					if (newXpath !== xpath) {
 						// replaced
 						let parent = element;
-						while (parent.tagName !== 'BUTTON') {
+						while (parent.tagName !== "BUTTON") {
 							parent = parent.parentElement;
 						}
 						element = parent;
@@ -459,6 +437,8 @@ export default class PageHelper {
 						csspath = newCssPath;
 					}
 				}
+
+				const isDocument = element.nodeType === Node.DOCUMENT_NODE;
 
 				return {
 					// keys
@@ -477,30 +457,23 @@ export default class PageHelper {
 					pageY: e.pageY,
 					screenX: e.screenX,
 					screenY: e.screenY,
-					scrollTop:
-						element === document
-							? document.documentElement.scrollTop
-							: element.scrollTop,
-					scrollLeft:
-						element === document
-							? document.documentElement.scrollLeft
-							: element.scrollLeft,
+					scrollTop: element === document ? document.documentElement.scrollTop : element.scrollTop,
+					scrollLeft: element === document ? document.documentElement.scrollLeft : element.scrollLeft,
 					timeStamp: e.timeStamp,
 					type: e.type,
 					// event source. true: generated by user action; false: generated by scripts
 					isTrusted: e.isTrusted,
-					value: e.type !== 'keydown' ? element.value : e.key,
+					value: e.type !== "keydown" ? element.value : e.key,
 					// computed
 					path: xpath,
 					csspath: csspath,
 					datapath: datapath,
-					target:
-						element === document
-							? 'document'
-							: `<${element.tagName.toLowerCase()} ${element
+					target: isDocument
+						? "document"
+						: `<${element.tagName.toLowerCase()} ${element
 								.getAttributeNames()
-								.map(name => `${name}="${element.getAttribute(name)}"`)
-								.join(' ')}>`
+								.map((name) => `${name}="${element.getAttribute(name)}"`)
+								.join(" ")}>`,
 					// bubbles: e.bubbles,
 					// cancelBubble: e.cancelBubble,
 					// cancelable: e.cancelable,
@@ -531,11 +504,11 @@ export default class PageHelper {
 				if (!e) {
 					return;
 				}
-				if ([ 'STYLE' ].includes(e.target && e.target.tagName)) {
+				if (["STYLE"].includes(e.target && e.target.tagName)) {
 					// inline style tag, ignored
 					return;
 				}
-				if (e.type === 'keydown' && e.key !== 'Enter') {
+				if (e.type === "keydown" && e.key !== "Enter") {
 					//just record Enter
 					return;
 				}
@@ -544,7 +517,7 @@ export default class PageHelper {
 				const data = transformEvent(e, element);
 				// console.log(data);
 				data.uuid = window.$lhUuid;
-				if (e.type === 'scroll') {
+				if (e.type === "scroll") {
 					if (scrollTimeoutHandle) {
 						clearTimeout(scrollTimeoutHandle);
 					}
@@ -553,9 +526,9 @@ export default class PageHelper {
 						scrollTimeoutHandle = null;
 					}, 100);
 				} else if (
-					e.type === 'change' &&
-					element.tagName === 'INPUT' &&
-					(element.getAttribute('type') || '').toLowerCase() === 'file'
+					e.type === "change" &&
+					element.tagName === "INPUT" &&
+					(element.getAttribute("type") || "").toLowerCase() === "file"
 				) {
 					// catch upload file
 					const file = element.files[0];
@@ -568,10 +541,8 @@ export default class PageHelper {
 						reader.readAsDataURL(file);
 					}
 				} else if (
-					element.tagName === 'INPUT' &&
-					[ 'checkbox', 'radio' ].indexOf(
-						(element.getAttribute('type') || '').toLowerCase()
-					) != -1
+					element.tagName === "INPUT" &&
+					["checkbox", "radio"].indexOf((element.getAttribute("type") || "").toLowerCase()) != -1
 				) {
 					// record checked
 					data.checked = element.checked;
@@ -581,34 +552,34 @@ export default class PageHelper {
 				}
 			};
 
-			window.$lhGetUuid().then(uuid => {
+			window.$lhGetUuid().then((uuid) => {
 				window.$lhUuid = uuid;
 			});
 
 			Object.values({
-				CLICK: 'click',
+				CLICK: "click",
 				// DBLCLICK: 'dblclick',
-				CHANGE: 'change',
-				KEYDOWN: 'keydown',
+				CHANGE: "change",
+				KEYDOWN: "keydown",
 				// SELECT: 'select'
-				FOCUS: 'focus',
-				SCROLL: 'scroll',
+				FOCUS: "focus",
+				SCROLL: "scroll",
 				// onchange:"on-change",
-				MOUSE_DOWN: 'mousedown',
-				SUBMIT: 'submit'
+				MOUSE_DOWN: "mousedown",
+				SUBMIT: "submit",
 				// LOAD: 'load',
 				// UNLOAD: 'unload',
 				// VALUE_CHANGE: 'valuechange'
-			}).forEach(eventType => {
+			}).forEach((eventType) => {
 				document.addEventListener(eventType, eventHandler, { capture: true });
 				if (window.$lhOnSwitchFromReplayToRecord) {
-					document.querySelectorAll('iframe').forEach(frame => {
+					document.querySelectorAll("iframe").forEach((frame) => {
 						frame.contentDocument!.addEventListener(eventType, eventHandler, { capture: true });
 					});
 				}
 			});
 
-			const recordDialogEvent = options => {
+			const recordDialogEvent = (options) => {
 				const { message, defaultMessage, returnValue, eventType, dialogType } = options;
 				window.$lhRecordEvent(
 					JSON.stringify({
@@ -618,28 +589,28 @@ export default class PageHelper {
 						message,
 						defaultMessage,
 						returnValue,
-						target: 'document',
-						url: window.location.href
+						target: "document",
+						url: window.location.href,
 					})
 				);
 			};
 			// take over native dialog, 4 types: alert, prompt, confirm and beforeunload
 			//
 			const nativeAlert = window.alert;
-			window.alert = message => {
-				recordDialogEvent({ message, eventType: 'dialog-open', dialogType: 'alert' });
+			window.alert = (message) => {
+				recordDialogEvent({ message, eventType: "dialog-open", dialogType: "alert" });
 				nativeAlert(message);
-				recordDialogEvent({ message, eventType: 'dialog-close', dialogType: 'alert' });
+				recordDialogEvent({ message, eventType: "dialog-close", dialogType: "alert" });
 			};
 			const nativeConfirm = window.confirm;
-			window.confirm = message => {
-				recordDialogEvent({ message, eventType: 'dialog-open', dialogType: 'confirm' });
+			window.confirm = (message) => {
+				recordDialogEvent({ message, eventType: "dialog-open", dialogType: "confirm" });
 				const ret = nativeConfirm(message);
 				recordDialogEvent({
 					message,
-					eventType: 'dialog-close',
-					dialogType: 'confirm',
-					returnValue: ret
+					eventType: "dialog-close",
+					dialogType: "confirm",
+					returnValue: ret,
 				});
 				return ret;
 			};
@@ -648,42 +619,42 @@ export default class PageHelper {
 				recordDialogEvent({
 					message,
 					defaultMessage,
-					eventType: 'dialog-open',
-					dialogType: 'prompt'
+					eventType: "dialog-open",
+					dialogType: "prompt",
 				});
 				const ret = nativePrompt(message, defaultMessage);
 				recordDialogEvent({
 					message,
 					defaultMessage,
-					eventType: 'dialog-close',
-					dialogType: 'prompt',
-					returnValue: ret
+					eventType: "dialog-close",
+					dialogType: "prompt",
+					returnValue: ret,
 				});
 				return ret;
 			};
 
 			// wechat related
-			(window => {
+			((window) => {
 				if (!/MicroMessenger/i.test(navigator.userAgent)) {
 					return;
 				}
 				const WeixinJSBridgeData = {};
 				let imageData = null;
-				const transformPNG2JPEG = base64Image => {
-					return new Promise(resolve => {
-						const canvas = document.createElement('canvas');
-						const ctx = canvas.getContext('2d');
+				const transformPNG2JPEG = (base64Image) => {
+					return new Promise((resolve) => {
+						const canvas = document.createElement("canvas");
+						const ctx = canvas.getContext("2d");
 
 						const image = new Image();
-						image.crossOrigin = 'anonymous';
+						image.crossOrigin = "anonymous";
 						image.onload = function () {
 							const { width, height } = image;
 							canvas.width = width;
 							canvas.height = height;
-							ctx.fillStyle = '#fff';
+							ctx.fillStyle = "#fff";
 							ctx.fillRect(0, 0, width, height);
 							ctx.drawImage(image, 0, 0, width, height);
-							resolve(canvas.toDataURL('image/jpeg', 1.0));
+							resolve(canvas.toDataURL("image/jpeg", 1.0));
 						};
 						image.src = base64Image;
 					});
@@ -692,36 +663,36 @@ export default class PageHelper {
 					invoke: (event, data, func): void => {
 						// console.info(event, data);
 						switch (event) {
-							case 'sendAppMessage':
-							case 'shareTimeline':
-								console.log('%c Ready for share', 'color:red', data);
+							case "sendAppMessage":
+							case "shareTimeline":
+								console.log("%c Ready for share", "color:red", data);
 								WeixinJSBridgeData[event] = data;
 								WeixinJSBridgeData[event]._callback = func;
 								break;
-							case 'preVerifyJSAPI':
+							case "preVerifyJSAPI":
 								func({});
 								break;
-							case 'chooseImage':
-								const input = document.createElement('input');
-								input.setAttribute('type', 'file');
-								input.style.visibility = 'hidden';
-								input.onchange = evt => {
+							case "chooseImage":
+								const input = document.createElement("input");
+								input.setAttribute("type", "file");
+								input.style.visibility = "hidden";
+								input.onchange = (evt) => {
 									const file = input.files[0];
 									const reader = new FileReader();
-									reader.onload = evt => {
+									reader.onload = (evt) => {
 										const base64Image = evt.target.result;
 										if (
-											typeof base64Image === 'string' &&
-											base64Image.startsWith('data:image/png;')
+											typeof base64Image === "string" &&
+											base64Image.startsWith("data:image/png;")
 										) {
 											// 是PNG, 转成JPEG
-											transformPNG2JPEG(base64Image).then(base64Image => {
+											transformPNG2JPEG(base64Image).then((base64Image) => {
 												imageData = base64Image;
-												func({ localIds: [ 0 ], errMsg: 'chooseImage:ok' });
+												func({ localIds: [0], errMsg: "chooseImage:ok" });
 											});
 										} else {
 											imageData = base64Image;
-											func({ localIds: [ 0 ], errMsg: 'chooseImage:ok' });
+											func({ localIds: [0], errMsg: "chooseImage:ok" });
 										}
 									};
 									reader.readAsDataURL(file);
@@ -729,66 +700,62 @@ export default class PageHelper {
 								document.body.append(input);
 								input.click();
 								break;
-							case 'getLocalImgData':
-								func({ localData: imageData, errMsg: 'getLocalImgData:ok' });
+							case "getLocalImgData":
+								func({ localData: imageData, errMsg: "getLocalImgData:ok" });
 								break;
 						}
 						// console.log(WeixinJSBridgeData);
 					},
 					on: (event, func) => {
 						func({});
-					}
+					},
 				};
-				window.addEventListener('DOMContentLoaded', () => {
-					if (document.getElementById('last-hit-bars') != null) {
+				window.addEventListener("DOMContentLoaded", () => {
+					if (document.getElementById("last-hit-bars") != null) {
 						return;
 					}
-					const div = document.createElement('DIV');
-					div.id = 'last-hit-bars';
-					div.style.position = 'fixed';
-					div.style.display = 'flex';
-					div.style.top = '0';
-					div.style.right = '0';
-					div.style.backgroundColor = 'transparent';
-					div.style.zIndex = '100000';
-					const span = document.createElement('SPAN');
-					span.id = 'last-hit-wechat-share';
-					span.style.height = '24px';
-					span.style.width = '24px';
+					const div = document.createElement("DIV");
+					div.id = "last-hit-bars";
+					div.style.position = "fixed";
+					div.style.display = "flex";
+					div.style.top = "0";
+					div.style.right = "0";
+					div.style.backgroundColor = "transparent";
+					div.style.zIndex = "100000";
+					const span = document.createElement("SPAN");
+					span.id = "last-hit-wechat-share";
+					span.style.height = "24px";
+					span.style.width = "24px";
 					// span.style.border = '1px solid red';
-					span.style.backgroundColor = 'burlywood';
-					span.style.opacity = '0.7';
-					span.style.borderRadius = '100%';
-					span.style.margin = '3px';
-					span.style.boxSizing = 'border-box';
-					span.style.cursor = 'pointer';
-					span.style.fontWeight = 'bold';
-					span.style.lineHeight = '24px';
-					span.style.fontSize = '12px';
-					span.style.color = '#fff';
+					span.style.backgroundColor = "burlywood";
+					span.style.opacity = "0.7";
+					span.style.borderRadius = "100%";
+					span.style.margin = "3px";
+					span.style.boxSizing = "border-box";
+					span.style.cursor = "pointer";
+					span.style.fontWeight = "bold";
+					span.style.lineHeight = "24px";
+					span.style.fontSize = "12px";
+					span.style.color = "#fff";
 					// span.style.transform = 'scale(0.8)';
-					const textSpan = document.createElement('span');
-					textSpan.textContent = 'Share';
-					textSpan.style.lineHeight = '24px';
-					textSpan.style.transform = 'scale(0.7)';
-					textSpan.style.display = 'block';
-					textSpan.style.transformOrigin = 'left';
-					textSpan.style.whiteSpace = 'nowrap';
+					const textSpan = document.createElement("span");
+					textSpan.textContent = "Share";
+					textSpan.style.lineHeight = "24px";
+					textSpan.style.transform = "scale(0.7)";
+					textSpan.style.display = "block";
+					textSpan.style.transformOrigin = "left";
+					textSpan.style.whiteSpace = "nowrap";
 					span.append(textSpan);
 					span.onclick = () => {
-						const data = WeixinJSBridgeData['sendAppMessage'];
+						const data = WeixinJSBridgeData["sendAppMessage"];
 						if (data && data.link) {
 							// use prepared share data
-							console.log(`%c Share to: %c ${data.link}`, 'color:red', 'color:brown');
+							console.log(`%c Share to: %c ${data.link}`, "color:red", "color:brown");
 							window.open(data.link);
-							data._callback && data._callback({ errMsg: 'sendAppMessage:ok' });
+							data._callback && data._callback({ errMsg: "sendAppMessage:ok" });
 						} else {
 							// use current url
-							console.log(
-								`%c Share to: %c ${location.href}`,
-								'color:red',
-								'color:brown'
-							);
+							console.log(`%c Share to: %c ${location.href}`, "color:red", "color:brown");
 							window.open(location.href);
 						}
 					};
@@ -797,23 +764,22 @@ export default class PageHelper {
 				});
 			})(window);
 
-			console.log(
-				'%c last-hit: %c evaluate on new document end...',
-				'color:red',
-				'color:brown'
-			);
+			console.log("%c last-hit: %c evaluate on new document end...", "color:red", "color:brown");
 		};
 		// some pages postpones the page created or popup event. so evaluateOnNewDocument doesn't work.
 		// in this case, run evaluate for ensuring the god logic should be install into page
 		// anyway, monitors cannot be installed twice, so add varaiable $lhGod on window to prevent
 		if (onSwitchFromReplayToRecord) {
-			await page.evaluate(() => window.$lhOnSwitchFromReplayToRecord = true);
+			await page.evaluate(() => (window.$lhOnSwitchFromReplayToRecord = true));
 		}
 		if (PageHelper.dataAttrName) {
-			await page.evaluate((dataAttrName: string) => window.$lhDataAttrName = dataAttrName, PageHelper.dataAttrName);
+			await page.evaluate(
+				(dataAttrName: string) => (window.$lhDataAttrName = dataAttrName),
+				PageHelper.dataAttrName
+			);
 		} else {
 			// clear when not given
-			await page.evaluate(() => window.$lhDataAttrName = null);
+			await page.evaluate(() => (window.$lhDataAttrName = null));
 		}
 		await page.evaluateOnNewDocument(god);
 		await page.evaluate(god);
@@ -834,32 +800,32 @@ export default class PageHelper {
 	}
 
 	private static monitorDialogOpened(page: Page, browserHelper: BrowserHelper): void {
-		page.on('dialog', async dialog => {
+		page.on("dialog", async (dialog) => {
 			console.log(`page event dialog caught`);
-			if (dialog.type() === 'beforeunload') {
+			if (dialog.type() === "beforeunload") {
 				const base64 = await PageHelper.captureScreenshot(page);
 				const uuid = browserHelper.getAllPages().findUuidByPage(page);
 				browserHelper.recordPageWindowEvent({
-					type: 'dialog-open',
-					dialog: 'beforeunload',
+					type: "dialog-open",
+					dialog: "beforeunload",
 					url: page.url(),
 					image: base64,
-					uuid
+					uuid,
 				});
 			}
 		});
 	}
 
 	private static monitorPageErrorOccurred(page: Page, browserHelper: BrowserHelper): void {
-		page.on('pageerror', async () => {
+		page.on("pageerror", async () => {
 			console.log(`page event pageerror caught`);
 			const base64 = await PageHelper.captureScreenshot(page);
 			const uuid = browserHelper.getAllPages().findUuidByPage(page);
 			browserHelper.recordPageWindowEvent({
-				type: 'page-error',
+				type: "page-error",
 				url: page.url(),
 				image: base64,
-				uuid
+				uuid,
 			});
 		});
 	}
@@ -868,8 +834,8 @@ export default class PageHelper {
 	 * page created by window.open or anchor
 	 */
 	private static monitorPagePopuped(page: Page, browserHelper: BrowserHelper): void {
-		page.on('popup', async newPage => {
-			console.log('page event popup caught');
+		page.on("popup", async (newPage) => {
+			console.log("page event popup caught");
 			const allPages = browserHelper.getAllPages();
 			if (!allPages.exists(newPage)) {
 				// not found in pages
@@ -878,45 +844,36 @@ export default class PageHelper {
 				await PageHelper.control(browserHelper, newPage, false);
 				// const base64 = await PageHelper.captureScreenshot(newPage);
 				browserHelper.recordPageWindowEvent({
-					type: 'page-created',
+					type: "page-created",
 					url: newPage.url(),
 					// image: base64,
-					uuid
+					uuid,
 				});
 			}
 		});
 	}
 
-	private static monitorPageClosed(
-		page: Page,
-		browserHelper: BrowserHelper,
-		client: CDPSession
-	): void {
-		page.on('close', async () => {
+	private static monitorPageClosed(page: Page, browserHelper: BrowserHelper, client: CDPSession): void {
+		page.on("close", async () => {
 			// RESEARCH already closed? seems like this.
 			// traverse all pages to check all related pages were closed or not
 			const allClosed = await PageHelper.isAllRelatedPagesClosed(page);
 			const uuid = browserHelper.getAllPages().removeByPage(page);
 			if (uuid) {
 				browserHelper.recordPageWindowEvent({
-					type: 'page-closed',
+					type: "page-closed",
 					url: page.url(),
 					allClosed,
-					uuid
+					uuid,
 				});
 			}
 			try {
 				client.detach();
-			} catch {
-			}
+			} catch {}
 		});
 	}
 
-	private static async monitorAnimation(
-		client: CDPSession,
-		browserHelper: BrowserHelper,
-		page: Page
-	): Promise<void> {
+	private static async monitorAnimation(client: CDPSession, browserHelper: BrowserHelper, page: Page): Promise<void> {
 		// await client.send('Animation.enable');
 		// client.on('Animation.animationStarted', ({ animation }) => {
 		// 	browserHelper.recordPageWindowEvent({
@@ -937,14 +894,14 @@ export default class PageHelper {
 	}
 
 	private static monitorRequestFailed(page: Page, browserHelper: BrowserHelper) {
-		page.on('requestfailed', async request => {
+		page.on("requestfailed", async (request) => {
 			const url = request.url();
 			const resourceType = request.resourceType();
 			if (PageHelper.isDynamicResource(resourceType)) {
 				// dynamic resources
 				try {
 					browserHelper.recordPageWindowEvent({
-						type: 'ajax',
+						type: "ajax",
 						uuid: browserHelper.getAllPages().findUuidByPage(page),
 						failed: true,
 						request: {
@@ -952,8 +909,8 @@ export default class PageHelper {
 							method: request.method(),
 							headers: request.headers(),
 							body: request.postData(),
-							resourceType
-						}
+							resourceType,
+						},
 					});
 				} catch (err) {
 					console.error(`Failed getting data from: ${url}`);
@@ -965,7 +922,7 @@ export default class PageHelper {
 	}
 
 	private static monitorRequestFinished(page: Page, browserHelper: BrowserHelper) {
-		page.on('requestfinished', async request => {
+		page.on("requestfinished", async (request) => {
 			const url = request.url();
 			const response = request.response();
 			const resourceType = request.resourceType();
@@ -980,21 +937,21 @@ export default class PageHelper {
 				const sendEvent = (body?: string) => {
 					try {
 						browserHelper.recordPageWindowEvent({
-							type: 'ajax',
+							type: "ajax",
 							uuid: browserHelper.getAllPages().findUuidByPage(page),
 							request: {
 								url,
 								method: request.method(),
 								headers: request.headers(),
 								body: request.postData(),
-								resourceType
+								resourceType,
 							},
 							response: {
 								statusCode: response.status(),
 								statusMessage: response.statusText(),
 								headers: response.headers(),
-								body
-							}
+								body,
+							},
 						});
 					} catch (err) {
 						console.error(`Failed getting data from: ${url}`);
