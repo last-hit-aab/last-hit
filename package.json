@@ -48,7 +48,7 @@
 		"@types/uuid": "^3.4.6",
 		"cssesc": "^3.0.0",
 		"last-hit-replayer": "^0.10.7",
-		"pino": "^5.13.4",
+		"pino": "^5.17.0",
 		"pino-pretty": "^3.2.1",
 		"puppeteer": "^2.0.0",
 		"typescript": "^3.7.2",
