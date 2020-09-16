@@ -208,6 +208,13 @@
   dependencies:
     "@types/node" "*"
 
+"@types/puppeteer@^1.20.6":
+  version "1.20.6"
+  resolved "https://registry.yarnpkg.com/@types/puppeteer/-/puppeteer-1.20.6.tgz#660c5888f6b88e657cdfa4aec5962e6f65efc733"
+  integrity sha512-ITkr6Z2qvCiDZFB3Y+VYt+uOzqxitr1HehAn+t/PoNNZAsX+LnovMaqFYg99pvkP18AvZdAqKNMhd8JaQIEWUA==
+  dependencies:
+    "@types/node" "*"
+
 "@types/sonic-boom@*":
   version "0.7.0"
   resolved "https://registry.yarnpkg.com/@types/sonic-boom/-/sonic-boom-0.7.0.tgz#38337036293992a1df65dd3161abddf8fb9b7176"
