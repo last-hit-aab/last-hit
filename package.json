@@ -50,7 +50,7 @@
 		"last-hit-replayer": "^0.10.9",
 		"pino": "^5.13.4",
 		"pino-pretty": "^3.2.1",
-		"puppeteer": "^2.0.0",
+		"puppeteer": "^21.3.7",
 		"typescript": "^3.7.2",
 		"uuid": "^3.3.3",
 		"watchr": "^4.1.0"
